@@ -39,8 +39,11 @@ class AdminUserSeeder extends Seeder
                 [
                     'name' => $userData['name'],
                     'password' => bcrypt('password'),
+                    'is_active' => true,
                 ]
             );
+
+            $user->update(['is_active' => true]);
 
             $role = Role::firstWhere('name', $userData['role']);
             if ($role) {

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\UserController;
 
 Route::prefix('companies')->group(function () {
     // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
@@ -16,6 +17,18 @@ Route::prefix('companies')->group(function () {
     Route::patch('/{id}/activate', [CompanyController::class, 'activate']);
     Route::patch('/{id}/deactivate', [CompanyController::class, 'deactivate']);
     Route::delete('/{id}', [CompanyController::class, 'destroy']);
+});
+
+Route::prefix('users')->group(function () {
+    Route::get('', [UserController::class, 'index']);
+    Route::get('/{id}', [UserController::class, 'show']);
+
+    Route::post('', [UserController::class, 'store']);
+    Route::put('/{id}', [UserController::class, 'update']);
+    Route::patch('/{id}/activate', [UserController::class, 'activate']);
+    Route::patch('/{id}/deactivate', [UserController::class, 'deactivate']);
+    Route::patch('/{id}/roles', [UserController::class, 'updateRoles']);
+    Route::delete('/{id}', [UserController::class, 'destroy']);
 });
 
 Route::prefix('baylines')->group(function () {
