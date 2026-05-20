@@ -33,3 +33,15 @@ Route::prefix('baylines')->group(function () {
     });
     */
 });
+
+Route::prefix('parkings')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+    // Re-enable auth and permission middleware when ready by uncommenting the lines below.
+
+    Route::get('', [\App\Http\Controllers\Api\ParkingController::class, 'index']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'show']);
+
+    Route::post('', [\App\Http\Controllers\Api\ParkingController::class, 'store']);
+    Route::put('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'update']);
+    Route::delete('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'destroy']);
+});
