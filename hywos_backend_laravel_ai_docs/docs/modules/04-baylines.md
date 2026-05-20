@@ -44,8 +44,9 @@ Role mapping (suggested)
 
 Middleware
 ----------
-- Routes are protected with `auth:sanctum` and `spatie/permission` middleware.
-- No custom middleware added yet. If strict site-scoped control is required (e.g. a dispatcher may only manage baylines in their `site_id`), implement `EnsureSiteScope` middleware and apply to create/update routes.
+- For development the `baylines` route group is currently configured without `auth:sanctum` or permission middleware in `routes/api.php`.
+- `StoreBayLineRequest` and `UpdateBayLineRequest` perform permission checks, but `DELETE` currently calls `$this->authorize('delete', BayLine::class)` and requires a matching policy to enforce delete authorization.
+- No site-scoped middleware is implemented yet. If strict scope is required, add an `EnsureSiteScope` middleware and apply it to create/update routes.
 
 Notes for implementers
 ---------------------

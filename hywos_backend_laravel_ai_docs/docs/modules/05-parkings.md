@@ -25,3 +25,8 @@ Manage (development):
 Planned permissions (Spatie): `parkings.view`, `parkings.create`, `parkings.update`, `parkings.delete`.
 
 Note: For development the middleware is currently disabled in `routes/api.php` to allow rapid iteration. Before enabling in production, run the permission seeder and publish/migrate `spatie/permission` tables.
+
+## Seeders and dependencies
+- The project includes `SiteSeeder`, `PlantAreaSeeder`, `BayLineSeeder`, `ParkingSeeder`, `RolePermissionSeeder`, and `AdminUserSeeder`.
+- `parkings` records require `sites` and `plant_areas` to exist first.
+- `ParkingResource` computes `available` as `capacity - occupied_count`.

@@ -50,6 +50,16 @@ Files created or updated (paths)
 - `hywos_backend_laravel_ai_docs/docs/dev/04-backend-status.md` (this file)
 - `app/Services/ApiResponse.php` (new)
 - `app/Http/Controllers/Api/ApiController.php` (new)
+ - `app/Models/Site.php` (new)
+ - `app/Models/PlantArea.php` (new)
+ - `database/migrations/2026_05_20_073300_create_sites_table.php` (new)
+ - `database/migrations/2026_05_20_073301_create_plant_areas_table.php` (new)
+ - `database/seeders/RolePermissionSeeder.php` (new)
+ - `database/seeders/SiteSeeder.php` (new)
+ - `database/seeders/PlantAreaSeeder.php` (new)
+ - `database/seeders/AdminUserSeeder.php` (new)
+ - `database/seeders/BayLineSeeder.php` (new)
+ - `database/seeders/ParkingSeeder.php` (new)
 
 Quick reproducible setup (commands)
 -----------------------------------
@@ -85,8 +95,7 @@ Important conventions and patterns to follow
 
 Suggested next work items (priority order)
 ----------------------------------------
-1. Seeders + sample admin user: create `RolePermissionSeeder` to create MVP roles (`admin`, `dispatcher`, `operator`, `analysis_specialist`, `auditor`) and a sample admin user. Add to `DatabaseSeeder`.
-2. Add `HasRoles` trait to `app/Models/User.php` and `HasApiTokens` if Sanctum tokens are required.
+1. Add `HasApiTokens` to `app/Models/User.php` if Sanctum token-based auth is required.
 3. Implement a small `CorrelationId` middleware to normalize/header-set correlation id for all requests and responses.
 4. Add `GET /api/health` endpoint and a minimal global error handler that uses `ApiResponse::error`.
 5. Implement basic auth endpoints (`/api/auth/login`, `/api/auth/logout`, `/api/auth/me`) using Sanctum.
