@@ -49,3 +49,16 @@ Route::prefix('parkings')->group(function () {
     Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\ParkingController::class, 'deactivate']);
     Route::delete('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'destroy']);
 });
+
+Route::prefix('customers')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [\App\Http\Controllers\Api\CustomerController::class, 'index']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'show']);
+
+    Route::post('', [\App\Http\Controllers\Api\CustomerController::class, 'store']);
+    Route::put('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'update']);
+    Route::patch('/{id}/activate', [\App\Http\Controllers\Api\CustomerController::class, 'activate']);
+    Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\CustomerController::class, 'deactivate']);
+    Route::delete('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'destroy']);
+});

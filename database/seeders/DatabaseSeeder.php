@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\AdminUserSeeder::class,
             \Database\Seeders\BayLineSeeder::class,
             \Database\Seeders\ParkingSeeder::class,
+            \Database\Seeders\CustomerSeeder::class,
         ]);
     }
 }

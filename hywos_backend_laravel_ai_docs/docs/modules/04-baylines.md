@@ -56,4 +56,9 @@ Notes for implementers
 - Use `StoreBayLineRequest` and `UpdateBayLineRequest` to validate input and enforce permission checks.
 - Keep business logic (assigning trailers to baylines, reserving) in a domain service (e.g., `ParkingService`) — controllers should stay thin.
 
+Activation behavior
+-------------------
+- `is_active` is intentionally managed via the dedicated endpoints `PATCH /api/baylines/{id}/activate` and `PATCH /api/baylines/{id}/deactivate`.
+- `UpdateBayLineRequest` does not accept `is_active`; this prevents accidental activation/deactivation when updating other fields.
+
 Database migration and model are already added in the repo. Remember to seed the permissions and map them to roles.

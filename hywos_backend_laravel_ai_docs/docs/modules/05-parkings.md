@@ -32,3 +32,8 @@ Note: For development the middleware is currently disabled in `routes/api.php` t
 - The project includes `SiteSeeder`, `PlantAreaSeeder`, `BayLineSeeder`, `ParkingSeeder`, `RolePermissionSeeder`, and `AdminUserSeeder`.
 - `parkings` records require `sites` and `plant_areas` to exist first.
 - `ParkingResource` computes `available` as `capacity - occupied_count`.
+
+Activation behavior
+-------------------
+- `is_active` for parkings is controlled via `PATCH /api/parkings/{id}/activate` and `PATCH /api/parkings/{id}/deactivate`.
+- `UpdateParkingRequest` does not accept `is_active` to avoid accidental activation during updates.

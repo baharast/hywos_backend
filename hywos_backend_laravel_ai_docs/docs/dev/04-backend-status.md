@@ -50,6 +50,13 @@ Files created or updated (paths)
 - `hywos_backend_laravel_ai_docs/docs/dev/04-backend-status.md` (this file)
 - `app/Services/ApiResponse.php` (new)
 - `app/Http/Controllers/Api/ApiController.php` (new)
+ - `app/Models/Customer.php` (new)
+ - `database/migrations/2026_05_20_073302_create_customers_table.php` (new)
+ - `app/Http/Controllers/Api/CustomerController.php` (new)
+ - `app/Http/Resources/CustomerResource.php` (new)
+ - `app/Http/Requests/StoreCustomerRequest.php` (new)
+ - `app/Http/Requests/UpdateCustomerRequest.php` (new)
+ - `database/seeders/CustomerSeeder.php` (new)
  - `app/Models/Site.php` (new)
  - `app/Models/PlantArea.php` (new)
  - `database/migrations/2026_05_20_073300_create_sites_table.php` (new)
@@ -99,6 +106,10 @@ Suggested next work items (priority order)
 3. Implement a small `CorrelationId` middleware to normalize/header-set correlation id for all requests and responses.
 4. Add `GET /api/health` endpoint and a minimal global error handler that uses `ApiResponse::error`.
 5. Implement basic auth endpoints (`/api/auth/login`, `/api/auth/logout`, `/api/auth/me`) using Sanctum.
+
+Notes about activation endpoints
+--------------------------------
+- For several entities (BayLine, Parking, Customer) activation is managed via dedicated endpoints (`PATCH /api/{resource}/{id}/activate` and `PATCH /api/{resource}/{id}/deactivate`) rather than through the generic `update` request. `Update*Request` classes do not include `is_active` to prevent accidental activation changes during updates.
 
 Notes for AI agents / new developers
 ----------------------------------
