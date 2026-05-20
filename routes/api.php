@@ -2,6 +2,21 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BayLineController;
+use App\Http\Controllers\Api\CompanyController;
+
+Route::prefix('companies')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+    // Re-enable auth and permission middleware when ready by uncommenting the lines below.
+
+    Route::get('', [CompanyController::class, 'index']);
+    Route::get('/{id}', [CompanyController::class, 'show']);
+
+    Route::post('', [CompanyController::class, 'store']);
+    Route::put('/{id}', [CompanyController::class, 'update']);
+    Route::patch('/{id}/activate', [CompanyController::class, 'activate']);
+    Route::patch('/{id}/deactivate', [CompanyController::class, 'deactivate']);
+    Route::delete('/{id}', [CompanyController::class, 'destroy']);
+});
 
 Route::prefix('baylines')->group(function () {
     Route::get('/', function () {

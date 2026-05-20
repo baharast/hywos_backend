@@ -15,8 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed order: permissions/roles -> sites/areas -> users -> domain data
+        // Seed order: companies -> permissions/roles -> sites/areas -> users -> domain data
         $this->call([
+            \Database\Seeders\CompanySeeder::class,
             \Database\Seeders\RolePermissionSeeder::class,
             \Database\Seeders\SiteSeeder::class,
             \Database\Seeders\PlantAreaSeeder::class,

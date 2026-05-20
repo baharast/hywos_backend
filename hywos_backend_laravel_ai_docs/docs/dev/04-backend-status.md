@@ -48,25 +48,34 @@ Files created or updated (paths)
 - `README.md` (root) (updated)
 - `hywos_backend_laravel_ai_docs/docs/dev/03-package-setup.md` (new)
 - `hywos_backend_laravel_ai_docs/docs/dev/04-backend-status.md` (this file)
+- `hywos_backend_laravel_ai_docs/docs/modules/07-companies.md` (new)
 - `app/Services/ApiResponse.php` (new)
 - `app/Http/Controllers/Api/ApiController.php` (new)
- - `app/Models/Customer.php` (new)
- - `database/migrations/2026_05_20_073302_create_customers_table.php` (new)
- - `app/Http/Controllers/Api/CustomerController.php` (new)
- - `app/Http/Resources/CustomerResource.php` (new)
- - `app/Http/Requests/StoreCustomerRequest.php` (new)
- - `app/Http/Requests/UpdateCustomerRequest.php` (new)
- - `database/seeders/CustomerSeeder.php` (new)
- - `app/Models/Site.php` (new)
- - `app/Models/PlantArea.php` (new)
- - `database/migrations/2026_05_20_073300_create_sites_table.php` (new)
- - `database/migrations/2026_05_20_073301_create_plant_areas_table.php` (new)
- - `database/seeders/RolePermissionSeeder.php` (new)
- - `database/seeders/SiteSeeder.php` (new)
- - `database/seeders/PlantAreaSeeder.php` (new)
- - `database/seeders/AdminUserSeeder.php` (new)
- - `database/seeders/BayLineSeeder.php` (new)
- - `database/seeders/ParkingSeeder.php` (new)
+- `app/Models/Company.php` (new)
+- `app/Models/Customer.php` (new)
+- `app/Models/Site.php` (new)
+- `app/Models/PlantArea.php` (new)
+- `database/migrations/2026_05_20_100000_create_companies_table.php` (new)
+- `database/migrations/2026_05_20_073302_create_customers_table.php` (new)
+- `database/migrations/2026_05_20_073300_create_sites_table.php` (new)
+- `database/migrations/2026_05_20_073301_create_plant_areas_table.php` (new)
+- `app/Http/Controllers/Api/CompanyController.php` (new)
+- `app/Http/Controllers/Api/CustomerController.php` (new)
+- `app/Http/Resources/CompanyResource.php` (new)
+- `app/Http/Resources/CustomerResource.php` (new)
+- `app/Http/Requests/StoreCompanyRequest.php` (new)
+- `app/Http/Requests/UpdateCompanyRequest.php` (new)
+- `app/Http/Requests/StoreCustomerRequest.php` (new)
+- `app/Http/Requests/UpdateCustomerRequest.php` (new)
+- `database/seeders/CompanySeeder.php` (new)
+- `database/seeders/CustomerSeeder.php` (new)
+- `database/seeders/RolePermissionSeeder.php` (new)
+- `database/seeders/SiteSeeder.php` (new)
+- `database/seeders/PlantAreaSeeder.php` (new)
+- `database/seeders/AdminUserSeeder.php` (new)
+- `database/seeders/BayLineSeeder.php` (new)
+- `database/seeders/ParkingSeeder.php` (new)
+- `routes/api.php` (updated)
 
 Quick reproducible setup (commands)
 -----------------------------------
@@ -102,10 +111,13 @@ Important conventions and patterns to follow
 
 Suggested next work items (priority order)
 ----------------------------------------
-1. Add `HasApiTokens` to `app/Models/User.php` if Sanctum token-based auth is required.
+1. **Company CRUD API** (✅ COMPLETE) — Full CRUD with soft-delete, activate/deactivate endpoints. 7 files created, seeder with 3 demo companies, docs/modules/07-companies.md.
+2. Add `HasApiTokens` to `app/Models/User.php` if Sanctum token-based auth is required.
 3. Implement a small `CorrelationId` middleware to normalize/header-set correlation id for all requests and responses.
 4. Add `GET /api/health` endpoint and a minimal global error handler that uses `ApiResponse::error`.
-5. Implement basic auth endpoints (`/api/auth/login`, `/api/auth/logout`, `/api/auth/me`) using Sanctum.
+5. Implement basic auth endpoints (`/api/auth/login`, `//api/auth/logout`, `/api/auth/me`) using Sanctum.
+6. **Plant Configuration module** — Implement company-to-site relationship, plant configuration workflow (draft → pending_confirmation → active_locked), gates/terminals/bay-lines/parking setup wizard.
+7. Implement change-request workflow for post-activation modifications.
 
 Notes about activation endpoints
 --------------------------------
