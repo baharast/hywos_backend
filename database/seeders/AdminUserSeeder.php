@@ -10,16 +10,42 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::firstOrCreate([
-            'email' => 'admin@local'
-        ], [
-            'name' => 'Admin User',
-            'password' => bcrypt('password')
-        ]);
+        $users = [
+            [
+                'email' => 'admin@local',
+                'name' => 'Admin User',
+                'role' => 'admin',
+            ],
+            [
+                'email' => 'dispatcher@local',
+                'name' => 'Dispatcher User',
+                'role' => 'dispatcher',
+            ],
+            [
+                'email' => 'operator@local',
+                'name' => 'Operator User',
+                'role' => 'operator',
+            ],
+            [
+                'email' => 'auditor@local',
+                'name' => 'Auditor User',
+                'role' => 'auditor',
+            ],
+        ];
 
-        $role = Role::firstWhere('name', 'admin');
-        if ($role) {
-            $user->assignRole($role);
+        foreach ($users as $userData) {
+            $user = User::firstOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'password' => bcrypt('password'),
+                ]
+            );
+
+            $role = Role::firstWhere('name', $userData['role']);
+            if ($role) {
+                $user->assignRole($role);
+            }
         }
     }
 }

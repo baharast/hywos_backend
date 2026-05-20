@@ -18,15 +18,24 @@ class BayLineSeeder extends Seeder
             return;
         }
 
-        BayLine::firstOrCreate([
-            'code' => 'BAY-1'
-        ], [
-            'id' => (string) Str::uuid(),
-            'name' => 'Bay Line 1',
-            'site_id' => $site->id,
-            'plant_area_id' => $area->id,
-            'status_code' => 'idle',
-            'is_active' => true,
-        ]);
+        $bayLines = [
+            ['code' => 'BAY-1', 'name' => 'Bay Line 1', 'status_code' => 'idle'],
+            ['code' => 'BAY-2', 'name' => 'Bay Line 2', 'status_code' => 'idle'],
+            ['code' => 'BAY-3', 'name' => 'Bay Line 3', 'status_code' => 'idle'],
+            ['code' => 'BAY-4', 'name' => 'Bay Line 4', 'status_code' => 'idle'],
+        ];
+
+        foreach ($bayLines as $line) {
+            BayLine::firstOrCreate([
+                'code' => $line['code'],
+            ], [
+                'id' => (string) Str::uuid(),
+                'name' => $line['name'],
+                'site_id' => $site->id,
+                'plant_area_id' => $area->id,
+                'status_code' => $line['status_code'],
+                'is_active' => true,
+            ]);
+        }
     }
 }
