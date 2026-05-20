@@ -24,7 +24,6 @@ class UpdateParkingRequest extends FormRequest
             'occupied_count' => 'nullable|integer|min:0',
             'status_code' => 'nullable|string|max:50',
             'current_vehicle_id' => 'nullable|string|max:36',
-            'is_active' => 'sometimes|boolean',
         ];
     }
 }

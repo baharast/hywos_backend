@@ -49,6 +49,30 @@ class BayLineController extends ApiController
         return $this->success(new BayLineResource($bayline), 'BayLine updated');
     }
 
+    public function activate(Request $request, $id)
+    {
+        $bayline = BayLine::find($id);
+        if (! $bayline) {
+            return $this->error('BayLine not found', 'BAYLINE_NOT_FOUND', 404);
+        }
+
+        $bayline->update(['is_active' => true]);
+
+        return $this->success(new BayLineResource($bayline), 'BayLine activated');
+    }
+
+    public function deactivate(Request $request, $id)
+    {
+        $bayline = BayLine::find($id);
+        if (! $bayline) {
+            return $this->error('BayLine not found', 'BAYLINE_NOT_FOUND', 404);
+        }
+
+        $bayline->update(['is_active' => false]);
+
+        return $this->success(new BayLineResource($bayline), 'BayLine deactivated');
+    }
+
     public function destroy(Request $request, $id)
     {
         $this->authorize('delete', BayLine::class);

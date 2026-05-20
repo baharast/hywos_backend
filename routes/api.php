@@ -17,6 +17,8 @@ Route::prefix('baylines')->group(function () {
     // Manage endpoints (originally inside ['auth:sanctum'] group and per-route permission middleware)
     Route::post('', [BayLineController::class, 'store']);
     Route::put('/{id}', [BayLineController::class, 'update']);
+    Route::patch('/{id}/activate', [BayLineController::class, 'activate']);
+    Route::patch('/{id}/deactivate', [BayLineController::class, 'deactivate']);
     Route::delete('/{id}', [BayLineController::class, 'destroy']);
 
     /*
@@ -43,5 +45,7 @@ Route::prefix('parkings')->group(function () {
 
     Route::post('', [\App\Http\Controllers\Api\ParkingController::class, 'store']);
     Route::put('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'update']);
+    Route::patch('/{id}/activate', [\App\Http\Controllers\Api\ParkingController::class, 'activate']);
+    Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\ParkingController::class, 'deactivate']);
     Route::delete('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'destroy']);
 });

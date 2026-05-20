@@ -61,6 +61,30 @@ class ParkingController extends ApiController
         return $this->success(new ParkingResource($parking), 'Parking updated');
     }
 
+    public function activate(Request $request, $id)
+    {
+        $parking = Parking::find($id);
+        if (! $parking) {
+            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+        }
+
+        $parking->update(['is_active' => true]);
+
+        return $this->success(new ParkingResource($parking), 'Parking activated');
+    }
+
+    public function deactivate(Request $request, $id)
+    {
+        $parking = Parking::find($id);
+        if (! $parking) {
+            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+        }
+
+        $parking->update(['is_active' => false]);
+
+        return $this->success(new ParkingResource($parking), 'Parking deactivated');
+    }
+
     public function destroy(Request $request, $id)
     {
         $this->authorize('delete', Parking::class);

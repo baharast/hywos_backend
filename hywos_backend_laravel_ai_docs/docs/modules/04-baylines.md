@@ -21,9 +21,11 @@ API Endpoints
 -------------
 - `GET /api/baylines` — list (pagination)
 - `GET /api/baylines/{id}` — detail
-- `POST /api/baylines` — create
-- `PUT /api/baylines/{id}` — update
-- `DELETE /api/baylines/{id}` — deactivate (soft)
+ - `POST /api/baylines` — create
+ - `PUT /api/baylines/{id}` — update
+ - `PATCH /api/baylines/{id}/activate` — activate
+ - `PATCH /api/baylines/{id}/deactivate` — deactivate
+ - `DELETE /api/baylines/{id}` — deactivate (soft)
 
 Permissions
 -----------

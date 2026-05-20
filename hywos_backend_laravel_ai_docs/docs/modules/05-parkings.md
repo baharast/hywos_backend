@@ -20,6 +20,8 @@ Manage (development):
 - `POST /api/parkings` — create (validated by `StoreParkingRequest`)
 - `PUT /api/parkings/{id}` — update (validated by `UpdateParkingRequest`)
 - `DELETE /api/parkings/{id}` — deactivate (sets `is_active` to false)
+- `PATCH /api/parkings/{id}/activate` — activate
+- `PATCH /api/parkings/{id}/deactivate` — deactivate
 
 ## Permissions
 Planned permissions (Spatie): `parkings.view`, `parkings.create`, `parkings.update`, `parkings.delete`.

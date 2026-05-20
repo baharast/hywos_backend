@@ -21,7 +21,6 @@ class UpdateBayLineRequest extends FormRequest
             'site_id' => 'nullable|uuid',
             'plant_area_id' => 'nullable|uuid',
             'status_code' => 'nullable|string|max:50',
-            'is_active' => 'nullable|boolean',
         ];
     }
 }
