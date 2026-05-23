@@ -35,6 +35,10 @@ return new class extends Migration
 
             $table->text('notes')->nullable();
 
+            // When true, the record originated from SAP and SAP-owned fields are
+            // locked from local edits. Changes go through a controlled correction flow.
+            $table->boolean('is_sap_owned')->default(false)->index();
+
             $table->boolean('is_active')->default(true)->index();
             $table->char('site_id', 36)->nullable()->index();
             $table->char('created_by_user_id', 36)->nullable()->index();

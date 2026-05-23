@@ -73,7 +73,13 @@ class CustomerSeeder extends Seeder
             Customer::firstOrCreate(
                 ['code' => $customer['code']],
                 array_merge(
-                    ['id' => (string) Str::uuid(), 'is_active' => $customer['status'] === 'active'],
+                    [
+                        'id' => (string) Str::uuid(),
+                        'is_active' => $customer['status'] === 'active',
+                        // Records sourced from SAP are flagged so the API rejects
+                        // local edits on SAP-owned fields (code, name, legal_name, sap_customer_no).
+                        'is_sap_owned' => ! empty($customer['sap_customer_no']),
+                    ],
                     $customer
                 )
             );

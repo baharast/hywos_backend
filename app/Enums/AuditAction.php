@@ -39,6 +39,7 @@ class AuditAction
     public const CUSTOMER_UNBLOCKED = 'customer.unblocked';
     public const CUSTOMER_ACTIVATED = 'customer.activated';
     public const CUSTOMER_DEACTIVATED = 'customer.deactivated';
+    public const CUSTOMER_SAP_FIELD_UPDATE_REJECTED = 'customer.sap_field_update_rejected';
 
     // Company
     public const COMPANY_CREATED = 'company.created';

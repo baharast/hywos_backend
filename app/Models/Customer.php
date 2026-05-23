@@ -13,6 +13,18 @@ class Customer extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    /**
+     * Fields that are considered owned by SAP when `is_sap_owned = true`.
+     * These cannot be changed via local edits; updates must go through a
+     * controlled correction flow.
+     */
+    public const SAP_OWNED_FIELDS = [
+        'code',
+        'name',
+        'legal_name',
+        'sap_customer_no',
+    ];
+
     protected $fillable = [
         'id',
         'code',
@@ -34,6 +46,7 @@ class Customer extends Model
         'blocked_at',
         'blocked_by_user_id',
         'notes',
+        'is_sap_owned',
         'is_active',
         'site_id',
         'created_by_user_id',
@@ -42,6 +55,7 @@ class Customer extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_sap_owned' => 'boolean',
         'blocked_at' => 'datetime',
         'document_requirements' => 'array',
     ];

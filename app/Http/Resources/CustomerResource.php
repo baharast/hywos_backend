@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Customer;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CustomerResource extends JsonResource
@@ -16,6 +17,7 @@ class CustomerResource extends JsonResource
             'archived' => 'neutral',
             default => 'neutral',
         };
+        $isSapOwned = (bool) ($this->is_sap_owned ?? false);
 
         return [
             'id' => $this->id,
@@ -45,6 +47,8 @@ class CustomerResource extends JsonResource
             'blockReason' => $this->block_reason,
             'blockedAt' => $this->blocked_at?->toIso8601String(),
             'notes' => $this->notes,
+            'isSapOwned' => $isSapOwned,
+            'sapOwnedFields' => $isSapOwned ? Customer::SAP_OWNED_FIELDS : [],
             'isActive' => (bool) $this->is_active,
             'siteId' => $this->site_id,
             'createdAt' => $this->created_at?->toIso8601String(),

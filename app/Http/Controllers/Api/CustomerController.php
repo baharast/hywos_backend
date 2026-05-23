@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\AuditAction;
 use App\Enums\EventCategory;
 use App\Enums\EventSeverity;
+use App\Exceptions\SapFieldProtectionException;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Requests\BlockCustomerRequest;
 use App\Http\Requests\StoreCustomerRequest;
@@ -14,6 +15,7 @@ use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Services\Audit\AuditLogger;
 use App\Services\Events\EventLogger;
+use App\Services\Sap\SapFieldGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -98,16 +100,53 @@ class CustomerController extends ApiController
         return $this->success(new CustomerResource($customer), 'Customer retrieved');
     }
 
-    public function update(UpdateCustomerRequest $request, $id)
-    {
+    public function update(
+        UpdateCustomerRequest $request,
+        $id,
+        SapFieldGuard $sapGuard,
+        AuditLogger $audit,
+        EventLogger $events
+    ) {
         $customer = Customer::find($id);
         if (! $customer) {
             return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
         }
 
-        $customer->update($request->validated());
+        $payload = $request->validated();
 
-        return $this->success(new CustomerResource($customer), 'Customer updated');
+        // Enforce SAP-owned field protection for records flagged is_sap_owned=true.
+        // Identical values are allowed (idempotent PUT). Different values are rejected
+        // with 423 + audit entry.
+        try {
+            $sapGuard->assertCanUpdate($customer, $payload, Customer::SAP_OWNED_FIELDS);
+        } catch (SapFieldProtectionException $e) {
+            $audit->record(
+                $customer,
+                AuditAction::CUSTOMER_SAP_FIELD_UPDATE_REJECTED,
+                $audit->snapshotModel($customer),
+                null,
+                'Rejected local update on SAP-owned fields',
+                null
+            );
+            $events->record(
+                'customer.sap_field_update_rejected',
+                $customer,
+                "Local update rejected on SAP-owned fields for {$customer->code}",
+                ['locked_fields' => $e->lockedFields],
+                EventCategory::SECURITY,
+                EventSeverity::WARNING
+            );
+            return $this->error(
+                $e->getMessage(),
+                'SAP_FIELDS_LOCKED',
+                423,
+                ['lockedFields' => $e->lockedFields]
+            );
+        }
+
+        $customer->update($payload);
+
+        return $this->success(new CustomerResource($customer->fresh()), 'Customer updated');
     }
 
     public function activate(Request $request, $id)
