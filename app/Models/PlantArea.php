@@ -13,7 +13,22 @@ class PlantArea extends Model
     protected $table = 'plant_areas';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['id', 'site_id', 'code', 'name'];
+
+    protected $fillable = [
+        'id',
+        'plant_configuration_id',
+        'site_id',
+        'code',
+        'name',
+        'area_type',
+        'description',
+        'status',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     protected static function booted()
     {
@@ -21,11 +36,19 @@ class PlantArea extends Model
             if (empty($model->{$model->getKeyName()})) {
                 $model->{$model->getKeyName()} = (string) Str::uuid();
             }
+            if (empty($model->status)) {
+                $model->status = 'draft';
+            }
         });
     }
 
     public function site()
     {
         return $this->belongsTo(Site::class, 'site_id', 'id');
+    }
+
+    public function plantConfiguration()
+    {
+        return $this->belongsTo(PlantConfiguration::class, 'plant_configuration_id', 'id');
     }
 }

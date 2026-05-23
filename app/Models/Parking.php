@@ -16,7 +16,21 @@ class Parking extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id', 'code', 'name', 'site_id', 'area_id', 'capacity', 'occupied_count', 'status_code', 'current_vehicle_id', 'is_active', 'created_by_user_id', 'updated_by_user_id'
+        'id',
+        'plant_configuration_id',
+        'code',
+        'name',
+        'site_id',
+        'area_id',
+        'space_type',
+        'reader_hardware_id',
+        'capacity',
+        'occupied_count',
+        'status_code',
+        'current_vehicle_id',
+        'is_active',
+        'created_by_user_id',
+        'updated_by_user_id',
     ];
 
     protected $casts = [
@@ -36,16 +50,16 @@ class Parking extends Model
 
     public function site()
     {
-        return $this->belongsTo(\App\Models\Site::class, 'site_id', 'id');
+        return $this->belongsTo(Site::class, 'site_id', 'id');
     }
 
     public function area()
     {
-        return $this->belongsTo(\App\Models\PlantArea::class, 'area_id', 'id');
+        return $this->belongsTo(PlantArea::class, 'area_id', 'id');
     }
 
-    public function currentVehicle()
+    public function plantConfiguration()
     {
-        return $this->belongsTo(\App\Models\Vehicle::class, 'current_vehicle_id', 'id');
+        return $this->belongsTo(PlantConfiguration::class, 'plant_configuration_id', 'id');
     }
 }

@@ -12,7 +12,22 @@ class Site extends Model
 
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['id', 'code', 'name'];
+
+    protected $fillable = [
+        'id',
+        'company_id',
+        'code',
+        'name',
+        'plant_type',
+        'default_language',
+        'time_zone',
+        'address_line',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     protected static function booted()
     {
@@ -21,5 +36,20 @@ class Site extends Model
                 $model->{$model->getKeyName()} = (string) Str::uuid();
             }
         });
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id', 'id');
+    }
+
+    public function plantAreas()
+    {
+        return $this->hasMany(PlantArea::class, 'site_id', 'id');
+    }
+
+    public function plantConfigurations()
+    {
+        return $this->hasMany(PlantConfiguration::class, 'site_id', 'id');
     }
 }

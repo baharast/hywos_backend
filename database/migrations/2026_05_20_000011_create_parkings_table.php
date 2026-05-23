@@ -10,10 +10,13 @@ return new class extends Migration
     {
         Schema::create('parkings', function (Blueprint $table) {
             $table->char('id', 36)->primary();
+            $table->char('plant_configuration_id', 36)->nullable()->index();
             $table->string('code', 50)->unique();
             $table->string('name', 255);
             $table->char('site_id', 36)->nullable()->index();
             $table->char('area_id', 36)->nullable()->index();
+            $table->string('space_type', 30)->nullable();
+            $table->char('reader_hardware_id', 36)->nullable();
             $table->unsignedInteger('capacity')->default(0);
             $table->unsignedInteger('occupied_count')->default(0);
             $table->string('status_code', 50)->nullable()->index();

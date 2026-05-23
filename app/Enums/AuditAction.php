@@ -41,9 +41,15 @@ class AuditAction
     public const COMPANY_DEACTIVATED = 'company.deactivated';
 
     // Plant configuration
+    public const PLANT_CONFIG_DRAFT_STARTED = 'plant_config.draft_started';
     public const PLANT_CONFIG_DRAFT_SAVED = 'plant_config.draft_saved';
+    public const PLANT_CONFIG_VALIDATED = 'plant_config.validated';
     public const PLANT_CONFIG_ACTIVATED = 'plant_config.activated';
+    public const PLANT_CONFIG_OBJECT_CREATED = 'plant_config.object_created';
+    public const PLANT_CONFIG_OBJECT_UPDATED = 'plant_config.object_updated';
     public const PLANT_CONFIG_CHANGE_REQUESTED = 'plant_config.change_requested';
+    public const PLANT_CONFIG_CHANGE_APPROVED = 'plant_config.change_approved';
+    public const PLANT_CONFIG_CHANGE_REJECTED = 'plant_config.change_rejected';
     public const PLANT_CONFIG_CHANGE_APPLIED = 'plant_config.change_applied';
 
     // Quality
