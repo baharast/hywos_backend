@@ -9,8 +9,14 @@ class ApiResponse
 {
     protected static function correlationId(): string
     {
-        $cid = request()->header('X-Correlation-Id') ?? request()->header('X-Request-Id');
-        return $cid ?: (string) Str::uuid();
+        /** @var \Illuminate\Http\Request $request */
+        $request = request();
+        $fromAttr = $request->attributes->get(\App\Http\Middleware\CorrelationIdMiddleware::ATTRIBUTE);
+        if ($fromAttr) {
+            return (string) $fromAttr;
+        }
+        $cid = $request->header('X-Correlation-Id') ?? $request->header('X-Request-Id');
+        return is_string($cid) && $cid !== '' ? $cid : (string) Str::uuid();
     }
 
     public static function success(mixed $data = null, string $message = 'OK', int $status = 200, array $meta = null): JsonResponse
