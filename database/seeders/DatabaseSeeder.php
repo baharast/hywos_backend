@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -10,21 +9,24 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Seed order: companies -> permissions/roles -> sites/areas -> users -> domain data
+        // Seed order matters:
+        //   companies/permissions -> sites -> plant_areas -> plant_configurations
+        //   -> gates / terminals / baylines / parkings  (all reference plant_configuration_id)
+        //   -> users -> domain master data
         $this->call([
-            \Database\Seeders\CompanySeeder::class,
-            \Database\Seeders\RolePermissionSeeder::class,
-            \Database\Seeders\SiteSeeder::class,
-            \Database\Seeders\PlantAreaSeeder::class,
-            \Database\Seeders\AdminUserSeeder::class,
-            \Database\Seeders\BayLineSeeder::class,
-            \Database\Seeders\ParkingSeeder::class,
-            \Database\Seeders\CustomerSeeder::class,
+            CompanySeeder::class,
+            RolePermissionSeeder::class,
+            SiteSeeder::class,
+            PlantAreaSeeder::class,
+            PlantConfigurationSeeder::class,
+            GateSeeder::class,
+            TerminalPanelSeeder::class,
+            BayLineSeeder::class,
+            ParkingSeeder::class,
+            AdminUserSeeder::class,
+            CustomerSeeder::class,
         ]);
     }
 }
