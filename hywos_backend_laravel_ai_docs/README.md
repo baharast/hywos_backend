@@ -1,113 +1,89 @@
-# HYWOS / FillTrack Backend AI Documentation Package
+<!--
+HYWOS / FillTrack Backend Laravel AI Docs
+Updated package generated from the latest FillTrack Markdown onboarding pack.
+Primary backend stack for this package: Laravel + MySQL + REST API for Next.js frontend.
+Do not treat older ASP.NET mentions in legacy source material as backend implementation instructions.
+-->
 
-**Version:** v0.1  
-**Audience:** AI coding assistants, backend developers, solution architects, QA engineers, and technical leads.  
-**Backend stack correction:** The uploaded project documents sometimes mention ASP.NET Core. For this project package, **ignore ASP.NET references**. The backend must be implemented with **Laravel + MySQL**.  
-**Frontend context:** The frontend is **Next.js / React / TypeScript** and consumes the Laravel API.
+# HYWOS / FillTrack Backend Laravel AI Documentation
 
----
+This folder is the backend onboarding and implementation guide for the HYWOS / FillTrack MVP.
+It is designed for Laravel backend developers, AI coding agents, technical reviewers, and new team members who need to understand the project before touching code.
 
-## 1. What this package is for
+## Current update basis
 
-This package gives an AI assistant enough backend context to continue the HYWOS / FillTrack MVP safely and consistently.
+This package was rebuilt and aligned with the latest FillTrack Markdown onboarding pack located in `source/filltrack_md_onboarding/`.
+The latest frontend/source documents included in this package are:
 
-The system is an industrial hydrogen loading management application. It manages:
+- `FillTrack Company Plant Configuration UX Frontend Spec-EN-V3.md`
+- `FillTrack Core UI Components Frontend Rules-EN-V1.md`
+- `FillTrack Customers UX Frontend Spec-EN-V2.md`
+- `FillTrack Dashboard Shell Template Frontend Rules-EN-V3.md`
+- `FillTrack Driver Management UX Frontend Spec -EN-V2.md`
+- `FillTrack Loading Control UX Frontend Spec-EN-V2.md`
+- `FillTrack Mvp Design System Frontend Rules-EN-V3.1.md`
+- `FillTrack Roles Permissions UX Frontend Spec-EN-V1.md`
+- `FillTrack Users UX Frontend Spec-EN-V1.md`
+- `README_ONBOARDING_ORDER.md`
 
-- SAP loading orders.
-- Drivers, tractors, trailers, chip cards, TAN fallback identification.
-- Entry gate, driver terminal, filling station panel, and exit gate workflows.
-- Trailer parking and pickup.
-- Loading control.
-- Pre-analysis and main-analysis quality decisions.
-- Certificates, delivery notes, print jobs, and document lifecycle.
-- Alarms, event journal, audit trail, interface health, and reporting.
-- On-premise operation with integrations to SAP, PLC/OPC UA, gate controllers, printers, card readers, and optional cloud sync.
+## Backend technology decision for this package
 
----
+The backend implementation target for this documentation package is:
 
-## 2. Recommended reading order for AI agents
+- **Laravel** for the backend API and application services.
+- **MySQL** for persistent relational data.
+- **Next.js** frontend consuming REST-style JSON APIs.
+- Queue/jobs for asynchronous sync, print, integration and notification work.
+- Audit-first backend behavior for sensitive operational, configuration and access changes.
 
-Read these files in order before generating code:
+Some older functional source documents mention ASP.NET. For this package, treat those mentions as legacy context only. Do **not** generate ASP.NET code from this documentation.
+
+## How to use this folder with an AI coding assistant
+
+1. Start with `AGENTS.md`.
+2. Read `docs/context/00-project-ai-context.md` and `docs/context/01-frontend-ux-context.md`.
+3. Read the module-specific backend document before implementing a feature.
+4. Read the technical documents before changing architecture, database, APIs, RBAC or integration logic.
+5. Use prompts from `docs/dev/02-prompts-for-backend-ai.md` for controlled implementation tasks.
+
+## Recommended reading order
 
 1. `AGENTS.md`
 2. `docs/context/00-project-ai-context.md`
-3. `docs/product/01-mvp-scope-domain.md`
-4. `docs/product/02-process-flows-business-rules.md`
-5. `docs/technical/01-laravel-backend-architecture.md`
-6. `docs/technical/02-database-model-mysql.md`
-7. `docs/technical/03-api-design-contracts.md`
-8. `docs/modules/01-driver-management-backend.md`
-9. `docs/dev/01-backend-implementation-roadmap.md`
+3. `docs/context/01-frontend-ux-context.md`
+4. `docs/context/02-source-documents-map.md`
+5. `docs/product/01-mvp-scope-domain.md`
+6. `docs/product/02-process-flows-business-rules.md`
+7. `docs/technical/01-laravel-backend-architecture.md`
+8. `docs/technical/02-database-model-mysql.md`
+9. `docs/technical/03-api-design-contracts.md`
+10. Relevant files under `docs/modules/`
 
-For integration work, also read:
-
-- `docs/technical/05-integrations-sap-opcua-devices.md`
-
-For testing and acceptance:
-
-- `docs/qa/01-testing-acceptance.md`
-
----
-
-## 3. Source-of-truth rules
-
-When documents conflict, use this order:
-
-1. Explicit correction in this package.
-2. Process-flow document and functional concept rules.
-3. ERD / database model.
-4. Frontend UX specifications.
-5. Open questions stay open. Do not silently decide them.
-
-Important corrections:
-
-- **Backend is Laravel, not ASP.NET.**
-- **Database is MySQL.**
-- **Frontend is Next.js.**
-- **Driver terminal actions are exactly five in MVP:** Loading, Park trailer in parking area, Pick up a trailer, Print delivery note and exit, Exit.
-- **Dispatching has four official variants:** Variant A park trailer, Variant B own trailer loading, Variant C pick up loaded trailer and exit, Variant D pick up empty trailer then load.
-- **Bulk actions are not allowed in MVP.**
-- **Manual overrides require reason, user, timestamp, before/after values, and often four-eyes approval.**
-- **No auto-guessing is allowed for ambiguous driver/trailer/order matches.**
-- **Functionally NOK main-analysis results may only be functionally approved by an Analysis Specialist.**
-
----
-
-## 4. Suggested repository placement
-
-Place this package in the Laravel backend repository:
+## Folder structure
 
 ```text
-hywos-api/
+hywos_backend_laravel_ai_docs/
 ├── AGENTS.md
+├── README.md
+├── CHANGELOG_UPDATED_FROM_FILLTRACK_MD.md
 ├── docs/
 │   ├── context/
 │   ├── product/
 │   ├── technical/
 │   ├── modules/
-│   ├── qa/
-│   └── dev/
-├── app/
-├── routes/
-├── database/
-├── tests/
-└── README.md
+│   ├── dev/
+│   └── qa/
+└── source/
+    └── filltrack_md_onboarding/
 ```
 
----
+## Non-negotiable MVP rules
 
-## 5. Best first prompt for an AI coding assistant
-
-```text
-Read AGENTS.md and the docs folder.
-
-Important correction: the backend is Laravel + MySQL, not ASP.NET.
-
-First summarize the project, then propose the Laravel backend implementation plan for Milestone 1: project foundation, auth/RBAC, base database migrations, audit/event logging foundation, and master-data APIs.
-
-Do not generate code until you explain:
-1. Which docs you used.
-2. Which assumptions you made.
-3. Which open questions remain.
-4. Which files you plan to create or modify.
-```
+- No bulk actions in MVP.
+- No hard delete for operational, master-data, document, user/access or configuration entities.
+- No auto-guessing when driver, trailer, order, station or plant-visit matching is ambiguous.
+- Critical actions require reason capture and audit logging.
+- Activated Company & Plant Configuration is locked/restricted; structural changes require controlled change request.
+- Export APIs must respect visible columns and active filters where relevant.
+- Backend must enforce permissions; frontend hiding/disable logic is not sufficient security.
+- All data shown in the UI should use readable labels, not raw database IDs as primary display values.

@@ -1,266 +1,119 @@
-# Module 02 — Orders, Dispatching and Plant Visits Backend Specification
+<!--
+HYWOS / FillTrack Backend Laravel AI Docs
+Updated package generated from the latest FillTrack Markdown onboarding pack.
+Primary backend stack for this package: Laravel + MySQL + REST API for Next.js frontend.
+Do not treat older ASP.NET mentions in legacy source material as backend implementation instructions.
+-->
 
-## 1. Purpose
+# Module Backend Spec — Orders, Dispatching and Plant Visits
 
-Orders and Plant Visits are the operational backbone.
+## Purpose
 
-- `order_header` represents the SAP/loading order.
-- `order_operation` represents execution/attempt/dispatching context.
-- `plant_visit` represents physical site stay from entry to exit.
+This module connects SAP loading orders, driver/trailer/tractor assignments, process variants and plant visits.
+Plant Visit is the operational glue that keeps the process traceable from entry to exit.
 
-The backend must connect commercial order data with physical driver/trailer/loading execution.
+## Main backend responsibilities
 
----
+- Import and maintain loading orders.
+- Link orders to customer/carrier/product/quality/target quantity.
+- Create/update plant visits when a driver enters or registers.
+- Match driver, tractor, trailer and order.
+- Route to parking, loading, pickup, document printing or exit.
+- Create clarification when data is ambiguous or mismatched.
+- Keep execution snapshot immutable for history/documents.
 
-## 2. Order import and queue
-
-### 2.1 SAP import
-
-Orders usually come from SAP. Imported orders must be validated before they enter operations.
-
-Minimum order fields:
-
-- order number,
-- SAP order number/reference,
-- customer,
-- source/destination if available,
-- freight forwarder/carrier if available,
-- substance/product,
-- quality specification,
-- requested quantity,
-- planned loading date/time window,
-- required documents,
-- status,
-- correlation ID.
-
-### 2.2 Incomplete orders
-
-If mandatory data is missing:
-
-- status becomes `incomplete` or `clarification_needed`,
-- order does not become operational,
-- event log created,
-- dispatcher can see issue,
-- no driver may be routed based on incomplete order.
-
-### 2.3 SAP downtime
-
-- Existing locally synchronized active orders may continue.
-- New orders must not be improvised locally unless manual order scope is explicitly approved.
-- Connection failure creates alert for IT/Support.
-
----
-
-## 3. Dispatching and assignment
-
-Dispatcher assigns/verifies:
-
-- driver,
-- tractor,
-- trailer,
-- carrier/freight forwarder,
-- site,
-- filling station,
-- parking space,
-- process variant,
-- time window.
-
-Rules:
-
-- Missing/ambiguous data keeps order in clarification.
-- System suggestions must be confirmed if required.
-- Assignment changes after visit start require audit and snapshots.
-- Driver/trailer/tractor blocked states prevent assignment unless authorized override exists.
-
----
-
-## 4. Process variant selection
-
-Use values:
-
-- `variant_a_park_trailer`
-- `variant_b_own_trailer_loading`
-- `variant_c_pickup_loaded_exit`
-- `variant_d_pickup_empty_then_load`
-
-Support actions:
-
-- `print_documents_exit`
-- `controlled_exit`
-
-Variant selection should live on `order_operation`.
-
----
-
-## 5. Execution snapshot
-
-When an order operation/plant visit becomes active, preserve snapshot data used later for history and documents.
-
-Suggested `execution_snapshot_json`:
-
-```json
-{
-  "driver": {
-    "driver_id": "uuid",
-    "driver_code": "DRV-1001",
-    "full_name": "Max Mustermann"
-  },
-  "tractor": {
-    "tractor_id": "uuid",
-    "license_plate": "SW-TR-200"
-  },
-  "trailer": {
-    "trailer_id": "uuid",
-    "trailer_code": "TRL-100",
-    "license_plate": "SW-FT-100"
-  },
-  "order": {
-    "order_id": "uuid",
-    "order_no": "O-100",
-    "sap_order_no": "SAP-100",
-    "customer": "Customer GmbH",
-    "product": "Hydrogen 5.0",
-    "requested_quantity_kg": 1000
-  }
-}
-```
-
-Rules:
-
-- Later master-data changes do not rewrite snapshots.
-- Snapshot correction requires authorized correction, reason, audit, and event.
-
----
-
-## 6. Plant Visit lifecycle
-
-Suggested lifecycle:
-
-1. `created`
-2. `entry_requested`
-3. `entered`
-4. `registered`
-5. `waiting_for_instruction`
-6. variant-specific statuses:
-   - `trailer_parking`
-   - `trailer_parked`
-   - `trailer_pickup`
-   - `trailer_picked_up`
-   - `assigned_to_bay`
-   - `loading`
-   - `loading_completed`
-7. `waiting_for_analysis`
-8. `waiting_for_documents`
-9. `ready_for_exit`
-10. `exited`
-11. `closed`
-
-Exception statuses:
-
-- `blocked`
-- `clarification_needed`
-- `cancelled`
-
----
-
-## 7. Order matching service
-
-Create `OrderMatchingService`.
-
-Inputs:
-
-- driver,
-- auth medium/TAN,
-- trailer chip/plate,
-- tractor plate,
-- selected driver action,
-- current site,
-- current plant visit.
-
-Outputs:
-
-- unique order/operation match,
-- no match,
-- multiple matches,
-- blocking reason,
-- clarification case ID.
-
-Matching sources:
-
-- direct order assignment,
-- TAN order link,
-- driver assignment,
-- trailer assignment,
-- license plates,
-- time window,
-- status,
-- site.
-
-Rules:
-
-- If one valid match exists, continue.
-- If none, return no active order and likely clarification/waiting.
-- If multiple, return conflict and create clarification.
-- Never select by newest/closest order silently.
-
----
-
-## 8. Plant Visit APIs
+## Suggested API groups
 
 ```text
-GET /api/plant-visits
-GET /api/plant-visits/{plantVisitId}
-GET /api/plant-visits/{plantVisitId}/steps
-GET /api/plant-visits/{plantVisitId}/events
-POST /api/terminal/gate/entry-identify
-POST /api/terminal/driver/login
-POST /api/terminal/driver/{plantVisitId}/registration
-POST /api/terminal/driver/{plantVisitId}/select-action
-POST /api/terminal/driver/{plantVisitId}/confirm-context
-POST /api/terminal/gate/exit-identify
+/api/loading-orders
+/api/loading-orders/{id}
+/api/plant-visits
+/api/plant-visits/{id}
+/api/plant-visits/{id}/events
+/api/clarification-cases
 ```
 
----
+## Loading order fields
 
-## 9. Clarification cases
+- internal order id/reference,
+- SAP order number,
+- customer,
+- freight forwarder/carrier,
+- product/quality,
+- target quantity,
+- tolerance,
+- planned time window,
+- status,
+- assigned driver,
+- assigned tractor,
+- assigned trailer,
+- SAP sync state.
 
-Create clarification case when:
+## Plant visit fields
 
-- driver data wrong,
-- trailer data wrong,
-- no active order,
-- multiple possible orders/trailers,
-- driver/trailer/order mismatch,
-- device fault blocks confirmation,
-- manual correction required,
-- exit requested with unresolved blockers.
-
-Clarification case fields should link to:
-
-- order,
-- operation,
-- plant visit,
+- visit number,
 - driver,
-- tractor,
-- trailer,
-- hardware,
-- reason,
-- assigned role/user,
-- blocking flag.
+- tractor plate snapshot,
+- trailer snapshot,
+- order context,
+- current instruction,
+- visit status,
+- entry timestamp,
+- exit timestamp,
+- current station/parking context,
+- clarification state,
+- document/analysis state summaries.
 
----
+## No-auto-guessing rules
 
-## 10. Tests
+Create or route a clarification case when:
 
-Required tests:
+- multiple orders match the same driver/trailer,
+- trailer chip does not match assigned trailer,
+- station does not match assignment,
+- tractor/trailer data is missing or changed unexpectedly,
+- order/customer/carrier relation is inconsistent,
+- mandatory order fields from SAP are missing.
 
-- SAP import creates valid order.
-- Incomplete order becomes clarification/incomplete.
-- Dispatcher assignment validates driver/trailer/tractor states.
-- Ambiguous order matching returns conflict and creates clarification.
-- Plant Visit is created at approved entry.
-- Terminal login continues existing visit.
-- Registration records tractor plate and trailer/no-trailer state.
-- Context confirmation with `confirmed=false` creates clarification.
-- Status history created for order/operation changes.
-- Snapshot not changed when driver/trailer master data changes later.
+## Snapshot rule
+
+If tractor plate or trailer plate changes after a visit starts, previous order history, certificates and delivery-note execution snapshots must not be changed retroactively.
+Store snapshot fields for documents/process records.
+
+## Status examples
+
+Plant Visit:
+
+- `entered`
+- `registered`
+- `assigned`
+- `parking_instruction_given`
+- `waiting_for_loading`
+- `loading`
+- `waiting_for_documents`
+- `ready_for_exit`
+- `closed`
+- `blocked`
+- `clarification_required`
+
+Loading Order:
+
+- `imported`
+- `assigned`
+- `in_process`
+- `in_loading`
+- `quality_check_open`
+- `quality_checked`
+- `documents_ready`
+- `completed`
+- `blocked`
+- `cancelled`
+
+## Tests
+
+- ambiguous order match creates clarification,
+- wrong trailer blocks release,
+- plant visit requires driver identity,
+- exit blocked if documents not ready,
+- snapshots remain unchanged after plate edit,
+- SAP-owned fields cannot be edited unless correction flow permits.

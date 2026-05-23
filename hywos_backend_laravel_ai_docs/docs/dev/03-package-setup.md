@@ -1,91 +1,77 @@
-```markdown
-# 03 — Package setup for local development
+<!--
+HYWOS / FillTrack Backend Laravel AI Docs
+Updated package generated from the latest FillTrack Markdown onboarding pack.
+Primary backend stack for this package: Laravel + MySQL + REST API for Next.js frontend.
+Do not treat older ASP.NET mentions in legacy source material as backend implementation instructions.
+-->
 
-این سند گام‌های مورد نیاز برای راه‌اندازی پکیج‌هایی که اخیراً به `composer.json` اضافه شده‌اند (Sanctum، Spatie Permission و Spatie Activitylog) را شرح می‌دهد.
+# Laravel Package / Project Setup
 
-## بسته‌های اضافه‌شده
-- `laravel/sanctum` — احراز هویت token/session برای SPA و clientهای دستگاه
-- `spatie/laravel-permission` — مدیریت roles و permissions
-- `spatie/laravel-activitylog` — ثبت لاگ‌های فعالیت و آدیت ساده‌سازی‌شده
+## Recommended baseline
 
-## گام‌های نصب محلی
-1. نصب وابستگی‌ها:
+- Laravel 11 or current approved Laravel version for the team.
+- PHP 8.2+ or team-approved runtime.
+- MySQL 8.x.
+- Redis for queues/cache if available.
+- Laravel Sanctum for API auth unless another standard is chosen.
+- PHPUnit/Pest for tests.
 
-```powershell
-composer install
+## Suggested packages
+
+Use only when approved by the team:
+
+- `laravel/sanctum` for API auth.
+- `spatie/laravel-permission` for RBAC if the team wants a package instead of custom role tables.
+- `spatie/laravel-activitylog` only if it can support required old/new/reason audit behavior cleanly; otherwise implement custom audit logs.
+- PDF generation package for certificates/delivery notes when document templates are in scope.
+- Queue driver for print/SAP/export jobs.
+
+## Environment variables
+
+```env
+APP_NAME=FillTrack
+APP_ENV=local
+DB_CONNECTION=mysql
+QUEUE_CONNECTION=database
+CACHE_STORE=file
+SESSION_DRIVER=file
+
+SAP_ENABLED=false
+OPCUA_ENABLED=false
+PRINTING_ENABLED=false
 ```
 
-2. ایجاد یا کپی فایل محیط:
+## Initial artisan steps
 
-```powershell
-copy .env.example .env
-```
-
-3. مقداردهی متغیرهای دیتابیس در `.env` (DB_CONNECTION, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD)
-
-4. تولید app key:
-
-```powershell
-php artisan key:generate
-```
-
-5. اجرای مایگریشن‌ها (پس از اطمینان از تنظیمات دیتابیس):
-
-```powershell
+```bash
+composer create-project laravel/laravel hywos-backend
 php artisan migrate
+php artisan queue:table
+php artisan make:model AuditLog -m
+php artisan make:model EventLog -m
+php artisan make:controller Api/DriverController --api
+php artisan make:request StoreDriverRequest
+php artisan make:resource DriverResource
 ```
 
-### پیکربندی پکیج‌ها
+## Development data
 
-- Spatie Permission:
+Create seeders for:
 
-```powershell
-php artisan vendor:publish --provider="Spatie\\Permission\\PermissionServiceProvider" --tag="migrations"
-php artisan vendor:publish --provider="Spatie\\Permission\\PermissionServiceProvider" --tag="config"
-php artisan migrate
-```
+- default roles/permissions,
+- admin user,
+- plant configuration draft/demo,
+- drivers/customers demo data,
+- bay lines/parking demo config,
+- loading orders demo data,
+- station/loading status demo for frontend.
 
-- Spatie Activitylog:
+## Documentation discipline
 
-```powershell
-php artisan vendor:publish --provider="Spatie\\Activitylog\\ActivitylogServiceProvider" --tag="activitylog-config"
-php artisan vendor:publish --provider="Spatie\\Activitylog\\ActivitylogServiceProvider" --tag="activitylog-migrations"
-php artisan migrate
-```
+When adding a backend module, update:
 
-- Laravel Sanctum:
-
-```powershell
-php artisan vendor:publish --provider="Laravel\\Sanctum\\SanctumServiceProvider"
-php artisan migrate
-```
-
-## تغییرات مورد نیاز در کد
-- در مدل `User` trait `HasRoles` (از spatie) را اضافه کنید و تغییرات لازم برای `HasApiTokens` از Sanctum (در صورت نیاز به token API).
-- مثال در `app/Models/User.php`:
-
-```php
-use Laravel\\Sanctum\\HasApiTokens;
-use Spatie\\Permission\\Traits\\HasRoles;
-
-class User extends Authenticatable
-{
-    use HasApiTokens, HasRoles, Notifiable;
-}
-```
-
-## یکبار اجرا (Seed نمونه)
-- برای شروع سریع، یک seeder برای نقش‌های پایه و مجوزها ایجاد و اجرا کنید:
-
-```powershell
-php artisan make:seeder RolePermissionSeeder
-php artisan db:seed --class=RolePermissionSeeder
-```
-
-در seeder نقش‌های MVP (`admin`, `dispatcher`, `operator`, `analysis_specialist`, `auditor`) و مجوزهای پایه را ایجاد کنید.
-
-## نکات و هشدارها
-- قبل از انتشار یا merge، بررسی کن که migrations مربوط به spatie و sanctum با طرح DB موجود تداخل نداشته باشند.
-- اگر نمی‌خواهی بسته‌ها را فعلاً فعال کنی، بازگرداندن `composer.json`/`composer.lock` راه امنی است.
-
-```
+- module doc,
+- migrations/model relationships,
+- API contract notes,
+- tests,
+- backend status file.

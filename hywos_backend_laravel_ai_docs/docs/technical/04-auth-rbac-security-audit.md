@@ -1,281 +1,128 @@
-# 04 — Authentication, RBAC, Security, Audit and Compliance
+<!--
+HYWOS / FillTrack Backend Laravel AI Docs
+Updated package generated from the latest FillTrack Markdown onboarding pack.
+Primary backend stack for this package: Laravel + MySQL + REST API for Next.js frontend.
+Do not treat older ASP.NET mentions in legacy source material as backend implementation instructions.
+-->
 
-## 1. Security purpose
+# Authentication, RBAC, Security and Audit
 
-The backend manages safety-relevant industrial workflows. Security is not only login security; it is also operational control, traceability, role separation, and prevention of unauthorized quality or manual override decisions.
+## Authentication
 
----
+Use Laravel authentication appropriate to the project setup.
+For API-first development, Laravel Sanctum is a reasonable MVP choice unless the team chooses another auth layer.
 
-## 2. Authentication model
+Never expose raw passwords or tokens in API responses.
 
-### 2.1 Internal users
+## Users vs Drivers
 
-Internal users include:
+Users are internal dashboard accounts.
+Drivers are operational people who interact with gate/driver/filling-station/exit terminals.
 
-- Admin
-- Dispatcher
-- Operator
-- Analysis Specialist
-- Operations Manager
-- IT/Support
-- Auditor
+Do not merge these concepts.
 
-Recommended:
+## Roles & Permissions
 
-- Laravel Sanctum for SPA/dashboard sessions if deployment topology supports it.
-- Strong password rules.
-- Lockout after repeated failed attempts.
-- Session timeout.
-- Security event logging.
+Roles are access groups for dashboard users.
+Permissions define page, data and action rights.
 
-### 2.2 Drivers
+Minimum permission groups:
 
-Drivers authenticate through:
+- Dashboard
+- Operations
+- Orders
+- Analysis & Quality
+- Documents & Reports
+- Alarms & Events
+- Master Data
+- System & Devices
+- Administration
 
-- Driver chip card.
-- TAN fallback.
+Permission types:
 
-Drivers do not use the management dashboard in MVP. They interact through terminal/panel/gate workflows.
+- Page access.
+- Action permission.
+- Data permission.
+- Critical permission.
+- Administration permission.
 
-### 2.3 Devices/service clients
+## Backend enforcement
 
-Device gateway, SAP integration, printer callbacks, and cloud sync should use service credentials or signed requests.
+Frontend must hide or disable unavailable actions, but backend must enforce all permission checks.
 
-Do not let device endpoints use normal user sessions.
+Use:
 
----
+- Policies for entity-specific authorization.
+- Gates for broad permissions.
+- Middleware for route-level restrictions where useful.
 
-## 3. RBAC model
+## Critical permissions
 
-### 3.1 Roles
+Critical permissions include actions that affect:
 
-| Role | Backend authority |
-|---|---|
-| Admin | Technical and functional configuration, users, roles, master data. |
-| Dispatcher | Order assignment, scheduling, clarification, parking/station decisions. |
-| Operator | Monitor and handle operational/device issues. |
-| Analysis Specialist | Quality decisions and analysis rule ownership. |
-| Operations Manager | KPI/reporting and management review. |
-| IT/Support | Interface/device/system health and support actions. |
-| Auditor | Read audit/event/report history. |
-| Driver | Terminal/panel/gate self-service only. |
+- quality decisions,
+- loading release/block,
+- manual overrides,
+- block/unblock master data,
+- role/permission management,
+- user disabling/locking,
+- plant configuration activation/change,
+- audit visibility/export.
 
-### 3.2 Permission categories
+Critical permission changes must require confirmation/reason and audit logging.
 
-- `view`
-- `create`
-- `update`
-- `block`
-- `approve`
-- `override`
-- `print`
-- `reprint`
-- `configure`
-- `export`
-- `audit.view`
+## Self-lockout prevention
 
-### 3.3 Critical permission rules
+Backend must prevent:
 
-- Dispatchers cannot functionally approve product-quality NOK results.
-- Operators cannot override product-quality decisions.
-- Analysis Specialists can approve/reject quality decisions.
-- Admin is not automatically a quality approver unless explicitly granted.
-- Manual overrides may require four-eyes approval.
-- Security/audit logs are read-only for most roles.
+- disabling the only active admin/user-access manager,
+- removing all roles that allow user/role management,
+- deactivating the last active role with Administration → User & Access rights,
+- a user disabling or locking themselves if no other admin remains.
 
----
+Frontend validation is helpful but not sufficient.
 
-## 4. Sensitive actions
+## Audit log requirements
 
-Sensitive actions must require:
+Audit logs must capture:
 
-- authenticated user,
-- permission,
-- reason code or note,
+- actor user id,
+- actor display name if denormalized,
+- entity type,
+- entity id,
+- action,
+- old values,
+- new values,
+- reason if required,
+- source module/action,
 - timestamp,
-- affected entity,
-- old value,
-- new value,
-- correlation ID,
-- audit log,
-- sometimes second approval.
+- request metadata if allowed.
 
-Examples:
+## Event log requirements
 
-- Block/unblock driver.
-- Block/unblock trailer.
-- Change assignment after driver confirmed.
-- Manual gate opening.
-- Manual loading release.
-- Analysis Specialist functional approval.
-- Document reprint.
-- Role/permission changes.
-- System/process/analysis configuration changes.
-- Emergency bypass mode.
+Event logs capture operational and system happenings:
 
----
+- gate identification,
+- terminal session started,
+- station status changed,
+- loading started/completed,
+- analysis result received,
+- SAP sync failed,
+- printer job failed,
+- exit blocked/allowed.
 
-## 5. Four-eyes principle
+## Sensitive data
 
-Some actions should support a second approver.
+Do not expose:
 
-Suggested fields for approval records or audit details:
+- raw passwords,
+- tokens,
+- national ID hash,
+- secret integration credentials,
+- raw PLC credentials,
+- internal database IDs as primary user-facing identifiers.
 
-- `requested_by_user_id`
-- `approved_by_user_id`
-- `requested_at`
-- `approved_at`
-- `reason_code`
-- `reason_note`
-- `entity_type`
-- `entity_id`
-- `old_value_json`
-- `new_value_json`
+## Preferred language
 
-Actions likely requiring four-eyes:
-
-- Functional approval of functionally NOK main analysis.
-- Permanent disabling of safety/audit-related rules.
-- Emergency bypass that affects gate/loading release.
-- Critical process configuration changes.
-- Role/permission changes for high-privilege roles.
-
----
-
-## 6. Audit log rules
-
-### 6.1 What audit log stores
-
-Audit log stores sensitive changes, not every operational event.
-
-Required fields:
-
-- entity name/type
-- entity ID
-- action
-- old value JSON
-- new value JSON
-- changed by user
-- changed at
-- source IP
-- user agent
-- session ID
-- correlation ID
-- reason/note
-
-### 6.2 Audit examples
-
-Driver blocked:
-
-```json
-{
-  "entity_name": "driver",
-  "entity_id": "uuid",
-  "action_name": "blocked",
-  "old_value_json": {"block_status_code": "clear"},
-  "new_value_json": {"block_status_code": "blocked", "reason_code": "TRAINING_EXPIRED"},
-  "note": "Training expired."
-}
-```
-
-Quality override:
-
-```json
-{
-  "entity_name": "quality_analysis",
-  "entity_id": "uuid",
-  "action_name": "functional_approval",
-  "old_value_json": {"result_status_code": "functionally_nok"},
-  "new_value_json": {"decision": "approved_by_specialist"},
-  "note": "Specialist approval after documented review."
-}
-```
-
----
-
-## 7. Event log rules
-
-Event log stores operational facts.
-
-Examples:
-
-- `GATE_ENTRY_APPROVED`
-- `GATE_ENTRY_DENIED`
-- `TERMINAL_LOGIN_SUCCESS`
-- `TERMINAL_LOGIN_FAILED`
-- `ORDER_MATCH_AMBIGUOUS`
-- `TRAILER_PARKING_CONFIRMED`
-- `LOADING_RELEASE_APPROVED`
-- `LOADING_RELEASE_DENIED`
-- `PRE_ANALYSIS_FAILED`
-- `MAIN_ANALYSIS_FUNCTIONALLY_NOK`
-- `DOCUMENT_PRINT_FAILED`
-- `EXIT_DENIED`
-- `EXIT_APPROVED`
-- `SAP_SYNC_FAILED`
-- `DEVICE_OFFLINE`
-
-Event log should include contextual links where possible:
-
-- site
-- plant visit
-- operation
-- order
-- driver
-- tractor
-- trailer
-- hardware
-- analysis
-- certificate/document
-- correlation ID
-
----
-
-## 8. GDPR and personal data
-
-The backend stores personal data such as driver names, contact details, identification media, language preference, license data, and visit times.
-
-Rules:
-
-- Store only data required for operations.
-- Do not display full national IDs.
-- Do not expose `national_id_hash`.
-- Mask identifiers where possible.
-- Define retention/anonymization strategy before production.
-- Audit access to sensitive data if required.
-- Use TLS for external communication.
-- Encrypt backups.
-- Do not log sensitive raw identifiers in plain text.
-
----
-
-## 9. Security logs
-
-Security events include:
-
-- Failed login attempts.
-- Account lock/unlock.
-- Password changes.
-- Permission/role changes.
-- Failed access due to permission.
-- Service credential failures.
-- Suspicious repeated terminal/device authentication attempts.
-
-Store in event log with security category or a dedicated security event table if later required.
-
----
-
-## 10. Backend controls checklist
-
-Before marking a module done:
-
-- [ ] Auth required.
-- [ ] Permissions enforced server-side.
-- [ ] Sensitive fields hidden.
-- [ ] Reason required for sensitive actions.
-- [ ] Audit log created for sensitive changes.
-- [ ] Event log created for operational facts.
-- [ ] Status changes use service/action, not direct controller assignment.
-- [ ] Tests cover denied/blocked/unauthorized cases.
-- [ ] No hard delete of operational history.
-- [ ] No auto-guessing in ambiguous workflows.
+Users have preferred UI language. Drivers have preferred terminal/message language.
+The default language in current specs is German where no better preference exists.

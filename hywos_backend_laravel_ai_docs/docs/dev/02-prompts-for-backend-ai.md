@@ -1,157 +1,92 @@
-# 02 — Prompts for Backend AI Coding Assistants
+<!--
+HYWOS / FillTrack Backend Laravel AI Docs
+Updated package generated from the latest FillTrack Markdown onboarding pack.
+Primary backend stack for this package: Laravel + MySQL + REST API for Next.js frontend.
+Do not treat older ASP.NET mentions in legacy source material as backend implementation instructions.
+-->
 
-## Prompt 1 — Understand backend context
+# Prompts for Backend AI Assistants
+
+Use these prompts with Claude, Copilot or another AI coding tool.
+
+## Prompt 1 — Read-only inspection
 
 ```text
-Read AGENTS.md and docs/context/00-project-ai-context.md.
-
-Important: the backend is Laravel + MySQL, not ASP.NET.
-
-Summarize:
-1. What the system does.
-2. Main domain objects.
-3. Critical safety/business rules.
-4. Which modules should be implemented first.
-5. Which open questions must not be guessed.
-
-Do not code yet.
+You are a senior Laravel backend developer.
+Inspect the current repository only. Do not modify files.
+Use AGENTS.md and docs/ as the source of truth.
+Report:
+1. Existing Laravel structure.
+2. Existing migrations/models/controllers/routes.
+3. Missing pieces compared to the requested module.
+4. Risks and inconsistencies.
+5. Exact files that would need to be created/updated.
+Do not write code yet.
 ```
 
----
-
-## Prompt 2 — Plan Laravel architecture
+## Prompt 2 — Implement a module safely
 
 ```text
-Read docs/technical/01-laravel-backend-architecture.md and docs/technical/02-database-model-mysql.md.
+You are a senior Laravel backend developer.
+Implement the [MODULE NAME] backend according to:
+- AGENTS.md
+- docs/modules/[MODULE FILE]
+- docs/technical/03-api-design-contracts.md
+- docs/technical/04-auth-rbac-security-audit.md
 
-Create a Laravel backend architecture plan for the MVP.
+Rules:
+- Use Form Requests, Policies, API Resources and Services.
+- Keep controllers thin.
+- Add migrations/models/controllers/resources/requests/policies/services/routes/tests.
+- Add audit/event behavior for critical actions.
+- No bulk actions.
+- No hard delete.
+- Do not invent fields not required by the docs unless you clearly mark them as assumptions.
 
-Return:
-1. Folder structure.
-2. Main service/action classes.
-3. Main Eloquent models.
-4. Migration groups and recommended order.
-5. Auth/RBAC approach.
-6. Audit/event logging approach.
-7. Testing approach.
-
-Do not generate code yet.
+Return a concise implementation summary and list changed files.
 ```
 
----
-
-## Prompt 3 — Implement foundation
+## Prompt 3 — Implement Drivers CRUD
 
 ```text
-Implement Milestone 0 and Milestone 1 from docs/dev/01-backend-implementation-roadmap.md.
+Implement Driver Management backend in Laravel.
+Use docs/modules/01-driver-management-backend.md.
+Required endpoints:
+GET /api/drivers
+POST /api/drivers
+GET /api/drivers/{driver}
+PUT /api/drivers/{driver}
+POST /api/drivers/{driver}/block
+POST /api/drivers/{driver}/unblock
+POST /api/drivers/export
 
-Requirements:
-- Laravel + MySQL.
-- API health endpoint.
-- Correlation ID middleware.
-- Structured API error response.
-- Auth endpoints.
-- User/role/permission migrations.
-- Event log and audit log migrations/services.
-- Seed roles and permissions.
-- Feature tests for login, permissions, audit/event service.
-
-Before coding, list files you will create or modify.
+Include search/filter/pagination, status resources, block/unblock reason, audit log, no national_id_hash in responses and feature tests.
 ```
 
----
-
-## Prompt 4 — Implement Driver Management backend
+## Prompt 4 — Implement Users and Roles
 
 ```text
-Read docs/modules/01-driver-management-backend.md and docs/technical/03-api-design-contracts.md.
-
-Implement Driver Management backend.
-
-Requirements:
-- Driver migration/model.
-- Recommended MVP fields including block/training fields.
-- Driver list/detail/create/update endpoints.
-- Block/unblock endpoints with required reason.
-- Driver auth media summary.
-- Driver visits/events/audit endpoints.
-- Form requests.
-- API resources.
-- Policies/permissions.
-- Audit/event logs for sensitive actions.
-- Tests.
-- Do not expose national_id_hash.
-- Do not add bulk actions.
+Implement dashboard Users and Roles & Permissions backend in Laravel.
+Use docs/modules/users.md and docs/modules/07-roles-permissions-backend.md.
+Backend must enforce permissions and prevent self-lockout.
+Critical permission changes require reason and audit old/new values.
+Do not expose raw passwords.
 ```
 
----
-
-## Prompt 5 — Implement Orders and Plant Visits
+## Prompt 5 — Implement Company & Plant Configuration
 
 ```text
-Read docs/modules/02-orders-dispatching-plant-visits.md.
-
-Implement:
-- order_header, order_operation, status histories.
-- fake SAP import.
-- order list/detail APIs.
-- assignment and process variant selection.
-- plant_visit, visit_authentication, visit_step_execution.
-- gate entry identification.
-- driver terminal login.
-- terminal registration.
-- selected action and context confirmation.
-- order matching service.
-- clarification cases.
-
-Critical rule:
-If multiple matches exist, return conflict and create clarification. Do not auto-guess.
+Implement Company & Plant Configuration backend lifecycle in Laravel.
+Use docs/modules/08-company-plant-configuration-backend.md.
+Support draft setup, validation, review, activation lock and change requests after activation.
+Direct editing of active/locked structural objects must be rejected.
+Add tests for activation validation and post-activation change request behavior.
 ```
 
----
-
-## Prompt 6 — Implement Loading, Analysis, Documents and Exit
+## Prompt 6 — API compatibility review
 
 ```text
-Read docs/modules/03-loading-analysis-documents.md.
-
-Implement backend services and APIs for:
-- filling station panel login,
-- loading operation,
-- loading release,
-- loading measurement/completion,
-- pre-analysis,
-- main-analysis,
-- analysis specialist approval,
-- documents,
-- print jobs,
-- exit eligibility,
-- exit gate decision.
-
-Critical rules:
-- Loading requires active order and valid assignment.
-- Pre-analysis has max three attempts.
-- Main technical invalid allows one technical repeat.
-- Main functionally NOK blocks documents/exit unless Analysis Specialist approval.
-- Mandatory documents must be generated/provided before exit.
-```
-
----
-
-## Prompt 7 — Review generated backend code
-
-```text
-Review the current Laravel backend code against the docs.
-
-Check:
-1. Does any controller contain business workflow logic that should be in a service/action?
-2. Are all sensitive actions audited?
-3. Are operational events logged?
-4. Are statuses controlled by enums?
-5. Are ambiguous matches blocked instead of guessed?
-6. Are Driver, Trailer, Order, Plant Visit, Analysis, Document, Exit rules enforced?
-7. Are security-only fields hidden?
-8. Are tests covering both allowed and denied paths?
-
-Return a prioritized fix list.
+Review all implemented APIs against docs/context/01-frontend-ux-context.md and docs/technical/03-api-design-contracts.md.
+Check if frontend list pages can support overview cards, filters, table rows, row actions, pagination and visible-column export.
+Report missing fields, inconsistent status names and authorization gaps.
 ```

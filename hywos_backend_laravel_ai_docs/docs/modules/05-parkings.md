@@ -1,39 +1,48 @@
-# Parkings module
+<!--
+HYWOS / FillTrack Backend Laravel AI Docs
+Updated package generated from the latest FillTrack Markdown onboarding pack.
+Primary backend stack for this package: Laravel + MySQL + REST API for Next.js frontend.
+Do not treat older ASP.NET mentions in legacy source material as backend implementation instructions.
+-->
 
-This document describes the `parkings` domain: storage, model, API and permissions.
+# Module Backend Spec — Parking Areas and Trailer Pool
 
-## Model
-- Table: `parkings`
-- Primary key: `id` (UUID / char(36))
-- Fields: `code`, `name`, `site_id`, `area_id`, `capacity`, `occupied_count`, `status_code`, `current_vehicle_id`, `is_active`, `created_by_user_id`, `updated_by_user_id`, timestamps
+## Source alignment
 
-Notes: `capacity` and `occupied_count` are integers. `available` is computed by the API as `capacity - occupied_count` (minimum 0).
+Parking structure is configured in Company & Plant Configuration V3 and used operationally by Trailer Pool / Car Park and driver instructions.
 
-## API
-- Base path: `/api/parkings`
+## Configuration responsibilities
 
-Public (development):
-- `GET /api/parkings` — list (supports `per_page`, `site_id`, `area_id`, `is_active` filters)
-- `GET /api/parkings/{id}` — get single parking
+- Parking area code/name.
+- Linked plant area/zone.
+- Parking spaces with code/label.
+- Space type: empty trailer, loaded trailer, service, general.
+- Optional trailer chip reader reference.
+- Activation/lock through plant configuration lifecycle.
 
-Manage (development):
-- `POST /api/parkings` — create (validated by `StoreParkingRequest`)
-- `PUT /api/parkings/{id}` — update (validated by `UpdateParkingRequest`)
-- `DELETE /api/parkings/{id}` — deactivate (sets `is_active` to false)
-- `PATCH /api/parkings/{id}/activate` — activate
-- `PATCH /api/parkings/{id}/deactivate` — deactivate
+## Operational responsibilities
 
-## Permissions
-Planned permissions (Spatie): `parkings.view`, `parkings.create`, `parkings.update`, `parkings.delete`.
+- Track trailer placement.
+- Track trailer pickup.
+- Track loaded/empty/service state if available.
+- Create event logs for parking actions.
+- Provide filtered trailer pool view by parking area/space.
 
-Note: For development the middleware is currently disabled in `routes/api.php` to allow rapid iteration. Before enabling in production, run the permission seeder and publish/migrate `spatie/permission` tables.
+## Suggested tables
 
-## Seeders and dependencies
-- The project includes `SiteSeeder`, `PlantAreaSeeder`, `BayLineSeeder`, `ParkingSeeder`, `RolePermissionSeeder`, and `AdminUserSeeder`.
-- `parkings` records require `sites` and `plant_areas` to exist first.
-- `ParkingResource` computes `available` as `capacity - occupied_count`.
+- `parking_areas`
+- `parking_spaces`
+- `trailer_pool_events`
+- `trailer_location_states`
 
-Activation behavior
--------------------
-- `is_active` for parkings is controlled via `PATCH /api/parkings/{id}/activate` and `PATCH /api/parkings/{id}/deactivate`.
-- `UpdateParkingRequest` does not accept `is_active` to avoid accidental activation during updates.
+## Business rules
+
+- If parking/pickup process variants are used, at least one parking area and space is required before plant configuration activation.
+- Parking instructions must reference configured, active spaces.
+- Trailer location changes must be event logged.
+- Changes to activated parking structure require change request.
+
+## API usage
+
+- Configuration: `/api/plant-configuration/parking-areas`.
+- Operations: `/api/trailer-pool` or `/api/operations/trailer-pool`.
