@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\UserController;
 
@@ -163,4 +164,16 @@ Route::prefix('drivers')->group(function () {
     // Detail tabs (placeholders for modules not yet implemented)
     Route::get('/{id}/plant-visits', [DriverController::class, 'plantVisits']);
     Route::get('/{id}/events-audit', [DriverController::class, 'eventsAudit']);
+});
+
+Route::prefix('loading-control')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('/station-view', [LoadingControlController::class, 'stationView']);
+    Route::get('/active-loadings', [LoadingControlController::class, 'activeLoadings']);
+
+    Route::get('/loadings/{id}', [LoadingControlController::class, 'show']);
+    Route::get('/loadings/{id}/events', [LoadingControlController::class, 'events']);
+    Route::get('/loadings/{id}/audit', [LoadingControlController::class, 'audit']);
+    Route::post('/loadings/{id}/notes', [LoadingControlController::class, 'addNote']);
 });

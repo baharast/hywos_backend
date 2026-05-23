@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             CustomerSeeder::class,
             DriverSeeder::class,
+            LoadingOperationSeeder::class,
         ]);
     }
 }

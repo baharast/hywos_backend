@@ -59,6 +59,13 @@ class AuditAction
     public const PLANT_CONFIG_CHANGE_REJECTED = 'plant_config.change_rejected';
     public const PLANT_CONFIG_CHANGE_APPLIED = 'plant_config.change_applied';
 
+    // Loading operations
+    public const LOADING_RELEASED = 'loading.released';
+    public const LOADING_PAUSED = 'loading.paused';
+    public const LOADING_COMPLETED = 'loading.completed';
+    public const LOADING_FAILED = 'loading.failed';
+    public const LOADING_NOTE_ADDED = 'loading.note_added';
+
     // Quality
     public const QUALITY_DECISION_APPROVED = 'quality.decision_approved';
     public const QUALITY_DECISION_REJECTED = 'quality.decision_rejected';
