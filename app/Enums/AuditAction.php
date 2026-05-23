@@ -26,6 +26,12 @@ class AuditAction
     public const DRIVER_BLOCKED = 'driver.blocked';
     public const DRIVER_UNBLOCKED = 'driver.unblocked';
 
+    // Auth media (chip cards, TANs)
+    public const AUTH_MEDIUM_CREATED = 'auth_medium.created';
+    public const AUTH_MEDIUM_BLOCKED = 'auth_medium.blocked';
+    public const AUTH_MEDIUM_REVOKED = 'auth_medium.revoked';
+    public const TAN_CREATED = 'tan.created';
+
     // Customer
     public const CUSTOMER_CREATED = 'customer.created';
     public const CUSTOMER_UPDATED = 'customer.updated';

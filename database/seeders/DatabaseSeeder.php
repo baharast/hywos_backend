@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ParkingSeeder::class,
             AdminUserSeeder::class,
             CustomerSeeder::class,
+            DriverSeeder::class,
         ]);
     }
 }

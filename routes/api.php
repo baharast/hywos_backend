@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\UserController;
 
@@ -137,4 +138,29 @@ Route::prefix('plant-configuration')->group(function () {
     Route::post('/change-requests/{id}/approve', [PlantConfigurationController::class, 'approveChangeRequest']);
     Route::post('/change-requests/{id}/reject', [PlantConfigurationController::class, 'rejectChangeRequest']);
     Route::post('/change-requests/{id}/apply', [PlantConfigurationController::class, 'applyChangeRequest']);
+});
+
+Route::prefix('drivers')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    // List/detail
+    Route::get('', [DriverController::class, 'index']);
+    Route::post('/export', [DriverController::class, 'export']);
+    Route::get('/{id}', [DriverController::class, 'show']);
+
+    // Create/update
+    Route::post('', [DriverController::class, 'store']);
+    Route::put('/{id}', [DriverController::class, 'update']);
+
+    // Critical actions (POST + required reason + audit + event)
+    Route::post('/{id}/block', [DriverController::class, 'block']);
+    Route::post('/{id}/unblock', [DriverController::class, 'unblock']);
+
+    // Identification (chip cards + TANs)
+    Route::get('/{id}/auth-media', [DriverController::class, 'authMedia']);
+    Route::post('/{id}/tan', [DriverController::class, 'createTan']);
+
+    // Detail tabs (placeholders for modules not yet implemented)
+    Route::get('/{id}/plant-visits', [DriverController::class, 'plantVisits']);
+    Route::get('/{id}/events-audit', [DriverController::class, 'eventsAudit']);
 });
