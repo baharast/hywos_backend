@@ -2,12 +2,20 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\AuditAction;
+use App\Enums\EventCategory;
+use App\Enums\EventSeverity;
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Requests\BlockCustomerRequest;
 use App\Http\Requests\StoreCustomerRequest;
+use App\Http\Requests\UnblockCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use App\Services\Audit\AuditLogger;
+use App\Services\Events\EventLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends ApiController
 {
@@ -77,6 +85,97 @@ class CustomerController extends ApiController
         $customer->update(['is_active' => false]);
 
         return $this->success(new CustomerResource($customer), 'Customer deactivated');
+    }
+
+    public function block(BlockCustomerRequest $request, $id, AuditLogger $audit, EventLogger $events)
+    {
+        $customer = Customer::find($id);
+        if (! $customer) {
+            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+        }
+        if ($customer->status === 'blocked') {
+            return $this->error('Customer is already blocked', 'ALREADY_BLOCKED', 409);
+        }
+
+        $reason = $request->input('reason');
+        $reasonCode = $request->input('reason_code');
+
+        return DB::transaction(function () use ($customer, $reason, $reasonCode, $audit, $events) {
+            $old = $audit->snapshotModel($customer);
+
+            // TODO: re-enable when auth lands — set blocked_by_user_id from request()->user().
+            // Block does NOT cancel existing orders by design (see customers module spec).
+            $customer->update([
+                'status' => 'blocked',
+                'block_reason' => $reason,
+                'blocked_at' => now(),
+            ]);
+
+            $audit->record(
+                $customer,
+                AuditAction::CUSTOMER_BLOCKED,
+                $old,
+                $audit->snapshotModel($customer->fresh()),
+                $reason,
+                $reasonCode
+            );
+
+            $events->record(
+                'customer.blocked',
+                $customer,
+                "Customer {$customer->name} blocked",
+                ['reason' => $reason, 'reason_code' => $reasonCode],
+                EventCategory::OPERATIONS,
+                EventSeverity::WARNING
+            );
+
+            return $this->success(new CustomerResource($customer->fresh()), 'Customer blocked');
+        });
+    }
+
+    public function unblock(UnblockCustomerRequest $request, $id, AuditLogger $audit, EventLogger $events)
+    {
+        $customer = Customer::find($id);
+        if (! $customer) {
+            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+        }
+        if ($customer->status !== 'blocked') {
+            return $this->error('Customer is not blocked', 'NOT_BLOCKED', 409);
+        }
+
+        $reason = $request->input('reason');
+        $reasonCode = $request->input('reason_code');
+
+        return DB::transaction(function () use ($customer, $reason, $reasonCode, $audit, $events) {
+            $old = $audit->snapshotModel($customer);
+
+            $customer->update([
+                'status' => 'active',
+                'block_reason' => null,
+                'blocked_at' => null,
+                'blocked_by_user_id' => null,
+            ]);
+
+            $audit->record(
+                $customer,
+                AuditAction::CUSTOMER_UNBLOCKED,
+                $old,
+                $audit->snapshotModel($customer->fresh()),
+                $reason,
+                $reasonCode
+            );
+
+            $events->record(
+                'customer.unblocked',
+                $customer,
+                "Customer {$customer->name} unblocked",
+                ['reason' => $reason, 'reason_code' => $reasonCode],
+                EventCategory::OPERATIONS,
+                EventSeverity::INFO
+            );
+
+            return $this->success(new CustomerResource($customer->fresh()), 'Customer unblocked');
+        });
     }
 
     public function destroy(Request $request, $id)
