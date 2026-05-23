@@ -16,19 +16,51 @@ class ParkingController extends ApiController
         $perPage = (int) $request->query('per_page', 25);
 
         $query = Parking::query();
+
+        if ($request->filled('search')) {
+            $search = '%' . $request->query('search') . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', $search)
+                    ->orWhere('name', 'like', $search);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status_code', $request->query('status'));
+        }
+
+        if ($request->filled('space_type')) {
+            $query->where('space_type', $request->query('space_type'));
+        }
+
         if ($request->filled('site_id')) {
             $query->where('site_id', $request->query('site_id'));
         }
+
         if ($request->filled('area_id')) {
             $query->where('area_id', $request->query('area_id'));
         }
+
         if ($request->filled('is_active')) {
-            $query->where('is_active', (bool) $request->query('is_active'));
+            $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
         }
 
-        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $totalCapacity = (int) Parking::query()->sum('capacity');
+        $totalOccupied = (int) Parking::query()->sum('occupied_count');
 
-        return \App\Services\ApiResponse::paginated($paginator, 'Parkings retrieved');
+        $summary = [
+            'total' => Parking::query()->count(),
+            'totalCapacity' => $totalCapacity,
+            'totalOccupied' => $totalOccupied,
+            'totalAvailable' => max(0, $totalCapacity - $totalOccupied),
+            'active' => Parking::query()->where('is_active', true)->count(),
+        ];
+
+        $paginator = $query->orderBy('code')->paginate($perPage);
+        $items = ParkingResource::collection($paginator->items());
+        $lastUpdated = Parking::query()->max('updated_at');
+
+        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, 'Parkings retrieved');
     }
 
     public function store(StoreParkingRequest $request)

@@ -6,22 +6,40 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class BayLineResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     */
     public function toArray($request): array
     {
+        $statusCode = $this->status_code ?: 'free';
+        $tone = match ($statusCode) {
+            'free' => 'success',
+            'reserved' => 'info',
+            'occupied' => 'warning',
+            'loading' => 'info',
+            'fault' => 'danger',
+            'maintenance' => 'maintenance',
+            'offline' => 'offline',
+            default => 'neutral',
+        };
+
         return [
             'id' => $this->id,
             'code' => $this->code,
             'name' => $this->name,
-            'site_id' => $this->site_id,
-            'plant_area_id' => $this->plant_area_id,
-            'status_code' => $this->status_code,
-            'current_trailer_id' => $this->current_trailer_id,
-            'is_active' => (bool) $this->is_active,
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            'siteId' => $this->site_id,
+            'plantAreaId' => $this->plant_area_id,
+            'plantConfigurationId' => $this->plant_configuration_id,
+            'pressureClass' => $this->pressure_class,
+            'allowedProduct' => $this->allowed_product,
+            'relatedPanelId' => $this->related_panel_id,
+            'relatedDeviceId' => $this->related_device_id,
+            'currentTrailerId' => $this->current_trailer_id,
+            'status' => [
+                'value' => $statusCode,
+                'label' => ucfirst(str_replace('_', ' ', $statusCode)),
+                'tone' => $tone,
+            ],
+            'isActive' => (bool) $this->is_active,
+            'createdAt' => $this->created_at?->toIso8601String(),
+            'updatedAt' => $this->updated_at?->toIso8601String(),
         ];
     }
 }

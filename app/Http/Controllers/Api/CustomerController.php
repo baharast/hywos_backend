@@ -24,13 +24,60 @@ class CustomerController extends ApiController
         $perPage = (int) $request->query('per_page', 25);
 
         $query = Customer::query();
+
+        if ($request->filled('search')) {
+            $search = '%' . $request->query('search') . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', $search)
+                    ->orWhere('legal_name', 'like', $search)
+                    ->orWhere('code', 'like', $search)
+                    ->orWhere('sap_customer_no', 'like', $search)
+                    ->orWhere('city', 'like', $search)
+                    ->orWhere('country', 'like', $search)
+                    ->orWhere('primary_contact_name', 'like', $search)
+                    ->orWhere('email', 'like', $search);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        if ($request->filled('sap_link')) {
+            $sap = $request->query('sap_link');
+            if ($sap === 'linked') {
+                $query->whereNotNull('sap_customer_no');
+            } elseif ($sap === 'missing') {
+                $query->whereNull('sap_customer_no');
+            }
+        }
+
+        if ($request->filled('country')) {
+            $query->where('country', $request->query('country'));
+        }
+
         if ($request->filled('site_id')) {
             $query->where('site_id', $request->query('site_id'));
         }
 
-        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $summary = [
+            'total' => Customer::query()->count(),
+            'active' => Customer::query()->where('status', 'active')->count(),
+            'blocked' => Customer::query()->where('status', 'blocked')->count(),
+            'needsAttention' => Customer::query()
+                ->where(function ($q) {
+                    $q->whereNull('sap_customer_no')
+                        ->orWhereNull('document_requirements')
+                        ->orWhere('document_requirements', '[]');
+                })
+                ->count(),
+        ];
 
-        return \App\Services\ApiResponse::paginated($paginator, 'Customers retrieved');
+        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $items = CustomerResource::collection($paginator->items());
+        $lastUpdated = Customer::query()->max('updated_at');
+
+        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, 'Customers retrieved');
     }
 
     public function store(StoreCustomerRequest $request)

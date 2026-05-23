@@ -71,15 +71,19 @@ class UserController extends ApiController
             });
         }
 
+        $summary = [
+            'total' => User::query()->count(),
+            'active' => User::query()->where('is_active', true)->where('is_locked', false)->whereNull('disabled_at')->count(),
+            'locked' => User::query()->where('is_locked', true)->count(),
+            'disabled' => User::query()->whereNotNull('disabled_at')->count(),
+            'inactive' => User::query()->where('is_active', false)->whereNull('disabled_at')->count(),
+        ];
+
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $users = UserResource::collection($paginator->items());
+        $lastUpdated = User::query()->max('updated_at');
 
-        return ApiResponse::success($users, 'Users retrieved', 200, [
-            'current_page' => $paginator->currentPage(),
-            'per_page' => $paginator->perPage(),
-            'total' => $paginator->total(),
-            'last_page' => $paginator->lastPage(),
-        ]);
+        return ApiResponse::list($users, $paginator, $summary, $lastUpdated, 'Users retrieved');
     }
 
     public function store(StoreUserRequest $request)
