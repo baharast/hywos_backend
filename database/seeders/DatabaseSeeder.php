@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             DriverSeeder::class,
             TrailerSeeder::class,
+            TractorVehicleSeeder::class,
+            TractorTrailerCouplingSeeder::class,
             LoadingOperationSeeder::class,
         ]);
     }

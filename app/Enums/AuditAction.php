@@ -78,4 +78,15 @@ class AuditAction
     public const TRAILER_UPDATED = 'trailer.updated';
     public const TRAILER_BLOCKED = 'trailer.blocked';
     public const TRAILER_UNBLOCKED = 'trailer.unblocked';
+
+    // Tractor / Vehicle
+    public const VEHICLE_CREATED = 'vehicle.created';
+    public const VEHICLE_UPDATED = 'vehicle.updated';
+    public const VEHICLE_BLOCKED = 'vehicle.blocked';
+    public const VEHICLE_UNBLOCKED = 'vehicle.unblocked';
+    public const VEHICLE_PLATE_CHANGED = 'vehicle.plate_changed';
+
+    // Tractor-Trailer coupling lifecycle
+    public const COUPLING_CREATED = 'coupling.created';
+    public const COUPLING_UNCOUPLED = 'coupling.uncoupled';
 }

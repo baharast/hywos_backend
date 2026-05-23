@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\PlantConfigurationController;
+use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
 use App\Http\Controllers\Api\UserController;
 
@@ -198,4 +199,25 @@ Route::prefix('trailers')->group(function () {
     Route::get('/{id}/loadings', [TrailerController::class, 'loadings']);
     Route::get('/{id}/documents', [TrailerController::class, 'documents']);
     Route::get('/{id}/events-audit', [TrailerController::class, 'eventsAudit']);
+});
+
+Route::prefix('tractors-vehicles')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [TractorVehicleController::class, 'index']);
+    Route::post('/export', [TractorVehicleController::class, 'export']);
+    Route::get('/{id}', [TractorVehicleController::class, 'show']);
+
+    Route::post('', [TractorVehicleController::class, 'store']);
+    Route::put('/{id}', [TractorVehicleController::class, 'update']);
+
+    // Critical actions (POST + required reason + audit + event)
+    Route::post('/{id}/block', [TractorVehicleController::class, 'block']);
+    Route::post('/{id}/unblock', [TractorVehicleController::class, 'unblock']);
+
+    // History tabs
+    Route::get('/{id}/couplings', [TractorVehicleController::class, 'couplings']);
+    Route::get('/{id}/plant-visits', [TractorVehicleController::class, 'plantVisits']);
+    Route::get('/{id}/clarifications', [TractorVehicleController::class, 'clarifications']);
+    Route::get('/{id}/events-audit', [TractorVehicleController::class, 'eventsAudit']);
 });
