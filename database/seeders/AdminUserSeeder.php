@@ -12,23 +12,35 @@ class AdminUserSeeder extends Seeder
     {
         $users = [
             [
+                'username' => 'admin',
                 'email' => 'admin@local',
                 'name' => 'Admin User',
+                'phone' => null,
+                'preferred_language' => 'de',
                 'role' => 'admin',
             ],
             [
+                'username' => 'dispatcher',
                 'email' => 'dispatcher@local',
                 'name' => 'Dispatcher User',
+                'phone' => null,
+                'preferred_language' => 'de',
                 'role' => 'dispatcher',
             ],
             [
+                'username' => 'operator',
                 'email' => 'operator@local',
                 'name' => 'Operator User',
+                'phone' => null,
+                'preferred_language' => 'de',
                 'role' => 'operator',
             ],
             [
+                'username' => 'auditor',
                 'email' => 'auditor@local',
                 'name' => 'Auditor User',
+                'phone' => null,
+                'preferred_language' => 'de',
                 'role' => 'auditor',
             ],
         ];
@@ -37,13 +49,22 @@ class AdminUserSeeder extends Seeder
             $user = User::firstOrCreate(
                 ['email' => $userData['email']],
                 [
+                    'username' => $userData['username'],
                     'name' => $userData['name'],
+                    'phone' => $userData['phone'],
+                    'preferred_language' => $userData['preferred_language'],
                     'password' => bcrypt('password'),
                     'is_active' => true,
+                    'is_locked' => false,
                 ]
             );
 
-            $user->update(['is_active' => true]);
+            $user->update([
+                'username' => $userData['username'],
+                'preferred_language' => $userData['preferred_language'],
+                'is_active' => true,
+                'is_locked' => false,
+            ]);
 
             $role = Role::firstWhere('name', $userData['role']);
             if ($role) {

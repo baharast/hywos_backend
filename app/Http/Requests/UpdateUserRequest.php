@@ -17,6 +17,12 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('id');
 
         return [
+            'username' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('users', 'username')->ignore($userId),
+            ],
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
@@ -24,10 +30,18 @@ class UpdateUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
-            'password' => 'nullable|string|min:8',
+            'phone' => 'nullable|string|max:50',
+            'preferred_language' => 'nullable|string|max:10',
             'is_active' => 'sometimes|boolean',
-            'roles' => 'sometimes|array',
+            'roles' => 'sometimes|array|min:1',
             'roles.*' => 'string|exists:roles,name',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'roles.min' => 'Assign at least one role.',
         ];
     }
 }

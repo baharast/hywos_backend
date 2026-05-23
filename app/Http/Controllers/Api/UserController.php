@@ -23,21 +23,35 @@ class UserController extends ApiController
             $search = '%' . $request->query('search') . '%';
             $query->where(function ($query) use ($search) {
                 $query->where('name', 'like', $search)
+                    ->orWhere('username', 'like', $search)
                     ->orWhere('email', 'like', $search);
             });
         }
 
         if ($request->filled('status')) {
             $status = strtolower($request->query('status'));
-            if ($status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($status === 'inactive') {
-                $query->where('is_active', false);
+            switch ($status) {
+                case 'active':
+                    $query->where('is_active', true)->where('is_locked', false)->whereNull('disabled_at');
+                    break;
+                case 'inactive':
+                    $query->where('is_active', false)->whereNull('disabled_at');
+                    break;
+                case 'locked':
+                    $query->where('is_locked', true);
+                    break;
+                case 'disabled':
+                    $query->whereNotNull('disabled_at');
+                    break;
             }
         }
 
         if ($request->filled('is_active')) {
             $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($request->filled('language')) {
+            $query->where('preferred_language', $request->query('language'));
         }
 
         if ($request->filled('role')) {
