@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('display_identifier', 100)->nullable();
 
             $table->char('driver_id', 36)->nullable()->index();
+            $table->char('trailer_id', 36)->nullable()->index();
 
             $table->string('status', 20)->default('active')->index();
             $table->boolean('is_single_use')->default(false);

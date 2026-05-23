@@ -72,4 +72,10 @@ class AuditAction
 
     // Documents
     public const DOCUMENT_REPRINTED = 'document.reprinted';
+
+    // Trailer
+    public const TRAILER_CREATED = 'trailer.created';
+    public const TRAILER_UPDATED = 'trailer.updated';
+    public const TRAILER_BLOCKED = 'trailer.blocked';
+    public const TRAILER_UNBLOCKED = 'trailer.unblocked';
 }

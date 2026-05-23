@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\PlantConfigurationController;
+use App\Http\Controllers\Api\TrailerController;
 use App\Http\Controllers\Api\UserController;
 
 Route::prefix('companies')->group(function () {
@@ -176,4 +177,25 @@ Route::prefix('loading-control')->group(function () {
     Route::get('/loadings/{id}/events', [LoadingControlController::class, 'events']);
     Route::get('/loadings/{id}/audit', [LoadingControlController::class, 'audit']);
     Route::post('/loadings/{id}/notes', [LoadingControlController::class, 'addNote']);
+});
+
+Route::prefix('trailers')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [TrailerController::class, 'index']);
+    Route::post('/export', [TrailerController::class, 'export']);
+    Route::get('/{id}', [TrailerController::class, 'show']);
+
+    Route::post('', [TrailerController::class, 'store']);
+    Route::put('/{id}', [TrailerController::class, 'update']);
+
+    Route::post('/{id}/block', [TrailerController::class, 'block']);
+    Route::post('/{id}/unblock', [TrailerController::class, 'unblock']);
+
+    Route::get('/{id}/auth-media', [TrailerController::class, 'authMedia']);
+
+    Route::get('/{id}/plant-visits', [TrailerController::class, 'plantVisits']);
+    Route::get('/{id}/loadings', [TrailerController::class, 'loadings']);
+    Route::get('/{id}/documents', [TrailerController::class, 'documents']);
+    Route::get('/{id}/events-audit', [TrailerController::class, 'eventsAudit']);
 });

@@ -23,6 +23,7 @@ class AuthMedium extends Model
         'identifier_hash',
         'display_identifier',
         'driver_id',
+        'trailer_id',
         'status',
         'is_single_use',
         'issued_at',
@@ -63,5 +64,10 @@ class AuthMedium extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class, 'driver_id', 'id');
+    }
+
+    public function trailer(): BelongsTo
+    {
+        return $this->belongsTo(Trailer::class, 'trailer_id', 'id');
     }
 }
