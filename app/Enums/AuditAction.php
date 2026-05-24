@@ -98,6 +98,12 @@ class AuditAction
     public const CARRIER_APPROVAL_CHANGED = 'carrier.approval_changed';
     public const CARRIER_SAP_FIELD_UPDATE_REJECTED = 'carrier.sap_field_update_rejected';
 
+    // Master Data Export
+    public const EXPORT_JOB_CREATED = 'export.job_created';
+    public const EXPORT_JOB_DOWNLOADED = 'export.job_downloaded';
+    public const EXPORT_JOB_RETRIED = 'export.job_retried';
+    public const EXPORT_JOB_FAILED = 'export.job_failed';
+
     // Chip cards
     public const CHIP_CARD_REGISTERED = 'chip_card.registered';
     public const CHIP_CARD_ASSIGNED = 'chip_card.assigned';

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ChipCardController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
+use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
@@ -245,6 +246,25 @@ Route::prefix('tractors-vehicles')->group(function () {
     Route::get('/{id}/plant-visits', [TractorVehicleController::class, 'plantVisits']);
     Route::get('/{id}/clarifications', [TractorVehicleController::class, 'clarifications']);
     Route::get('/{id}/events-audit', [TractorVehicleController::class, 'eventsAudit']);
+});
+
+Route::prefix('master-data-export')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    // Recent exports list + summary counts
+    Route::get('', [MasterDataExportController::class, 'index']);
+
+    // Create + run a new export job (synchronous in dev; queue-ready)
+    Route::post('', [MasterDataExportController::class, 'store']);
+
+    // Single job detail
+    Route::get('/{id}', [MasterDataExportController::class, 'show']);
+
+    // Download the generated file when status=ready
+    Route::get('/{id}/download', [MasterDataExportController::class, 'download']);
+
+    // Retry a failed job; produces a new job with same setup
+    Route::post('/{id}/retry', [MasterDataExportController::class, 'retry']);
 });
 
 Route::prefix('chip-cards')->group(function () {
