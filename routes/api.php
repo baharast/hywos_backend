@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CarrierController;
+use App\Http\Controllers\Api\ChipCardController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
@@ -244,4 +245,32 @@ Route::prefix('tractors-vehicles')->group(function () {
     Route::get('/{id}/plant-visits', [TractorVehicleController::class, 'plantVisits']);
     Route::get('/{id}/clarifications', [TractorVehicleController::class, 'clarifications']);
     Route::get('/{id}/events-audit', [TractorVehicleController::class, 'eventsAudit']);
+});
+
+Route::prefix('chip-cards')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [ChipCardController::class, 'index']);
+    Route::post('/export', [ChipCardController::class, 'export']);
+    Route::get('/{id}', [ChipCardController::class, 'show']);
+
+    Route::post('', [ChipCardController::class, 'store']);
+    Route::put('/{id}', [ChipCardController::class, 'update']);
+
+    // Assignment
+    Route::post('/{id}/assign', [ChipCardController::class, 'assign']);
+    Route::post('/{id}/unassign', [ChipCardController::class, 'unassign']);
+
+    // Lifecycle (POST + required reason + audit + event)
+    Route::post('/{id}/block', [ChipCardController::class, 'block']);
+    Route::post('/{id}/unblock', [ChipCardController::class, 'unblock']);
+    Route::post('/{id}/mark-lost', [ChipCardController::class, 'markLost']);
+    Route::post('/{id}/mark-defective', [ChipCardController::class, 'markDefective']);
+    Route::post('/{id}/replace', [ChipCardController::class, 'replace']);
+    Route::post('/{id}/archive', [ChipCardController::class, 'archive']);
+
+    // History tabs
+    Route::get('/{id}/assignment-history', [ChipCardController::class, 'assignmentHistory']);
+    Route::get('/{id}/usage-history', [ChipCardController::class, 'usageHistory']);
+    Route::get('/{id}/events-audit', [ChipCardController::class, 'eventsAudit']);
 });

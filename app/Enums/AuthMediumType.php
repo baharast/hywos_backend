@@ -8,4 +8,5 @@ class AuthMediumType
     public const TAN = 'tan';
     public const BADGE = 'badge';
     public const OTHER = 'other';
+    public const TRAILER_CHIP = 'trailer_chip';
 }

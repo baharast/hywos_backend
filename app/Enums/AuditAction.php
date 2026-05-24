@@ -97,4 +97,16 @@ class AuditAction
     public const CARRIER_UNBLOCKED = 'carrier.unblocked';
     public const CARRIER_APPROVAL_CHANGED = 'carrier.approval_changed';
     public const CARRIER_SAP_FIELD_UPDATE_REJECTED = 'carrier.sap_field_update_rejected';
+
+    // Chip cards
+    public const CHIP_CARD_REGISTERED = 'chip_card.registered';
+    public const CHIP_CARD_ASSIGNED = 'chip_card.assigned';
+    public const CHIP_CARD_REASSIGNED = 'chip_card.reassigned';
+    public const CHIP_CARD_UNASSIGNED = 'chip_card.unassigned';
+    public const CHIP_CARD_BLOCKED = 'chip_card.blocked';
+    public const CHIP_CARD_UNBLOCKED = 'chip_card.unblocked';
+    public const CHIP_CARD_MARKED_LOST = 'chip_card.marked_lost';
+    public const CHIP_CARD_MARKED_DEFECTIVE = 'chip_card.marked_defective';
+    public const CHIP_CARD_REPLACED = 'chip_card.replaced';
+    public const CHIP_CARD_ARCHIVED = 'chip_card.archived';
 }
