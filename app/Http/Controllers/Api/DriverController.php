@@ -300,6 +300,19 @@ class DriverController extends ApiController
         return $this->success(AuthMediumResource::collection($media), 'Auth media retrieved');
     }
 
+    /**
+     * Legacy quick-path: kept verbatim for backward-compat with the original
+     * driver detail screen. The dashboard's full-featured TAN flow now lives at
+     * `POST /api/tans` (see TanController::store) which produces the same
+     * AuthMedium row but additionally:
+     *   - generates a tan_reference, tan_masked, valid_from
+     *   - enforces no-overlap-per-driver
+     *   - emits the richer TAN_GENERATED audit + tan.generated event
+     *   - sets usage_state='unused', consumption_count=0
+     * This method intentionally still uses the simpler TAN_CREATED audit
+     * + 'tan.created' event to avoid changing observable behaviour for callers
+     * that depend on this older route.
+     */
     public function createTan(CreateTanRequest $request, $id, AuditLogger $audit, EventLogger $events)
     {
         $driver = Driver::find($id);

@@ -56,6 +56,17 @@ class AuthMedium extends Model
         'last_used_context',
         'last_used_source',
         'last_usage_result',
+
+        // TAN-only columns (additive — ChipCards module does not touch these).
+        'tan_reference',
+        'tan_masked',
+        'valid_from',
+        'consumed_at',
+        'consumption_count',
+        'usage_state',
+        'related_plant_visit_id',
+        'related_terminal_session_id',
+        'reason',
     ];
 
     protected $hidden = [
@@ -75,6 +86,11 @@ class AuthMedium extends Model
         'defective_at' => 'datetime',
         'archived_at' => 'datetime',
         'last_used_at' => 'datetime',
+
+        // TAN columns
+        'valid_from' => 'datetime',
+        'consumed_at' => 'datetime',
+        'consumption_count' => 'integer',
     ];
 
     protected static function booted()
@@ -132,5 +148,22 @@ class AuthMedium extends Model
         return $query
             ->where('assignment_state', ChipCardAssignmentState::ASSIGNED)
             ->where($column, $entityId);
+    }
+
+    public function scopeTans(Builder $query): Builder
+    {
+        return $query->where('medium_type', AuthMediumType::TAN);
+    }
+
+    public function scopeUnused(Builder $query): Builder
+    {
+        return $query
+            ->where('usage_state', 'unused')
+            ->where('status', AuthMediumStatus::ACTIVE);
+    }
+
+    public function scopeForDriver(Builder $query, string $driverId): Builder
+    {
+        return $query->where('driver_id', $driverId);
     }
 }

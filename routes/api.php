@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\PlantConfigurationController;
+use App\Http\Controllers\Api\TanController;
 use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
 use App\Http\Controllers\Api\UserController;
@@ -293,4 +294,24 @@ Route::prefix('chip-cards')->group(function () {
     Route::get('/{id}/assignment-history', [ChipCardController::class, 'assignmentHistory']);
     Route::get('/{id}/usage-history', [ChipCardController::class, 'usageHistory']);
     Route::get('/{id}/events-audit', [ChipCardController::class, 'eventsAudit']);
+});
+
+Route::prefix('tans')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [TanController::class, 'index']);
+    Route::post('/export', [TanController::class, 'export']);
+    Route::get('/{id}', [TanController::class, 'show']);
+
+    // Create (generate) — returns oneTimeFullValue exactly once
+    Route::post('', [TanController::class, 'store']);
+
+    // Lifecycle (POST + required reason + audit + event)
+    Route::post('/{id}/revoke', [TanController::class, 'revoke']);
+    Route::post('/{id}/expire-now', [TanController::class, 'expireNow']);
+
+    // History tabs
+    Route::get('/{id}/usage-history', [TanController::class, 'usageHistory']);
+    Route::get('/{id}/security-events', [TanController::class, 'securityEvents']);
+    Route::get('/{id}/events-audit', [TanController::class, 'eventsAudit']);
 });

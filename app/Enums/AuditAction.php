@@ -115,4 +115,11 @@ class AuditAction
     public const CHIP_CARD_MARKED_DEFECTIVE = 'chip_card.marked_defective';
     public const CHIP_CARD_REPLACED = 'chip_card.replaced';
     public const CHIP_CARD_ARCHIVED = 'chip_card.archived';
+
+    // TANs (legacy TAN_CREATED above is the quick-path; these are the dashboard flow)
+    public const TAN_GENERATED = 'tan.generated';
+    public const TAN_CONSUMED = 'tan.consumed';
+    public const TAN_REVOKED = 'tan.revoked';
+    public const TAN_EXPIRED = 'tan.expired';
+    public const TAN_USAGE_FAILED = 'tan.usage_failed';
 }

@@ -2,17 +2,18 @@
 
 namespace App\Services\MasterDataExport\Exporters;
 
+use App\Enums\AuthMediumStatus;
 use App\Enums\ExportCategory;
+use App\Enums\ExportStatusScope;
+use App\Models\AuthMedium;
 use App\Models\ExportJob;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Placeholder exporter for the TANs module, which is not yet implemented in
- * the backend. The exporter exists so the API can accept the `tans` category
- * without erroring, and the service layer can attach a non-fatal warning to
- * the export job explaining that no TAN rows were produced.
+ * Real exporter for TANs. Driven by the TanController-backed module.
  *
- * When the TANs module lands, replace this with a real implementation that
- * exports masked TAN only (never the raw value or hash) plus lifecycle metadata.
+ * SECURITY: never emit `identifier_value` or `identifier_hash` — both are in
+ * AuthMedium::$hidden and explicitly skipped by `shape()` even if asked for.
  */
 class TansExporter extends AbstractExporter
 {
@@ -23,14 +24,14 @@ class TansExporter extends AbstractExporter
 
     public function isImplemented(): bool
     {
-        return false;
+        return true;
     }
 
     public function defaultFields(): array
     {
         return [
             'tan_reference', 'tan_masked', 'status', 'usage_state',
-            'assigned_driver_id', 'valid_from', 'expires_at',
+            'driver_id', 'valid_from', 'expires_at',
             'consumed_at', 'revoked_at',
             'created_at', 'updated_at',
         ];
@@ -47,15 +48,53 @@ class TansExporter extends AbstractExporter
 
     public function rows(ExportJob $job, array $fields): \Generator
     {
-        // No-op: TANs module is not implemented yet. The service layer attaches
-        // a "module not implemented" warning to the job. Returning immediately
-        // from this generator keeps the CSV file consistent (header only).
-        return;
-        yield; // unreachable; keeps return type as Generator
+        foreach ($this->query($job)->cursor() as $tan) {
+            yield $this->shape($tan, $fields);
+        }
     }
 
     public function estimateCount(ExportJob $job): ?int
     {
-        return 0;
+        return $this->query($job)->count();
+    }
+
+    protected function query(ExportJob $job): Builder
+    {
+        $query = AuthMedium::query()->tans();
+
+        if ($job->status_scope === ExportStatusScope::ACTIVE_CURRENT_ONLY) {
+            $query->where('status', AuthMediumStatus::ACTIVE)
+                ->whereNull('revoked_at')
+                ->whereNull('consumed_at')
+                ->where(function (Builder $q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                });
+        }
+
+        return $this->applyRecordScope($query, $job);
+    }
+
+    protected function shape(AuthMedium $tan, array $fields): array
+    {
+        $row = [];
+        foreach ($fields as $f) {
+            // SECURITY: never export the raw TAN or its hash, even if requested.
+            if (in_array($f, ['identifier_value', 'identifier_hash'], true)) {
+                continue;
+            }
+            // `related_order_id` is logically the same column as auth_media.order_id.
+            $key = $f === 'related_order_id' ? 'order_id' : $f;
+
+            $row[$f] = match ($f) {
+                'valid_from' => $tan->valid_from?->toIso8601String(),
+                'expires_at' => $tan->expires_at?->toIso8601String(),
+                'consumed_at' => $tan->consumed_at?->toIso8601String(),
+                'revoked_at' => $tan->revoked_at?->toIso8601String(),
+                'created_at' => $tan->created_at?->toIso8601String(),
+                'updated_at' => $tan->updated_at?->toIso8601String(),
+                default => $tan->{$key} ?? null,
+            };
+        }
+        return $row;
     }
 }
