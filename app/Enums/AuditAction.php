@@ -89,4 +89,12 @@ class AuditAction
     // Tractor-Trailer coupling lifecycle
     public const COUPLING_CREATED = 'coupling.created';
     public const COUPLING_UNCOUPLED = 'coupling.uncoupled';
+
+    // Carrier / Freight Forwarder
+    public const CARRIER_CREATED = 'carrier.created';
+    public const CARRIER_UPDATED = 'carrier.updated';
+    public const CARRIER_BLOCKED = 'carrier.blocked';
+    public const CARRIER_UNBLOCKED = 'carrier.unblocked';
+    public const CARRIER_APPROVAL_CHANGED = 'carrier.approval_changed';
+    public const CARRIER_SAP_FIELD_UPDATE_REJECTED = 'carrier.sap_field_update_rejected';
 }

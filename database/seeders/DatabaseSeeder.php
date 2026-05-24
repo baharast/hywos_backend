@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ParkingSeeder::class,
             AdminUserSeeder::class,
             CustomerSeeder::class,
+            FreightForwarderSeeder::class,
             DriverSeeder::class,
             TrailerSeeder::class,
             TractorVehicleSeeder::class,

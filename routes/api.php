@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BayLineController;
+use App\Http\Controllers\Api\CarrierController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
@@ -199,6 +200,29 @@ Route::prefix('trailers')->group(function () {
     Route::get('/{id}/loadings', [TrailerController::class, 'loadings']);
     Route::get('/{id}/documents', [TrailerController::class, 'documents']);
     Route::get('/{id}/events-audit', [TrailerController::class, 'eventsAudit']);
+});
+
+Route::prefix('freight-forwarders-carriers')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [CarrierController::class, 'index']);
+    Route::post('/export', [CarrierController::class, 'export']);
+    Route::get('/{id}', [CarrierController::class, 'show']);
+
+    Route::post('', [CarrierController::class, 'store']);
+    Route::put('/{id}', [CarrierController::class, 'update']);
+
+    // Critical actions (POST + required reason + audit + event)
+    Route::post('/{id}/block', [CarrierController::class, 'block']);
+    Route::post('/{id}/unblock', [CarrierController::class, 'unblock']);
+
+    // Related records tabs
+    Route::get('/{id}/drivers', [CarrierController::class, 'drivers']);
+    Route::get('/{id}/vehicles', [CarrierController::class, 'vehicles']);
+    Route::get('/{id}/trailers', [CarrierController::class, 'trailers']);
+    Route::get('/{id}/orders', [CarrierController::class, 'orders']);
+    Route::get('/{id}/plant-visits', [CarrierController::class, 'plantVisits']);
+    Route::get('/{id}/events-audit', [CarrierController::class, 'eventsAudit']);
 });
 
 Route::prefix('tractors-vehicles')->group(function () {
