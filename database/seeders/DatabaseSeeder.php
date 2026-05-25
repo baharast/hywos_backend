@@ -36,6 +36,10 @@ class DatabaseSeeder extends Seeder
             ChipCardSeeder::class,
             TanSeeder::class,
             LoadingOrderSeeder::class,
+            // SapSyncRecordSeeder references loading_orders rows (LO-2026-0002 /
+            // -0003 / -0004) for linked-order snapshots, so it must run after
+            // LoadingOrderSeeder.
+            SapSyncRecordSeeder::class,
             // PlantVisits must run after LoadingOrderSeeder so PV-2026-0019
             // can back-fill loading_orders.active_plant_visit_id on LO-2026-0004.
             PlantVisitSeeder::class,

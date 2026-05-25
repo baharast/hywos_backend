@@ -334,6 +334,14 @@ Route::prefix('clarification-cases')->group(function () {
     Route::get('', [ClarificationCaseController::class, 'index']);
     Route::get('/{id}', [ClarificationCaseController::class, 'show']);
     Route::post('', [ClarificationCaseController::class, 'store']);
+
+    // Lifecycle (V1.3 §4.1) — POST + audit + event. No `cancel` endpoint
+    // exists because V1.3 has no `cancelled` status.
+    Route::post('/{id}/acknowledge', [ClarificationCaseController::class, 'acknowledge']);
+    Route::post('/{id}/assign', [ClarificationCaseController::class, 'assign']);
+    Route::post('/{id}/move-to-waiting-for-owner', [ClarificationCaseController::class, 'moveToWaitingForOwner']);
+    Route::post('/{id}/resolve', [ClarificationCaseController::class, 'resolve']);
+    Route::post('/{id}/close', [ClarificationCaseController::class, 'close']);
 });
 
 Route::prefix('loading-orders')->group(function () {
@@ -383,4 +391,18 @@ Route::prefix('plant-visits')->group(function () {
 
     // Timeline
     Route::get('/{id}/events-audit', [PlantVisitController::class, 'eventsAudit']);
+});
+
+Route::prefix('sap-sync')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+    //
+    // SAP Sync / Order Import Status is STRICTLY read-only in MVP per V1.5 §2.2:
+    //   - no POST /retry (V1.5 §4.2 — "no manual retry action in MVP")
+    //   - no order creation / editing / assignment (belongs in /loading-orders)
+    //   - no DELETE, no bulk, no quality / document decisions
+    // Write endpoints arrive only when the SAP_SYNC_* audit constants in
+    // App\Enums\AuditAction get a real emitter.
+
+    Route::get('', [\App\Http\Controllers\Api\SapSyncController::class, 'index']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\SapSyncController::class, 'show']);
 });

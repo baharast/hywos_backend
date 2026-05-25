@@ -165,4 +165,14 @@ class AuditAction
     public const PARKING_SLOT_UNBLOCKED = 'parking_slot.unblocked';
     public const PARKING_SLOT_OUT_OF_SERVICE = 'parking_slot.out_of_service';
     public const PARKING_SLOT_RESTORED = 'parking_slot.restored';
+
+    // SAP Sync / Order Import Status (reserved for future write surface;
+    // the current MVP controller is read-only per V1.5 §2.2 / §4.2 and
+    // never emits these. They are listed here so write endpoints — manual
+    // retry, mark-resolved — can land later without churning this enum.)
+    public const SAP_SYNC_RECORD_IMPORTED = 'sap_sync.record_imported';
+    public const SAP_SYNC_RECORD_EXPORTED = 'sap_sync.record_exported';
+    public const SAP_SYNC_RECORD_FAILED = 'sap_sync.record_failed';
+    public const SAP_SYNC_RECORD_RESOLVED = 'sap_sync.record_resolved';
+    public const SAP_SYNC_RETRY_REQUESTED = 'sap_sync.retry_requested';
 }
