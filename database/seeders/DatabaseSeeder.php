@@ -14,7 +14,8 @@ class DatabaseSeeder extends Seeder
         // Seed order matters:
         //   companies/permissions -> sites -> plant_areas -> plant_configurations
         //   -> gates / terminals / baylines / parkings  (all reference plant_configuration_id)
-        //   -> users -> domain master data
+        //   -> users -> domain master data -> loading_orders -> plant_visits
+        //   -> loading_operations
         $this->call([
             CompanySeeder::class,
             RolePermissionSeeder::class,
@@ -35,6 +36,9 @@ class DatabaseSeeder extends Seeder
             ChipCardSeeder::class,
             TanSeeder::class,
             LoadingOrderSeeder::class,
+            // PlantVisits must run after LoadingOrderSeeder so PV-2026-0019
+            // can back-fill loading_orders.active_plant_visit_id on LO-2026-0004.
+            PlantVisitSeeder::class,
             LoadingOperationSeeder::class,
         ]);
     }

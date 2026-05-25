@@ -135,4 +135,15 @@ class AuditAction
     public const LOADING_ORDER_CANCELLED = 'loading_order.cancelled';
     public const LOADING_ORDER_SAP_FIELD_UPDATE_REJECTED = 'loading_order.sap_field_update_rejected';
     public const LOADING_ORDER_SAP_IMPORTED = 'loading_order.sap_imported';
+
+    // Plant Visits (controller in TSK-005 will emit these)
+    public const PLANT_VISIT_CREATED = 'plant_visit.created';
+    public const PLANT_VISIT_STEP_ADVANCED = 'plant_visit.step_advanced';
+    public const PLANT_VISIT_STATUS_CHANGED = 'plant_visit.status_changed';
+    public const PLANT_VISIT_LOCATION_CHANGED = 'plant_visit.location_changed';
+    public const PLANT_VISIT_BLOCKED = 'plant_visit.blocked';
+    public const PLANT_VISIT_CLARIFICATION_RAISED = 'plant_visit.clarification_raised';
+    public const PLANT_VISIT_READY_FOR_EXIT = 'plant_visit.ready_for_exit';
+    public const PLANT_VISIT_CLOSED = 'plant_visit.closed';
+    public const PLANT_VISIT_FORCE_CLOSED = 'plant_visit.force_closed';
 }
