@@ -147,6 +147,14 @@ class AuditAction
     public const PLANT_VISIT_CLOSED = 'plant_visit.closed';
     public const PLANT_VISIT_FORCE_CLOSED = 'plant_visit.force_closed';
 
+    // Clarification Cases
+    public const CLARIFICATION_CREATED = 'clarification.created';
+    public const CLARIFICATION_ACKNOWLEDGED = 'clarification.acknowledged';
+    public const CLARIFICATION_ASSIGNED = 'clarification.assigned';
+    public const CLARIFICATION_RESOLVED = 'clarification.resolved';
+    public const CLARIFICATION_CLOSED = 'clarification.closed';
+    public const CLARIFICATION_CANCELLED = 'clarification.cancelled';
+
     // Trailer Parking slots (controller in TSK-006 will emit these)
     public const PARKING_SLOT_RESERVED = 'parking_slot.reserved';
     public const PARKING_SLOT_OCCUPIED = 'parking_slot.occupied';

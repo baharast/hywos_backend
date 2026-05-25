@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CarrierController;
 use App\Http\Controllers\Api\ChipCardController;
+use App\Http\Controllers\Api\ClarificationCaseController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
@@ -314,4 +315,12 @@ Route::prefix('tans')->group(function () {
     Route::get('/{id}/usage-history', [TanController::class, 'usageHistory']);
     Route::get('/{id}/security-events', [TanController::class, 'securityEvents']);
     Route::get('/{id}/events-audit', [TanController::class, 'eventsAudit']);
+});
+
+Route::prefix('clarification-cases')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [ClarificationCaseController::class, 'index']);
+    Route::get('/{id}', [ClarificationCaseController::class, 'show']);
+    Route::post('', [ClarificationCaseController::class, 'store']);
 });

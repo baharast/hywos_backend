@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             // PlantVisits must run after LoadingOrderSeeder so PV-2026-0019
             // can back-fill loading_orders.active_plant_visit_id on LO-2026-0004.
             PlantVisitSeeder::class,
+            ClarificationCaseSeeder::class,
             // Trailer Parking 2-slot board (V2.1) — needs Trailer + LoadingOrder ids
             ParkingSeeder::class,
             LoadingOperationSeeder::class,
