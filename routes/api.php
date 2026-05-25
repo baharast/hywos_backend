@@ -96,6 +96,15 @@ Route::prefix('parkings')->group(function () {
     Route::patch('/{id}/activate', [\App\Http\Controllers\Api\ParkingController::class, 'activate']);
     Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\ParkingController::class, 'deactivate']);
     Route::delete('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'destroy']);
+
+    // Lifecycle actions (V2.1 §16.1) — POST + required reason + audit + event.
+    Route::post('/{id}/reserve', [\App\Http\Controllers\Api\ParkingController::class, 'reserve']);
+    Route::post('/{id}/occupy', [\App\Http\Controllers\Api\ParkingController::class, 'occupy']);
+    Route::post('/{id}/clear', [\App\Http\Controllers\Api\ParkingController::class, 'clear']);
+    Route::post('/{id}/block', [\App\Http\Controllers\Api\ParkingController::class, 'block']);
+    Route::post('/{id}/unblock', [\App\Http\Controllers\Api\ParkingController::class, 'unblock']);
+    Route::post('/{id}/out-of-service', [\App\Http\Controllers\Api\ParkingController::class, 'outOfService']);
+    Route::post('/{id}/restore', [\App\Http\Controllers\Api\ParkingController::class, 'restore']);
 });
 
 Route::prefix('customers')->group(function () {
