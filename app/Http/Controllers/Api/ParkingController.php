@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ParkingSlotStatus;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Requests\StoreParkingRequest;
 use App\Http\Requests\UpdateParkingRequest;
@@ -25,34 +26,29 @@ class ParkingController extends ApiController
             });
         }
 
-        // TSK-006 cleanup pending — capacity model dropped.
-        // The status_code / space_type / area_id columns were removed in the
-        // V2.1 two-slot rewrite; filters and capacity sums are disabled here
-        // until the TSK-006 Trailer Parking controller replaces this file.
-        // if ($request->filled('status')) {
-        //     $query->where('status_code', $request->query('status'));
-        // }
-        // if ($request->filled('space_type')) {
-        //     $query->where('space_type', $request->query('space_type'));
-        // }
-
+        if ($request->filled('slot_status')) {
+            $query->where('slot_status', $request->query('slot_status'));
+        }
         if ($request->filled('site_id')) {
             $query->where('site_id', $request->query('site_id'));
         }
-
-        // TSK-006 cleanup pending — area_id renamed to plant_area_id.
-        // if ($request->filled('area_id')) {
-        //     $query->where('area_id', $request->query('area_id'));
-        // }
-
+        if ($request->filled('plant_area_id')) {
+            $query->where('plant_area_id', $request->query('plant_area_id'));
+        }
         if ($request->filled('is_active')) {
             $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
         }
 
-        // TSK-006 cleanup pending — capacity model dropped (no capacity/occupied_count columns).
+        $base = Parking::query();
         $summary = [
-            'total' => Parking::query()->count(),
-            'active' => Parking::query()->where('is_active', true)->count(),
+            'total' => (clone $base)->count(),
+            'free' => (clone $base)->where('slot_status', ParkingSlotStatus::FREE)->count(),
+            'occupied' => (clone $base)->where('slot_status', ParkingSlotStatus::OCCUPIED)->count(),
+            'blocked' => (clone $base)->whereIn('slot_status', [
+                ParkingSlotStatus::BLOCKED,
+                ParkingSlotStatus::OUT_OF_SERVICE,
+            ])->count(),
+            'active' => (clone $base)->where('is_active', true)->count(),
         ];
 
         $paginator = $query->orderBy('code')->paginate($perPage);
@@ -118,14 +114,14 @@ class ParkingController extends ApiController
 
     public function destroy(Request $request, $id)
     {
-        $this->authorize('delete', Parking::class);
-
+        // V2.1 — slots are part of the fixed site layout, not user-created
+        // master data. DELETE acts as a soft deactivate so the row + history
+        // remain. Auth is intentionally disabled in this MVP phase.
         $parking = Parking::find($id);
         if (! $parking) {
             return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
         }
 
-        // Soft disable for safety
         $parking->update(['is_active' => false]);
 
         return $this->success(null, 'Parking deactivated');
