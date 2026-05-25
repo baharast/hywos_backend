@@ -148,12 +148,14 @@ class AuditAction
     public const PLANT_VISIT_FORCE_CLOSED = 'plant_visit.force_closed';
 
     // Clarification Cases
+    // V1.3 has no `cancelled` status — CLARIFICATION_CANCELLED was removed
+    // when the enum was reconciled. "Close without resolution" is captured
+    // in resolution_note + CLARIFICATION_CLOSED audit, not a separate action.
     public const CLARIFICATION_CREATED = 'clarification.created';
     public const CLARIFICATION_ACKNOWLEDGED = 'clarification.acknowledged';
     public const CLARIFICATION_ASSIGNED = 'clarification.assigned';
     public const CLARIFICATION_RESOLVED = 'clarification.resolved';
     public const CLARIFICATION_CLOSED = 'clarification.closed';
-    public const CLARIFICATION_CANCELLED = 'clarification.cancelled';
 
     // Trailer Parking slots (controller in TSK-006 will emit these)
     public const PARKING_SLOT_RESERVED = 'parking_slot.reserved';

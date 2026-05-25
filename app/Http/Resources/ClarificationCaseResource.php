@@ -2,8 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\BlockingImpact;
 use App\Enums\ClarificationEntityType;
+use App\Enums\ClarificationPrimaryActionType;
 use App\Enums\ClarificationSeverity;
+use App\Enums\ClarificationSource;
 use App\Enums\ClarificationStatus;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,6 +16,16 @@ class ClarificationCaseResource extends JsonResource
     {
         $status = $this->status ?? ClarificationStatus::OPEN;
         $severity = $this->severity ?? ClarificationSeverity::NORMAL;
+        $blockingImpact = $this->blocking_impact ?? BlockingImpact::NONE;
+        $source = $this->source;
+
+        $primaryActionValue = $this->primary_action;
+        $primaryAction = $primaryActionValue === null
+            ? null
+            : [
+                'value' => $primaryActionValue,
+                'label' => ClarificationPrimaryActionType::label($primaryActionValue),
+            ];
 
         return [
             'id' => $this->id,
@@ -27,6 +40,20 @@ class ClarificationCaseResource extends JsonResource
                 'label' => ClarificationSeverity::label($severity),
                 'tone' => ClarificationSeverity::tone($severity),
             ],
+            'source' => $source === null
+                ? null
+                : [
+                    'value' => $source,
+                    'label' => ClarificationSource::label($source),
+                ],
+            'blockingImpact' => [
+                'value' => $blockingImpact,
+                'label' => BlockingImpact::label($blockingImpact),
+                'tone' => BlockingImpact::tone($blockingImpact),
+            ],
+            'primaryAction' => $primaryAction,
+            'actionNeeded' => $this->action_needed,
+
             'category' => $this->category,
             'title' => $this->title,
             'description' => $this->description,
@@ -57,10 +84,8 @@ class ClarificationCaseResource extends JsonResource
             'acknowledgedAt' => $this->acknowledged_at?->toIso8601String(),
             'resolvedAt' => $this->resolved_at?->toIso8601String(),
             'closedAt' => $this->closed_at?->toIso8601String(),
-            'cancelledAt' => $this->cancelled_at?->toIso8601String(),
 
             'resolutionNote' => $this->resolution_note,
-            'cancellationReason' => $this->cancellation_reason,
 
             'correlationId' => $this->correlation_id,
             'notes' => $this->notes,

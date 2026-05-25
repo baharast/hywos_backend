@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\AuditAction;
+use App\Enums\BlockingImpact;
 use App\Enums\ClarificationSeverity;
 use App\Enums\ClarificationStatus;
 use App\Enums\EventCategory;
@@ -77,12 +78,14 @@ class ClarificationCaseController extends ApiController
             $events->record(
                 'clarification.created',
                 $case,
-                "Clarification {$case->case_no} opened ({$case->category})",
+                "Clarification {$case->case_no} opened ({$case->source})",
                 [
+                    'source' => $case->source,
                     'category' => $case->category,
                     'entity_type' => $case->entity_type,
                     'entity_id' => $case->entity_id,
                     'severity' => $severity,
+                    'blocking_impact' => $case->blocking_impact,
                     'is_blocking' => (bool) $case->is_blocking,
                 ],
                 EventCategory::OPERATIONS,
@@ -119,6 +122,12 @@ class ClarificationCaseController extends ApiController
         if (! empty($filters['category'])) {
             $query->where('category', $filters['category']);
         }
+        if (! empty($filters['source'])) {
+            $query->where('source', $filters['source']);
+        }
+        if (! empty($filters['blocking_impact'])) {
+            $query->where('blocking_impact', $filters['blocking_impact']);
+        }
         if (! empty($filters['owner_role'])) {
             $query->where('owner_role', $filters['owner_role']);
         }
@@ -131,26 +140,46 @@ class ClarificationCaseController extends ApiController
     protected function summary(): array
     {
         $base = ClarificationCase::query();
+        $openStatuses = ClarificationStatus::openStatuses();
 
         $totalOpen = (clone $base)
-            ->whereIn('status', [ClarificationStatus::OPEN, ClarificationStatus::IN_REVIEW])
+            ->whereIn('status', $openStatuses)
             ->count();
 
         $criticalOpen = (clone $base)
-            ->whereIn('status', [ClarificationStatus::OPEN, ClarificationStatus::IN_REVIEW])
+            ->whereIn('status', $openStatuses)
             ->where('severity', ClarificationSeverity::CRITICAL)
             ->count();
 
+        // V1.3 §6.3 "Blocking loading" + "Blocking exit" summary cards rely on
+        // blocking_impact, so we count the same way: any non-`none` impact
+        // among open cases.
         $blockingOpen = (clone $base)
-            ->whereIn('status', [ClarificationStatus::OPEN, ClarificationStatus::IN_REVIEW])
-            ->where('is_blocking', true)
+            ->whereIn('status', $openStatuses)
+            ->where(function ($w) {
+                $w->where('is_blocking', true)
+                    ->orWhere(function ($x) {
+                        $x->whereNotNull('blocking_impact')
+                            ->where('blocking_impact', '!=', BlockingImpact::NONE);
+                    });
+            })
             ->count();
 
         $byOwnerRole = (clone $base)
-            ->whereIn('status', [ClarificationStatus::OPEN, ClarificationStatus::IN_REVIEW])
+            ->whereIn('status', $openStatuses)
             ->selectRaw('owner_role, COUNT(*) as c')
             ->groupBy('owner_role')
             ->pluck('c', 'owner_role')
+            ->toArray();
+
+        // V1.3 §6.3 compact summary line — surface per-impact counts so the
+        // FE can render "Blocking loading", "Blocking exit", etc. without a
+        // second round trip.
+        $byBlockingImpact = (clone $base)
+            ->whereIn('status', $openStatuses)
+            ->selectRaw('blocking_impact, COUNT(*) as c')
+            ->groupBy('blocking_impact')
+            ->pluck('c', 'blocking_impact')
             ->toArray();
 
         return [
@@ -158,6 +187,7 @@ class ClarificationCaseController extends ApiController
             'criticalOpen' => $criticalOpen,
             'blockingOpen' => $blockingOpen,
             'byOwnerRole' => $byOwnerRole,
+            'byBlockingImpact' => $byBlockingImpact,
         ];
     }
 }
