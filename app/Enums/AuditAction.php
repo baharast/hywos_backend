@@ -175,4 +175,13 @@ class AuditAction
     public const SAP_SYNC_RECORD_FAILED = 'sap_sync.record_failed';
     public const SAP_SYNC_RECORD_RESOLVED = 'sap_sync.record_resolved';
     public const SAP_SYNC_RETRY_REQUESTED = 'sap_sync.retry_requested';
+
+    // Gate & Terminal Monitor (reserved; current MVP controller is read-only
+    // per V2.3 — a future write controller will emit these for session
+    // lifecycle events as drivers move through entry / terminal / exit.)
+    public const GATE_TERMINAL_SESSION_STARTED = 'gate_terminal.session_started';
+    public const GATE_TERMINAL_SESSION_DENIED = 'gate_terminal.session_denied';
+    public const GATE_TERMINAL_NEEDS_OPERATOR_FLAGGED = 'gate_terminal.needs_operator_flagged';
+    public const GATE_TERMINAL_RESOLVED = 'gate_terminal.resolved';
+    public const GATE_TERMINAL_DEVICE_FAULT = 'gate_terminal.device_fault';
 }

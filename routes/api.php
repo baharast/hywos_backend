@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ChipCardController;
 use App\Http\Controllers\Api\ClarificationCaseController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\GateTerminalMonitorController;
 use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\LoadingOrderController;
 use App\Http\Controllers\Api\MasterDataExportController;
@@ -405,4 +406,19 @@ Route::prefix('sap-sync')->group(function () {
 
     Route::get('', [\App\Http\Controllers\Api\SapSyncController::class, 'index']);
     Route::get('/{id}', [\App\Http\Controllers\Api\SapSyncController::class, 'show']);
+});
+
+Route::prefix('gate-terminal-monitor')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+    //
+    // Read-only per Gate & Terminal Monitor V2.3 §2.2:
+    //   - no remote gate opening, force exit, or PLC/ESD commands
+    //   - no order assignment, quality decision, or document handling here
+    //   - no bulk, no DELETE, no POST in this slice
+    // Write endpoints arrive only when the GATE_TERMINAL_* audit constants
+    // in App\Enums\AuditAction get a real emitter.
+
+    Route::get('/touchpoints', [GateTerminalMonitorController::class, 'touchpoints']);
+    Route::get('/sessions', [GateTerminalMonitorController::class, 'sessions']);
+    Route::get('/sessions/{id}', [GateTerminalMonitorController::class, 'show']);
 });
