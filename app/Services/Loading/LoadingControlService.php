@@ -3,6 +3,7 @@
 namespace App\Services\Loading;
 
 use App\Enums\AuditAction;
+use App\Enums\BayLineStatus;
 use App\Enums\EventCategory;
 use App\Enums\EventSeverity;
 use App\Enums\LoadingStatus;
@@ -14,8 +15,21 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Implements the FillTrack Loading Control UX Spec V3.2 backend surface:
+ * Compact Status Tiles (§4.3), Station Board (§5) with display priority
+ * (§5.2), Active Loadings list (§6), Selected / Full Loading Details
+ * (§7 / §8).
+ *
+ * Read-mostly. The only write is {@see self::addNote()} which exists to
+ * give operators a paper-trail of operational decisions; V3.2 §1.2 + §13
+ * explicitly forbid any other write (no start/stop/pause/ESD/PLC/force).
+ */
 class LoadingControlService
 {
+    /** Bay/loading data older than this is rendered with a stale warning. */
+    protected const STALE_THRESHOLD_SECONDS = 90;
+
     public function __construct(
         protected AuditLogger $audit,
         protected EventLogger $events
@@ -23,10 +37,11 @@ class LoadingControlService
     }
 
     /**
-     * Build Station-View cards: every configured BayLine plus its currently active
-     * LoadingOperation (or null when free). When more than one active loading
-     * resolves to the same bay we emit a row per loading and flag the duplicates
-     * so the frontend can surface a clarification — we never silently pick one.
+     * Build Station-View cards: every configured BayLine plus its currently
+     * active LoadingOperation (or null when the bay is free). When multiple
+     * actives collide on one bay we emit a row per loading and flag every
+     * row as `has_clarification` so the dispatcher cannot miss the
+     * ambiguity — V3.2 §1.2 / §13 forbid auto-guessing.
      *
      * @return Collection<int, array{bay: BayLine, active: LoadingOperation|null}>
      */
@@ -63,9 +78,10 @@ class LoadingControlService
                 continue;
             }
 
-            // Defensive: if multiple actives collide on the same bay, expose all
-            // and flag clarification on every row so dispatcher cannot miss it.
             if ($actives->count() > 1) {
+                // Multiple active loadings on the same bay = ambiguity. We
+                // never pick one; surface all with clarification flag so the
+                // FE renders an attention card (V3.2 §5.2 priority 2).
                 foreach ($actives as $active) {
                     $active->has_clarification = true;
                     $items->push(['bay' => $bay, 'active' => $active]);
@@ -76,10 +92,10 @@ class LoadingControlService
             $items->push(['bay' => $bay, 'active' => $actives->first()]);
         }
 
-        if (! empty($filters['station_status'])) {
-            $wanted = strtolower((string) $filters['station_status']);
+        if (! empty($filters['bay_status'])) {
+            $wanted = strtolower((string) $filters['bay_status']);
             $items = $items->filter(function ($row) use ($wanted) {
-                return \App\Enums\StationStatus::derive($row['bay'], $row['active']) === $wanted;
+                return BayLineStatus::derive($row['bay'], $row['active']) === $wanted;
             })->values();
         }
 
@@ -87,7 +103,9 @@ class LoadingControlService
     }
 
     /**
-     * Builder for the Active Loadings table. Resolves filters from the request.
+     * Builder for the Active Loadings table. Resolves V3.2 §6.4 filters:
+     * `bay_line`, `loading_state`, `analysis_state`, `issue_type`
+     * (categorical), plus search and date-range refinements.
      */
     public function activeLoadingsQuery(array $filters = []): Builder
     {
@@ -104,25 +122,36 @@ class LoadingControlService
                     ->orWhere('order_no', 'like', $search)
                     ->orWhere('sap_order_no', 'like', $search)
                     ->orWhere('trailer_label', 'like', $search)
-                    ->orWhere('tractor_plate', 'like', $search);
+                    ->orWhere('tractor_plate', 'like', $search)
+                    ->orWhere('visit_no', 'like', $search);
             });
         }
 
-        if (! empty($filters['station_id'])) {
-            $query->where('bay_line_id', $filters['station_id']);
+        if (! empty($filters['bay_line'])) {
+            $query->where('bay_line_id', $filters['bay_line']);
         }
-        if (! empty($filters['loading_status'])) {
-            $query->where('loading_status', $filters['loading_status']);
+
+        // V3.2 §11.1 — `loading_state` accepts the wire vocabulary. We map it
+        // back to whichever DB value(s) it covers so legacy and V3.2 rows
+        // both match.
+        if (! empty($filters['loading_state'])) {
+            $dbValues = $this->mapWireLoadingStateToDb($filters['loading_state']);
+            if ($dbValues) {
+                $query->whereIn('loading_status', $dbValues);
+            }
         }
-        if (! empty($filters['analysis_status'])) {
-            $query->where('analysis_status', $filters['analysis_status']);
+
+        if (! empty($filters['analysis_state'])) {
+            $query->where('analysis_status', $filters['analysis_state']);
         }
-        if (isset($filters['has_clarification'])) {
-            $query->where('has_clarification', (bool) $filters['has_clarification']);
+
+        // V3.2 §6.4 — `issue_type` replaces the V2-era `has_clarification`
+        // and `has_alarm` boolean filters. Categorical so the FE can render
+        // a single dropdown.
+        if (! empty($filters['issue_type'])) {
+            $this->applyIssueTypeFilter($query, (string) $filters['issue_type']);
         }
-        if (! empty($filters['has_alarm'])) {
-            $query->where('alarm_count', '>', 0);
-        }
+
         if (! empty($filters['started_from'])) {
             $query->where('started_at', '>=', $filters['started_from']);
         }
@@ -144,49 +173,79 @@ class LoadingControlService
     }
 
     /**
-     * Overview-card aggregates for the dashboard header.
+     * Compact Status Tiles (V3.2 §4.3) — exactly 6 keys.
      *
-     * @return array{stationsLoading: int, freeStations: int, waitingForAnalysis: int, faultsOrBlockers: int}
+     *   total           Total bay lines (always 6 in MVP).
+     *   available       Bays ready/available for the next loading.
+     *   inUse           Bays currently loading or assigned to an active loading.
+     *   outOfService    Bays in maintenance/offline/service mode.
+     *   blocked         Bays/loadings blocked by clarification, safety,
+     *                   analysis or device issue.
+     *   plcOnline       `"$online/$total"` string — degraded state links to
+     *                   System & Devices on the FE.
+     *
+     * @return array{total: int, available: int, inUse: int, outOfService: int, blocked: int, plcOnline: string}
      */
     public function summary(): array
     {
-        $stationsLoading = LoadingOperation::query()
-            ->where('loading_status', LoadingStatus::LOADING)
-            ->whereNotNull('bay_line_id')
-            ->distinct('bay_line_id')
-            ->count('bay_line_id');
+        $bays = BayLine::query()->orderBy('code')->get();
+        $bayIds = $bays->pluck('id')->all();
 
-        $busyBayIds = LoadingOperation::query()
+        $activesByBay = LoadingOperation::query()
+            ->whereIn('bay_line_id', $bayIds)
             ->active()
-            ->whereNotNull('bay_line_id')
-            ->pluck('bay_line_id')
-            ->unique()
-            ->all();
+            ->orderByDesc('updated_at')
+            ->get()
+            ->groupBy('bay_line_id');
 
-        $totalBays = BayLine::query()->count();
-        $freeStations = max(0, $totalBays - count($busyBayIds));
+        $total = $bays->count();
+        $available = 0;
+        $inUse = 0;
+        $outOfService = 0;
+        $blocked = 0;
+        $plcOnline = 0;
 
-        $waitingForAnalysis = LoadingOperation::query()
-            ->whereIn('loading_status', [
-                LoadingStatus::WAITING_PRE_ANALYSIS,
-                LoadingStatus::WAITING_MAIN_ANALYSIS,
-                LoadingStatus::QUALITY_CHECK_OPEN,
-            ])->count();
+        foreach ($bays as $bay) {
+            $actives = $activesByBay->get($bay->id, collect());
+            $active = $actives->first();
+            $bayStatus = BayLineStatus::derive($bay, $active);
 
-        $faultsOrBlockers = LoadingOperation::query()
-            ->where(function ($q) {
-                $q->whereIn('loading_status', [
-                    LoadingStatus::QUALITY_BLOCKED,
-                    LoadingStatus::CLARIFICATION_REQUIRED,
-                    LoadingStatus::FAILED,
-                ])->orWhere('critical_alarm_count', '>', 0);
-            })->count();
+            switch ($bayStatus) {
+                case BayLineStatus::AVAILABLE:
+                    $available++;
+                    break;
+                case BayLineStatus::MAINTENANCE_OFFLINE:
+                    $outOfService++;
+                    break;
+                case BayLineStatus::FAULT_BLOCKED:
+                    $blocked++;
+                    break;
+                default:
+                    // reserved, loading, waiting_analysis,
+                    // completed_waiting_documents all count as in-use.
+                    $inUse++;
+            }
+
+            // PLC tile derivation: a bay is considered "online" when the
+            // active loading reports `connected` PLC or when the bay has no
+            // active loading and is not faulty/offline. We're conservative —
+            // unknown / degraded / failed count as not online.
+            $plcStatus = $active?->plc_status;
+            if ($bayStatus !== BayLineStatus::MAINTENANCE_OFFLINE
+                && $bayStatus !== BayLineStatus::FAULT_BLOCKED
+                && ($plcStatus === null || $plcStatus === 'connected')
+            ) {
+                $plcOnline++;
+            }
+        }
 
         return [
-            'stationsLoading' => $stationsLoading,
-            'freeStations' => $freeStations,
-            'waitingForAnalysis' => $waitingForAnalysis,
-            'faultsOrBlockers' => $faultsOrBlockers,
+            'total' => $total,
+            'available' => $available,
+            'inUse' => $inUse,
+            'outOfService' => $outOfService,
+            'blocked' => $blocked,
+            'plcOnline' => "{$plcOnline}/{$total}",
         ];
     }
 
@@ -199,7 +258,8 @@ class LoadingControlService
     }
 
     /**
-     * Append an operational note. Wrapped in a transaction; emits audit + event.
+     * Append an operational note. Wrapped in a transaction; emits audit +
+     * event. The only write on this controller (V3.2 §1.2 + §13).
      */
     public function addNote(LoadingOperation $loading, string $note): LoadingOperation
     {
@@ -233,5 +293,86 @@ class LoadingControlService
 
             return $loading->fresh();
         });
+    }
+
+    /**
+     * Map a V3.2 wire-level `loading_state` value back to the set of DB
+     * `loading_status` strings that should match. Necessary because seeded
+     * data + the LoadingOperation model still use legacy strings like
+     * `assigned`, `released`, `paused`, `failed`, `cancelled`,
+     * `quality_check_open`.
+     *
+     * @return list<string>|null
+     */
+    protected function mapWireLoadingStateToDb(string $wire): ?array
+    {
+        return match ($wire) {
+            LoadingStatus::ASSIGNED_READY_FOR_BAY => [LoadingStatus::ASSIGNED_READY_FOR_BAY, LoadingStatus::ASSIGNED],
+            LoadingStatus::READY_FOR_LOADING => [LoadingStatus::READY_FOR_LOADING, LoadingStatus::RELEASED],
+            LoadingStatus::PAUSED_WAITING => [LoadingStatus::PAUSED_WAITING, LoadingStatus::PAUSED],
+            LoadingStatus::DOCUMENTS_PENDING => [LoadingStatus::DOCUMENTS_PENDING, LoadingStatus::QUALITY_CHECK_OPEN],
+            LoadingStatus::FAULT_DEVICE_ISSUE => [LoadingStatus::FAULT_DEVICE_ISSUE, LoadingStatus::FAILED],
+            // Values that are unchanged between legacy and V3.2 vocab.
+            LoadingStatus::WAITING_PRE_ANALYSIS,
+            LoadingStatus::LOADING,
+            LoadingStatus::COMPLETED,
+            LoadingStatus::WAITING_MAIN_ANALYSIS,
+            LoadingStatus::QUALITY_BLOCKED,
+            LoadingStatus::CLARIFICATION_REQUIRED => [$wire],
+            default => null,
+        };
+    }
+
+    /**
+     * V3.2 §6.4 categorical `issue_type` filter. Covers the common
+     * blocker/issue buckets the operator would scan for.
+     */
+    protected function applyIssueTypeFilter(Builder $query, string $issueType): void
+    {
+        match ($issueType) {
+            'clarification' => $query->where(function ($q) {
+                $q->where('has_clarification', true)
+                    ->orWhere('loading_status', LoadingStatus::CLARIFICATION_REQUIRED);
+            }),
+
+            'quality_blocked' => $query->where('loading_status', LoadingStatus::QUALITY_BLOCKED),
+
+            'device_fault' => $query->where(function ($q) {
+                $q->where('loading_status', LoadingStatus::FAULT_DEVICE_ISSUE)
+                    ->orWhere('loading_status', LoadingStatus::FAILED)
+                    ->orWhere('plc_status', 'failed')
+                    ->orWhere('critical_alarm_count', '>', 0);
+            }),
+
+            'waiting_analysis' => $query->whereIn('loading_status', [
+                LoadingStatus::WAITING_PRE_ANALYSIS,
+                LoadingStatus::WAITING_MAIN_ANALYSIS,
+            ]),
+
+            'documents_pending' => $query->whereIn('loading_status', [
+                LoadingStatus::DOCUMENTS_PENDING,
+                LoadingStatus::QUALITY_CHECK_OPEN,
+            ]),
+
+            'paused' => $query->whereIn('loading_status', [
+                LoadingStatus::PAUSED_WAITING,
+                LoadingStatus::PAUSED,
+            ]),
+
+            'none' => $query->whereNotIn('loading_status', [
+                LoadingStatus::CLARIFICATION_REQUIRED,
+                LoadingStatus::QUALITY_BLOCKED,
+                LoadingStatus::FAULT_DEVICE_ISSUE,
+                LoadingStatus::FAILED,
+                LoadingStatus::PAUSED_WAITING,
+                LoadingStatus::PAUSED,
+                LoadingStatus::WAITING_PRE_ANALYSIS,
+                LoadingStatus::WAITING_MAIN_ANALYSIS,
+                LoadingStatus::DOCUMENTS_PENDING,
+                LoadingStatus::QUALITY_CHECK_OPEN,
+            ])->where('has_clarification', false),
+
+            default => null, // unknown issue type — silently skip filter
+        };
     }
 }

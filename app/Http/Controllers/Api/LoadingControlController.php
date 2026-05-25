@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Requests\LoadingControl\AddLoadingNoteRequest;
 use App\Http\Resources\ActiveLoadingListItemResource;
 use App\Http\Resources\LoadingDetailResource;
+use App\Http\Resources\SelectedLoadingDetailsResource;
 use App\Http\Resources\StationViewItemResource;
 use App\Models\AuditLog;
 use App\Models\BayLine;
@@ -15,12 +16,12 @@ use App\Services\Loading\LoadingControlService;
 use Illuminate\Http\Request;
 
 /**
- * Operational dashboard for active loadings.
+ * Operational dashboard for Loading Control. Aligned with FillTrack Loading
+ * Control UX Spec V3.2.
  *
- * IMPORTANT: this controller is read-only with one write endpoint (addNote).
- * Creating / starting / completing loadings is OUT OF SCOPE here and will land
- * with the Orders / PlantVisit / device-gateway modules. The dashboard cannot
- * mint loadings on its own.
+ * Read-mostly. The only write is `addNote`. V3.2 §1.2 + §13 explicitly forbid
+ * any other write — no start/stop/pause/ESD, no quality decisions, no
+ * document print/reprint, no order assignment, no PLC commands.
  */
 class LoadingControlController extends ApiController
 {
@@ -28,10 +29,15 @@ class LoadingControlController extends ApiController
     {
     }
 
+    /**
+     * Station View — V3.2 §5 station board feeding the 3×2 Bay Line cards.
+     * Always returns every configured bay line (even faulty / offline) so
+     * the FE never has to hide a card.
+     */
     public function stationView(Request $request)
     {
         $items = $this->service->stationViewItems($request->only([
-            'site_id', 'plant_area_id', 'station_status',
+            'site_id', 'plant_area_id', 'bay_status',
         ]));
 
         $summary = $this->service->summary();
@@ -48,14 +54,26 @@ class LoadingControlController extends ApiController
         );
     }
 
+    /**
+     * Active Loadings — V3.2 §6 process-level table. Primary filters are
+     * `bay_line`, `loading_state`, `analysis_state`, `issue_type` per §6.4.
+     * The legacy `has_clarification` / `has_alarm` boolean filters are
+     * replaced by the `issue_type` categorical.
+     */
     public function activeLoadings(Request $request)
     {
         $perPage = (int) $request->query('per_page', 25);
 
         $filters = $request->only([
-            'search', 'station_id', 'loading_status', 'analysis_status',
-            'has_clarification', 'has_alarm', 'started_from', 'started_to',
-            'sort', 'include_terminal',
+            'search',
+            'bay_line',
+            'loading_state',
+            'analysis_state',
+            'issue_type',
+            'started_from',
+            'started_to',
+            'sort',
+            'include_terminal',
         ]);
 
         $paginator = $this->service->activeLoadingsQuery($filters)->paginate($perPage);
@@ -65,10 +83,24 @@ class LoadingControlController extends ApiController
         $summary = $this->service->summary();
         $lastUpdated = LoadingOperation::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Active loadings retrieved');
+        return ApiResponse::list(
+            $rows,
+            $paginator,
+            $summary,
+            $lastUpdated,
+            'Active loadings retrieved'
+        );
     }
 
-    public function show($id)
+    /**
+     * GET `/api/loading-control/loadings/{id}` — returns either the full
+     * deep-review shape (V3.2 §8) or the lighter inline selected-panel
+     * shape (V3.2 §7) when `?view=selected`.
+     *
+     * Same URL, two response shapes so the FE doesn't need a second
+     * endpoint for the inline panel.
+     */
+    public function show(Request $request, $id)
     {
         $loading = LoadingOperation::find($id);
         if (! $loading) {
@@ -76,6 +108,13 @@ class LoadingControlController extends ApiController
         }
 
         $loading = $this->service->loadingDetail($loading);
+
+        if ($request->query('view') === 'selected') {
+            return $this->success(
+                new SelectedLoadingDetailsResource($loading),
+                'Selected loading details retrieved'
+            );
+        }
 
         return $this->success(new LoadingDetailResource($loading), 'Loading retrieved');
     }
@@ -102,7 +141,13 @@ class LoadingControlController extends ApiController
             ->where('entity_id', (string) $loading->id)
             ->max('occurred_at');
 
-        return ApiResponse::list($paginator->items(), $paginator, null, $lastUpdated, 'Loading events retrieved');
+        return ApiResponse::list(
+            $paginator->items(),
+            $paginator,
+            null,
+            $lastUpdated,
+            'Loading events retrieved'
+        );
     }
 
     public function audit(Request $request, $id)
@@ -127,7 +172,13 @@ class LoadingControlController extends ApiController
             ->where('entity_id', (string) $loading->id)
             ->max('created_at');
 
-        return ApiResponse::list($paginator->items(), $paginator, null, $lastUpdated, 'Loading audit retrieved');
+        return ApiResponse::list(
+            $paginator->items(),
+            $paginator,
+            null,
+            $lastUpdated,
+            'Loading audit retrieved'
+        );
     }
 
     public function addNote(AddLoadingNoteRequest $request, $id)
@@ -139,6 +190,9 @@ class LoadingControlController extends ApiController
 
         $loading = $this->service->addNote($loading, (string) $request->input('note'));
 
-        return $this->success(new LoadingDetailResource($this->service->loadingDetail($loading)), 'Note added');
+        return $this->success(
+            new LoadingDetailResource($this->service->loadingDetail($loading)),
+            'Note added'
+        );
     }
 }
