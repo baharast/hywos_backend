@@ -146,4 +146,13 @@ class AuditAction
     public const PLANT_VISIT_READY_FOR_EXIT = 'plant_visit.ready_for_exit';
     public const PLANT_VISIT_CLOSED = 'plant_visit.closed';
     public const PLANT_VISIT_FORCE_CLOSED = 'plant_visit.force_closed';
+
+    // Trailer Parking slots (controller in TSK-006 will emit these)
+    public const PARKING_SLOT_RESERVED = 'parking_slot.reserved';
+    public const PARKING_SLOT_OCCUPIED = 'parking_slot.occupied';
+    public const PARKING_SLOT_CLEARED = 'parking_slot.cleared';
+    public const PARKING_SLOT_BLOCKED = 'parking_slot.blocked';
+    public const PARKING_SLOT_UNBLOCKED = 'parking_slot.unblocked';
+    public const PARKING_SLOT_OUT_OF_SERVICE = 'parking_slot.out_of_service';
+    public const PARKING_SLOT_RESTORED = 'parking_slot.restored';
 }

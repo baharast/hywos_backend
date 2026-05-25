@@ -25,34 +25,33 @@ class ParkingController extends ApiController
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('status_code', $request->query('status'));
-        }
-
-        if ($request->filled('space_type')) {
-            $query->where('space_type', $request->query('space_type'));
-        }
+        // TSK-006 cleanup pending — capacity model dropped.
+        // The status_code / space_type / area_id columns were removed in the
+        // V2.1 two-slot rewrite; filters and capacity sums are disabled here
+        // until the TSK-006 Trailer Parking controller replaces this file.
+        // if ($request->filled('status')) {
+        //     $query->where('status_code', $request->query('status'));
+        // }
+        // if ($request->filled('space_type')) {
+        //     $query->where('space_type', $request->query('space_type'));
+        // }
 
         if ($request->filled('site_id')) {
             $query->where('site_id', $request->query('site_id'));
         }
 
-        if ($request->filled('area_id')) {
-            $query->where('area_id', $request->query('area_id'));
-        }
+        // TSK-006 cleanup pending — area_id renamed to plant_area_id.
+        // if ($request->filled('area_id')) {
+        //     $query->where('area_id', $request->query('area_id'));
+        // }
 
         if ($request->filled('is_active')) {
             $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
         }
 
-        $totalCapacity = (int) Parking::query()->sum('capacity');
-        $totalOccupied = (int) Parking::query()->sum('occupied_count');
-
+        // TSK-006 cleanup pending — capacity model dropped (no capacity/occupied_count columns).
         $summary = [
             'total' => Parking::query()->count(),
-            'totalCapacity' => $totalCapacity,
-            'totalOccupied' => $totalOccupied,
-            'totalAvailable' => max(0, $totalCapacity - $totalOccupied),
             'active' => Parking::query()->where('is_active', true)->count(),
         ];
 

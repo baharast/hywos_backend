@@ -13,8 +13,9 @@ class DatabaseSeeder extends Seeder
     {
         // Seed order matters:
         //   companies/permissions -> sites -> plant_areas -> plant_configurations
-        //   -> gates / terminals / baylines / parkings  (all reference plant_configuration_id)
-        //   -> users -> domain master data -> loading_orders -> plant_visits
+        //   -> gates / terminals / baylines (all reference plant_configuration_id)
+        //   -> users -> domain master data -> loading_orders
+        //   -> ParkingSeeder (2-slot board snapshots reference Trailer + LO-2026-0003)
         //   -> loading_operations
         $this->call([
             CompanySeeder::class,
@@ -25,7 +26,6 @@ class DatabaseSeeder extends Seeder
             GateSeeder::class,
             TerminalPanelSeeder::class,
             BayLineSeeder::class,
-            ParkingSeeder::class,
             AdminUserSeeder::class,
             CustomerSeeder::class,
             FreightForwarderSeeder::class,
@@ -39,6 +39,8 @@ class DatabaseSeeder extends Seeder
             // PlantVisits must run after LoadingOrderSeeder so PV-2026-0019
             // can back-fill loading_orders.active_plant_visit_id on LO-2026-0004.
             PlantVisitSeeder::class,
+            // Trailer Parking 2-slot board (V2.1) — needs Trailer + LoadingOrder ids
+            ParkingSeeder::class,
             LoadingOperationSeeder::class,
         ]);
     }
