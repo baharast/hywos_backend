@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\LoadingOrderController;
 use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\PlantConfigurationController;
+use App\Http\Controllers\Api\PlantVisitController;
 use App\Http\Controllers\Api\TanController;
 use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
@@ -356,4 +357,30 @@ Route::prefix('loading-orders')->group(function () {
 
     // Timeline
     Route::get('/{id}/events-audit', [LoadingOrderController::class, 'eventsAudit']);
+});
+
+Route::prefix('plant-visits')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [PlantVisitController::class, 'index']);
+    Route::get('/{id}', [PlantVisitController::class, 'show']);
+    Route::post('', [PlantVisitController::class, 'store']);
+
+    // Step + location lifecycle
+    Route::post('/{id}/advance-step', [PlantVisitController::class, 'advanceStep']);
+    Route::post('/{id}/change-location', [PlantVisitController::class, 'changeLocation']);
+
+    // Status transitions (POST + audit + event; reason required on
+    // wait/block/raise-clarification/force-close)
+    Route::post('/{id}/wait', [PlantVisitController::class, 'wait']);
+    Route::post('/{id}/resume', [PlantVisitController::class, 'resume']);
+    Route::post('/{id}/block', [PlantVisitController::class, 'block']);
+    Route::post('/{id}/unblock', [PlantVisitController::class, 'unblock']);
+    Route::post('/{id}/raise-clarification', [PlantVisitController::class, 'raiseClarification']);
+    Route::post('/{id}/mark-ready-for-exit', [PlantVisitController::class, 'markReadyForExit']);
+    Route::post('/{id}/close', [PlantVisitController::class, 'close']);
+    Route::post('/{id}/force-close', [PlantVisitController::class, 'forceClose']);
+
+    // Timeline
+    Route::get('/{id}/events-audit', [PlantVisitController::class, 'eventsAudit']);
 });
