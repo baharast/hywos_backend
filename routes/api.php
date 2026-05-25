@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ClarificationCaseController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LoadingControlController;
+use App\Http\Controllers\Api\LoadingOrderController;
 use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\TanController;
@@ -332,4 +333,27 @@ Route::prefix('clarification-cases')->group(function () {
     Route::get('', [ClarificationCaseController::class, 'index']);
     Route::get('/{id}', [ClarificationCaseController::class, 'show']);
     Route::post('', [ClarificationCaseController::class, 'store']);
+});
+
+Route::prefix('loading-orders')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+
+    Route::get('', [LoadingOrderController::class, 'index']);
+    Route::get('/{id}', [LoadingOrderController::class, 'show']);
+    Route::post('', [LoadingOrderController::class, 'store']);
+    Route::put('/{id}', [LoadingOrderController::class, 'update']);
+
+    // Assignment (no reason required — these are dispatcher actions, not critical state changes)
+    Route::post('/{id}/assign-driver', [LoadingOrderController::class, 'assignDriver']);
+    Route::post('/{id}/unassign-driver', [LoadingOrderController::class, 'unassignDriver']);
+    Route::post('/{id}/assign-trailer', [LoadingOrderController::class, 'assignTrailer']);
+    Route::post('/{id}/unassign-trailer', [LoadingOrderController::class, 'unassignTrailer']);
+
+    // Lifecycle (POST + reason + audit + event)
+    Route::post('/{id}/block', [LoadingOrderController::class, 'block']);
+    Route::post('/{id}/unblock', [LoadingOrderController::class, 'unblock']);
+    Route::post('/{id}/cancel', [LoadingOrderController::class, 'cancel']);
+
+    // Timeline
+    Route::get('/{id}/events-audit', [LoadingOrderController::class, 'eventsAudit']);
 });
