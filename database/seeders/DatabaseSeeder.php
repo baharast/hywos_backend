@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             TractorTrailerCouplingSeeder::class,
             ChipCardSeeder::class,
             TanSeeder::class,
+            LoadingOrderSeeder::class,
             LoadingOperationSeeder::class,
         ]);
     }

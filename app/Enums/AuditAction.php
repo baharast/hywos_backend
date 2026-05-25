@@ -122,4 +122,17 @@ class AuditAction
     public const TAN_REVOKED = 'tan.revoked';
     public const TAN_EXPIRED = 'tan.expired';
     public const TAN_USAGE_FAILED = 'tan.usage_failed';
+
+    // Loading Orders (reserved block — controller in TSK-004 will emit these)
+    public const LOADING_ORDER_CREATED = 'loading_order.created';
+    public const LOADING_ORDER_UPDATED = 'loading_order.updated';
+    public const LOADING_ORDER_DRIVER_ASSIGNED = 'loading_order.driver_assigned';
+    public const LOADING_ORDER_DRIVER_UNASSIGNED = 'loading_order.driver_unassigned';
+    public const LOADING_ORDER_TRAILER_ASSIGNED = 'loading_order.trailer_assigned';
+    public const LOADING_ORDER_TRAILER_UNASSIGNED = 'loading_order.trailer_unassigned';
+    public const LOADING_ORDER_BLOCKED = 'loading_order.blocked';
+    public const LOADING_ORDER_UNBLOCKED = 'loading_order.unblocked';
+    public const LOADING_ORDER_CANCELLED = 'loading_order.cancelled';
+    public const LOADING_ORDER_SAP_FIELD_UPDATE_REJECTED = 'loading_order.sap_field_update_rejected';
+    public const LOADING_ORDER_SAP_IMPORTED = 'loading_order.sap_imported';
 }
