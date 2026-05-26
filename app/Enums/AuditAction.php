@@ -218,4 +218,13 @@ class AuditAction
     public const TERMINAL_WORKFLOW_ORDER_CONFIRMED = 'terminal.workflow.order_confirmed';
     public const TERMINAL_WORKFLOW_DELIVERY_NOTE_PRINTED = 'terminal.workflow.delivery_note_printed';
     public const TERMINAL_WORKFLOW_COMPLETED = 'terminal.workflow.completed';
+
+    // Safety Training (V6 §7) — emitted by SafetyTrainingService for the
+    // driver-confirmation-per-module flow + the 5-question exam.
+    // EXAM_SUBMITTED records the attempt; EXAM_PASSED / EXAM_FAILED captures
+    // the outcome so pass-rate analytics don't have to re-read each score.
+    public const TERMINAL_TRAINING_MODULE_COMPLETED = 'terminal.training.module_completed';
+    public const TERMINAL_TRAINING_EXAM_SUBMITTED   = 'terminal.training.exam_submitted';
+    public const TERMINAL_TRAINING_EXAM_PASSED      = 'terminal.training.exam_passed';
+    public const TERMINAL_TRAINING_EXAM_FAILED      = 'terminal.training.exam_failed';
 }
