@@ -58,6 +58,19 @@ class DatabaseSeeder extends Seeder
             // activation. Must run after DriverSeeder (binds existing drivers
             // by code) and TerminalPanelSeeder (flips TERM-DRV-1 to active).
             TerminalAuthDemoSeeder::class,
+            // Products & Quality Specifications (V2.1) — H2-5.0 active +
+            // H2-3.5 draft. No external dependencies.
+            ProductSpecificationSeeder::class,
+            // Calibration profile for OrthoSmart. Soft-resolves device_id
+            // from analysis_devices if Track A has landed; otherwise the
+            // snapshot device_bmk='AN-OS-01' carries the link.
+            CalibrationProfileSeeder::class,
+            // Analysis Devices (V1) — 3 demo devices with mixed states so
+            // the readiness dashboard exercises every tone. Must run BEFORE
+            // any future seeder that references device ids (e.g. when
+            // CalibrationProfileSeeder later resolves device_id from
+            // analysis_devices.code).
+            AnalysisDeviceSeeder::class,
         ]);
     }
 }

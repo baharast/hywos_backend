@@ -227,4 +227,32 @@ class AuditAction
     public const TERMINAL_TRAINING_EXAM_SUBMITTED   = 'terminal.training.exam_submitted';
     public const TERMINAL_TRAINING_EXAM_PASSED      = 'terminal.training.exam_passed';
     public const TERMINAL_TRAINING_EXAM_FAILED      = 'terminal.training.exam_failed';
+
+    // Products & Quality Specs (V2.1) — emitted by ProductSpecificationService
+    // and CalibrationProfileService. Lifecycle constants (created/updated/
+    // activated/retired) cover the header; gas-limit and component row
+    // mutations are tracked separately so an auditor can see exactly which
+    // limit / reference value changed.
+    public const PRODUCT_SPEC_CREATED = 'product_spec.created';
+    public const PRODUCT_SPEC_UPDATED = 'product_spec.updated';
+    public const PRODUCT_SPEC_ACTIVATED = 'product_spec.activated';
+    public const PRODUCT_SPEC_RETIRED = 'product_spec.retired';
+    public const PRODUCT_SPEC_GAS_LIMIT_ADDED = 'product_spec.gas_limit_added';
+    public const PRODUCT_SPEC_GAS_LIMIT_UPDATED = 'product_spec.gas_limit_updated';
+
+    public const CALIBRATION_PROFILE_CREATED = 'calibration_profile.created';
+    public const CALIBRATION_PROFILE_UPDATED = 'calibration_profile.updated';
+    public const CALIBRATION_PROFILE_ACTIVATED = 'calibration_profile.activated';
+    public const CALIBRATION_PROFILE_RETIRED = 'calibration_profile.retired';
+    public const CALIBRATION_COMPONENT_ADDED = 'calibration_profile.component_added';
+    public const CALIBRATION_COMPONENT_UPDATED = 'calibration_profile.component_updated';
+
+    // Analysis Devices (V1) — reserved for a future write controller
+    // (acknowledge / inhibit / mark-maintenance / fault-raised). Read-only
+    // in MVP per V1 §4.2; these constants are intentionally never emitted
+    // by the current AnalysisDeviceController.
+    public const ANALYSIS_DEVICE_INHIBITED = 'analysis_device.inhibited';
+    public const ANALYSIS_DEVICE_RESTORED = 'analysis_device.restored';
+    public const ANALYSIS_DEVICE_FAULT_RAISED = 'analysis_device.fault_raised';
+    public const ANALYSIS_DEVICE_CALIBRATION_DUE = 'analysis_device.calibration_due';
 }

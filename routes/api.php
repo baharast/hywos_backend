@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AnalysisDeviceController;
 use App\Http\Controllers\Api\BayLineController;
+use App\Http\Controllers\Api\CalibrationProfileController;
 use App\Http\Controllers\Api\CarrierController;
 use App\Http\Controllers\Api\ChipCardController;
 use App\Http\Controllers\Api\ClarificationCaseController;
@@ -15,6 +17,7 @@ use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
+use App\Http\Controllers\Api\ProductSpecificationController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\SafetyTrainingController;
 use App\Http\Controllers\Api\TanController;
@@ -496,6 +499,53 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{reportId}', [ReportsController::class, 'show'])->middleware('permission:reports.view');
         Route::get('/{reportId}/drill-down', [ReportsController::class, 'drillDown'])->middleware('permission:reports.view');
         Route::post('/{reportId}/export', [ReportsController::class, 'export'])->middleware('permission:reports.export');
+    });
+
+    /*
+     * Products & Quality Specifications (V2.1)
+     * Permissions: analysis.view (read) / analysis.manage (write)
+     * Two related entities, each with a draft/active/retired lifecycle and
+     * row-level edit audit. Edits to ACTIVE rows require a `reason`; the
+     * service enforces "all 6 components configured" before activate.
+     */
+    Route::prefix('product-specifications')->group(function () {
+        Route::get('', [ProductSpecificationController::class, 'index'])->middleware('permission:analysis.view');
+        Route::get('/{id}', [ProductSpecificationController::class, 'show'])->middleware('permission:analysis.view');
+
+        Route::post('', [ProductSpecificationController::class, 'store'])->middleware('permission:analysis.manage');
+        Route::put('/{id}', [ProductSpecificationController::class, 'update'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/activate', [ProductSpecificationController::class, 'activate'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/retire', [ProductSpecificationController::class, 'retire'])->middleware('permission:analysis.manage');
+
+        // One row per (spec, component) — POST to add, PUT to edit by rowId
+        Route::post('/{id}/gas-limits', [ProductSpecificationController::class, 'addGasLimit'])->middleware('permission:analysis.manage');
+        Route::put('/{id}/gas-limits/{rowId}', [ProductSpecificationController::class, 'updateGasLimit'])->middleware('permission:analysis.manage');
+    });
+
+    Route::prefix('calibration-profiles')->group(function () {
+        Route::get('', [CalibrationProfileController::class, 'index'])->middleware('permission:analysis.view');
+        Route::get('/{id}', [CalibrationProfileController::class, 'show'])->middleware('permission:analysis.view');
+
+        Route::post('', [CalibrationProfileController::class, 'store'])->middleware('permission:analysis.manage');
+        Route::put('/{id}', [CalibrationProfileController::class, 'update'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/activate', [CalibrationProfileController::class, 'activate'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/retire', [CalibrationProfileController::class, 'retire'])->middleware('permission:analysis.manage');
+
+        Route::post('/{id}/components', [CalibrationProfileController::class, 'addComponent'])->middleware('permission:analysis.manage');
+        Route::put('/{id}/components/{rowId}', [CalibrationProfileController::class, 'updateComponent'])->middleware('permission:analysis.manage');
+    });
+
+    /*
+     * Analysis Devices (V1) — read-only readiness monitor for the 3 MVP
+     * analysis devices (OrthoSmart / REGARD3900 / SAM1000DP2).
+     * Permissions: analysis.view only — no write surface in MVP per V1 §4.2.
+     */
+    Route::prefix('analysis-devices')->group(function () {
+        Route::get('', [AnalysisDeviceController::class, 'index'])->middleware('permission:analysis.view');
+        Route::get('/status-table', [AnalysisDeviceController::class, 'statusTable'])->middleware('permission:analysis.view');
+        Route::get('/{id}', [AnalysisDeviceController::class, 'show'])->middleware('permission:analysis.view');
+        Route::get('/{id}/channels', [AnalysisDeviceController::class, 'channels'])->middleware('permission:analysis.view');
+        Route::get('/{id}/events', [AnalysisDeviceController::class, 'events'])->middleware('permission:analysis.view');
     });
 
 });
