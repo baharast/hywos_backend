@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
+use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\TanController;
 use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
@@ -441,4 +442,18 @@ Route::prefix('documents-reports/operational-documents')->group(function () {
     Route::post('/{id}/reprint', [OperationalDocumentController::class, 'reprint']);
     Route::post('/{id}/hand-over', [OperationalDocumentController::class, 'handOver']);
     Route::post('/{id}/invalidate', [OperationalDocumentController::class, 'invalidate']);
+});
+
+Route::prefix('documents-reports/reports')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+    //
+    // Reports V2.1 is READ-ONLY (§2.1 / §3). Endpoints aggregate from other
+    // modules' tables and never mutate them. Drill-down is a returned
+    // `routePath` string for the FE to navigate to — corrective actions
+    // belong to the owning module.
+
+    Route::get('', [ReportsController::class, 'hub']);
+    Route::get('/{reportId}', [ReportsController::class, 'show']);
+    Route::get('/{reportId}/drill-down', [ReportsController::class, 'drillDown']);
+    Route::post('/{reportId}/export', [ReportsController::class, 'export']);
 });
