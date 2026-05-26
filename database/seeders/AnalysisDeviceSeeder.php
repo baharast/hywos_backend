@@ -60,9 +60,19 @@ class AnalysisDeviceSeeder extends Seeder
             [GasComponent::CO2, 0.08,    'ppm'],
         ];
         foreach ($readings as [$component, $value, $unit]) {
+            // DatabaseSeeder uses WithoutModelEvents, so the booted()
+            // hook on AnalysisDeviceLatestReading never fires and we
+            // must seed the UUID explicitly. Look up the existing row
+            // first to keep the id stable across re-seeds.
+            $existingId = AnalysisDeviceLatestReading::query()
+                ->where('device_id', $device->id)
+                ->where('component', $component)
+                ->value('id');
+
             AnalysisDeviceLatestReading::updateOrCreate(
                 ['device_id' => $device->id, 'component' => $component],
                 [
+                    'id' => $existingId ?? (string) Str::uuid(),
                     'value' => $value,
                     'unit' => $unit,
                     'validity' => 'valid',
@@ -96,9 +106,17 @@ class AnalysisDeviceSeeder extends Seeder
             ['CH-4', 'Ambient H2S', 'H2S', 'f1',     null,  null,  false, false, 'Channel fault — sensor not responding'],
         ];
         foreach ($channels as [$code, $label, $gas, $severity, $value, $unit, $ack, $inh, $msg]) {
+            // Same WithoutModelEvents workaround as the analyser readings
+            // above — pass an explicit id to avoid the NOT NULL violation.
+            $existingId = AnalysisDeviceChannel::query()
+                ->where('device_id', $device->id)
+                ->where('channel_code', $code)
+                ->value('id');
+
             AnalysisDeviceChannel::updateOrCreate(
                 ['device_id' => $device->id, 'channel_code' => $code],
                 [
+                    'id' => $existingId ?? (string) Str::uuid(),
                     'label' => $label,
                     'gas' => $gas,
                     'severity' => $severity,
