@@ -16,6 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             CorrelationIdMiddleware::class,
         ]);
+
+        // Spatie Permission middleware aliases — required in Laravel 11+
+        // because Spatie only registers Route macros, not the alias names
+        // referenced by `->middleware('permission:...')` in routes/api.php.
+        $middleware->alias([
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

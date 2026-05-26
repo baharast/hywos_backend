@@ -21,463 +21,454 @@ use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
 use App\Http\Controllers\Api\UserController;
 
-Route::prefix('companies')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-    // Re-enable auth and permission middleware when ready by uncommenting the lines below.
-
-    Route::get('', [CompanyController::class, 'index']);
-    Route::get('/{id}', [CompanyController::class, 'show']);
-
-    Route::post('', [CompanyController::class, 'store']);
-    Route::put('/{id}', [CompanyController::class, 'update']);
-    Route::patch('/{id}/activate', [CompanyController::class, 'activate']);
-    Route::patch('/{id}/deactivate', [CompanyController::class, 'deactivate']);
-    Route::delete('/{id}', [CompanyController::class, 'destroy']);
-});
-
-Route::prefix('users')->group(function () {
-    Route::get('', [UserController::class, 'index']);
-    Route::get('/{id}', [UserController::class, 'show']);
-
-    Route::post('', [UserController::class, 'store']);
-    Route::put('/{id}', [UserController::class, 'update']);
-
-    // Critical lifecycle actions (POST + reason + audit + event)
-    Route::post('/{id}/disable', [UserController::class, 'disable']);
-    Route::post('/{id}/enable', [UserController::class, 'enable']);
-    Route::post('/{id}/lock', [UserController::class, 'lock']);
-    Route::post('/{id}/unlock', [UserController::class, 'unlock']);
-    Route::post('/{id}/reset-access', [UserController::class, 'resetAccess']);
-
-    // @deprecated PATCH wrappers kept for FE transition; prefer the POST endpoints above.
-    Route::patch('/{id}/activate', [UserController::class, 'activate']);
-    Route::patch('/{id}/deactivate', [UserController::class, 'deactivate']);
-
-    Route::patch('/{id}/roles', [UserController::class, 'updateRoles']);
-    Route::delete('/{id}', [UserController::class, 'destroy']);
-});
-
-Route::prefix('baylines')->group(function () {
-    Route::get('/', function () {
-        return response()->json(['message' => 'Welcome to the HYWOS API']);
-    });
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-    // Re-enable auth and permission middleware when ready by uncommenting the lines below.
-
-    // Public read endpoints (originally protected by ['auth:sanctum', 'permission:baylines.view'])
-    Route::get('', [BayLineController::class, 'index']);
-    Route::get('/{id}', [BayLineController::class, 'show']);
-
-    // Manage endpoints (originally inside ['auth:sanctum'] group and per-route permission middleware)
-    Route::post('', [BayLineController::class, 'store']);
-    Route::put('/{id}', [BayLineController::class, 'update']);
-    Route::patch('/{id}/activate', [BayLineController::class, 'activate']);
-    Route::patch('/{id}/deactivate', [BayLineController::class, 'deactivate']);
-    Route::delete('/{id}', [BayLineController::class, 'destroy']);
-
-    /*
-    // To restore protection, use:
-    Route::middleware(['auth:sanctum', 'permission:baylines.view'])->group(function () {
-        Route::get('/baylines', [BayLineController::class, 'index']);
-        Route::get('/baylines/{id}', [BayLineController::class, 'show']);
-    });
-
-    Route::middleware(['auth:sanctum'])->group(function () {
-        Route::post('/baylines', [BayLineController::class, 'store'])->middleware('permission:baylines.create');
-        Route::put('/baylines/{id}', [BayLineController::class, 'update'])->middleware('permission:baylines.update');
-        Route::delete('/baylines/{id}', [BayLineController::class, 'destroy'])->middleware('permission:baylines.delete');
-    });
-    */
-});
-
-Route::prefix('parkings')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-    // Re-enable auth and permission middleware when ready by uncommenting the lines below.
-
-    Route::get('', [\App\Http\Controllers\Api\ParkingController::class, 'index']);
-    Route::get('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'show']);
-
-    Route::post('', [\App\Http\Controllers\Api\ParkingController::class, 'store']);
-    Route::put('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'update']);
-    Route::patch('/{id}/activate', [\App\Http\Controllers\Api\ParkingController::class, 'activate']);
-    Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\ParkingController::class, 'deactivate']);
-    Route::delete('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'destroy']);
-
-    // Lifecycle actions (V2.1 §16.1) — POST + required reason + audit + event.
-    Route::post('/{id}/reserve', [\App\Http\Controllers\Api\ParkingController::class, 'reserve']);
-    Route::post('/{id}/occupy', [\App\Http\Controllers\Api\ParkingController::class, 'occupy']);
-    Route::post('/{id}/clear', [\App\Http\Controllers\Api\ParkingController::class, 'clear']);
-    Route::post('/{id}/block', [\App\Http\Controllers\Api\ParkingController::class, 'block']);
-    Route::post('/{id}/unblock', [\App\Http\Controllers\Api\ParkingController::class, 'unblock']);
-    Route::post('/{id}/out-of-service', [\App\Http\Controllers\Api\ParkingController::class, 'outOfService']);
-    Route::post('/{id}/restore', [\App\Http\Controllers\Api\ParkingController::class, 'restore']);
-});
-
-Route::prefix('customers')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [\App\Http\Controllers\Api\CustomerController::class, 'index']);
-    Route::get('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'show']);
-
-    Route::post('', [\App\Http\Controllers\Api\CustomerController::class, 'store']);
-    Route::put('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'update']);
-
-    // Block/unblock are critical actions (POST + required reason + audit + event).
-    // activate/deactivate remain for the active<->inactive lifecycle (status field) separately.
-    Route::post('/{id}/block', [\App\Http\Controllers\Api\CustomerController::class, 'block']);
-    Route::post('/{id}/unblock', [\App\Http\Controllers\Api\CustomerController::class, 'unblock']);
-
-    Route::patch('/{id}/activate', [\App\Http\Controllers\Api\CustomerController::class, 'activate']);
-    Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\CustomerController::class, 'deactivate']);
-    Route::delete('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'destroy']);
-});
-
-Route::prefix('plant-configuration')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    // Read current configuration + counts + validation summary
-    Route::get('', [PlantConfigurationController::class, 'show']);
-
-    // Draft lifecycle
-    Route::post('/draft', [PlantConfigurationController::class, 'startDraft']);
-    Route::put('/draft', [PlantConfigurationController::class, 'updateDraft']);
-
-    // Validation + review + activation
-    Route::post('/validate', [PlantConfigurationController::class, 'validateConfiguration']);
-    Route::get('/review', [PlantConfigurationController::class, 'review']);
-    Route::post('/activate', [PlantConfigurationController::class, 'activate']);
-
-    // Structural object creation (during draft only — service rejects when locked)
-    Route::post('/areas', [PlantConfigurationController::class, 'storeArea']);
-    Route::post('/gates', [PlantConfigurationController::class, 'storeGate']);
-    Route::post('/terminals', [PlantConfigurationController::class, 'storeTerminal']);
-
-    // Detail for a single configured object by type+id
-    Route::get('/objects/{type}/{id}', [PlantConfigurationController::class, 'showObject']);
-
-    // Change request flow (only on active/locked configuration)
-    Route::post('/change-requests', [PlantConfigurationController::class, 'submitChangeRequest']);
-    Route::get('/change-requests/{id}', [PlantConfigurationController::class, 'showChangeRequest']);
-    Route::post('/change-requests/{id}/approve', [PlantConfigurationController::class, 'approveChangeRequest']);
-    Route::post('/change-requests/{id}/reject', [PlantConfigurationController::class, 'rejectChangeRequest']);
-    Route::post('/change-requests/{id}/apply', [PlantConfigurationController::class, 'applyChangeRequest']);
-});
-
-Route::prefix('drivers')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    // List/detail
-    Route::get('', [DriverController::class, 'index']);
-    Route::post('/export', [DriverController::class, 'export']);
-    Route::get('/{id}', [DriverController::class, 'show']);
-
-    // Create/update
-    Route::post('', [DriverController::class, 'store']);
-    Route::put('/{id}', [DriverController::class, 'update']);
-
-    // Critical actions (POST + required reason + audit + event)
-    Route::post('/{id}/block', [DriverController::class, 'block']);
-    Route::post('/{id}/unblock', [DriverController::class, 'unblock']);
-
-    // Identification (chip cards + TANs)
-    Route::get('/{id}/auth-media', [DriverController::class, 'authMedia']);
-    Route::post('/{id}/tan', [DriverController::class, 'createTan']);
-
-    // Detail tabs (placeholders for modules not yet implemented)
-    Route::get('/{id}/plant-visits', [DriverController::class, 'plantVisits']);
-    Route::get('/{id}/events-audit', [DriverController::class, 'eventsAudit']);
-});
-
-Route::prefix('loading-control')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('/station-view', [LoadingControlController::class, 'stationView']);
-    Route::get('/active-loadings', [LoadingControlController::class, 'activeLoadings']);
-
-    Route::get('/loadings/{id}', [LoadingControlController::class, 'show']);
-    Route::get('/loadings/{id}/events', [LoadingControlController::class, 'events']);
-    Route::get('/loadings/{id}/audit', [LoadingControlController::class, 'audit']);
-    Route::post('/loadings/{id}/notes', [LoadingControlController::class, 'addNote']);
-});
-
-Route::prefix('trailers')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [TrailerController::class, 'index']);
-    Route::post('/export', [TrailerController::class, 'export']);
-    Route::get('/{id}', [TrailerController::class, 'show']);
-
-    Route::post('', [TrailerController::class, 'store']);
-    Route::put('/{id}', [TrailerController::class, 'update']);
-
-    Route::post('/{id}/block', [TrailerController::class, 'block']);
-    Route::post('/{id}/unblock', [TrailerController::class, 'unblock']);
-
-    Route::get('/{id}/auth-media', [TrailerController::class, 'authMedia']);
-
-    Route::get('/{id}/plant-visits', [TrailerController::class, 'plantVisits']);
-    Route::get('/{id}/loadings', [TrailerController::class, 'loadings']);
-    Route::get('/{id}/documents', [TrailerController::class, 'documents']);
-    Route::get('/{id}/events-audit', [TrailerController::class, 'eventsAudit']);
-});
-
-Route::prefix('freight-forwarders-carriers')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [CarrierController::class, 'index']);
-    Route::post('/export', [CarrierController::class, 'export']);
-    Route::get('/{id}', [CarrierController::class, 'show']);
-
-    Route::post('', [CarrierController::class, 'store']);
-    Route::put('/{id}', [CarrierController::class, 'update']);
-
-    // Critical actions (POST + required reason + audit + event)
-    Route::post('/{id}/block', [CarrierController::class, 'block']);
-    Route::post('/{id}/unblock', [CarrierController::class, 'unblock']);
-
-    // Related records tabs
-    Route::get('/{id}/drivers', [CarrierController::class, 'drivers']);
-    Route::get('/{id}/vehicles', [CarrierController::class, 'vehicles']);
-    Route::get('/{id}/trailers', [CarrierController::class, 'trailers']);
-    Route::get('/{id}/orders', [CarrierController::class, 'orders']);
-    Route::get('/{id}/plant-visits', [CarrierController::class, 'plantVisits']);
-    Route::get('/{id}/events-audit', [CarrierController::class, 'eventsAudit']);
-});
-
-Route::prefix('tractors-vehicles')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [TractorVehicleController::class, 'index']);
-    Route::post('/export', [TractorVehicleController::class, 'export']);
-    Route::get('/{id}', [TractorVehicleController::class, 'show']);
-
-    Route::post('', [TractorVehicleController::class, 'store']);
-    Route::put('/{id}', [TractorVehicleController::class, 'update']);
-
-    // Critical actions (POST + required reason + audit + event)
-    Route::post('/{id}/block', [TractorVehicleController::class, 'block']);
-    Route::post('/{id}/unblock', [TractorVehicleController::class, 'unblock']);
-
-    // History tabs
-    Route::get('/{id}/couplings', [TractorVehicleController::class, 'couplings']);
-    Route::get('/{id}/plant-visits', [TractorVehicleController::class, 'plantVisits']);
-    Route::get('/{id}/clarifications', [TractorVehicleController::class, 'clarifications']);
-    Route::get('/{id}/events-audit', [TractorVehicleController::class, 'eventsAudit']);
-});
-
-Route::prefix('master-data-export')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    // Recent exports list + summary counts
-    Route::get('', [MasterDataExportController::class, 'index']);
-
-    // Create + run a new export job (synchronous in dev; queue-ready)
-    Route::post('', [MasterDataExportController::class, 'store']);
-
-    // Single job detail
-    Route::get('/{id}', [MasterDataExportController::class, 'show']);
-
-    // Download the generated file when status=ready
-    Route::get('/{id}/download', [MasterDataExportController::class, 'download']);
-
-    // Retry a failed job; produces a new job with same setup
-    Route::post('/{id}/retry', [MasterDataExportController::class, 'retry']);
-});
-
-Route::prefix('chip-cards')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [ChipCardController::class, 'index']);
-    Route::post('/export', [ChipCardController::class, 'export']);
-    Route::get('/{id}', [ChipCardController::class, 'show']);
-
-    Route::post('', [ChipCardController::class, 'store']);
-    Route::put('/{id}', [ChipCardController::class, 'update']);
-
-    // Assignment
-    Route::post('/{id}/assign', [ChipCardController::class, 'assign']);
-    Route::post('/{id}/unassign', [ChipCardController::class, 'unassign']);
-
-    // Lifecycle (POST + required reason + audit + event)
-    Route::post('/{id}/block', [ChipCardController::class, 'block']);
-    Route::post('/{id}/unblock', [ChipCardController::class, 'unblock']);
-    Route::post('/{id}/mark-lost', [ChipCardController::class, 'markLost']);
-    Route::post('/{id}/mark-defective', [ChipCardController::class, 'markDefective']);
-    Route::post('/{id}/replace', [ChipCardController::class, 'replace']);
-    Route::post('/{id}/archive', [ChipCardController::class, 'archive']);
-
-    // History tabs
-    Route::get('/{id}/assignment-history', [ChipCardController::class, 'assignmentHistory']);
-    Route::get('/{id}/usage-history', [ChipCardController::class, 'usageHistory']);
-    Route::get('/{id}/events-audit', [ChipCardController::class, 'eventsAudit']);
-});
-
-Route::prefix('tans')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [TanController::class, 'index']);
-    Route::post('/export', [TanController::class, 'export']);
-    Route::get('/{id}', [TanController::class, 'show']);
-
-    // Create (generate) — returns oneTimeFullValue exactly once
-    Route::post('', [TanController::class, 'store']);
-
-    // Lifecycle (POST + required reason + audit + event)
-    Route::post('/{id}/revoke', [TanController::class, 'revoke']);
-    Route::post('/{id}/expire-now', [TanController::class, 'expireNow']);
-
-    // History tabs
-    Route::get('/{id}/usage-history', [TanController::class, 'usageHistory']);
-    Route::get('/{id}/security-events', [TanController::class, 'securityEvents']);
-    Route::get('/{id}/events-audit', [TanController::class, 'eventsAudit']);
-});
-
-Route::prefix('clarification-cases')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [ClarificationCaseController::class, 'index']);
-    Route::get('/{id}', [ClarificationCaseController::class, 'show']);
-    Route::post('', [ClarificationCaseController::class, 'store']);
-
-    // Lifecycle (V1.3 §4.1) — POST + audit + event. No `cancel` endpoint
-    // exists because V1.3 has no `cancelled` status.
-    Route::post('/{id}/acknowledge', [ClarificationCaseController::class, 'acknowledge']);
-    Route::post('/{id}/assign', [ClarificationCaseController::class, 'assign']);
-    Route::post('/{id}/move-to-waiting-for-owner', [ClarificationCaseController::class, 'moveToWaitingForOwner']);
-    Route::post('/{id}/resolve', [ClarificationCaseController::class, 'resolve']);
-    Route::post('/{id}/close', [ClarificationCaseController::class, 'close']);
-});
-
-Route::prefix('loading-orders')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [LoadingOrderController::class, 'index']);
-    Route::get('/{id}', [LoadingOrderController::class, 'show']);
-    Route::post('', [LoadingOrderController::class, 'store']);
-    Route::put('/{id}', [LoadingOrderController::class, 'update']);
-
-    // Assignment (no reason required — these are dispatcher actions, not critical state changes)
-    Route::post('/{id}/assign-driver', [LoadingOrderController::class, 'assignDriver']);
-    Route::post('/{id}/unassign-driver', [LoadingOrderController::class, 'unassignDriver']);
-    Route::post('/{id}/assign-trailer', [LoadingOrderController::class, 'assignTrailer']);
-    Route::post('/{id}/unassign-trailer', [LoadingOrderController::class, 'unassignTrailer']);
-
-    // Lifecycle (POST + reason + audit + event)
-    Route::post('/{id}/block', [LoadingOrderController::class, 'block']);
-    Route::post('/{id}/unblock', [LoadingOrderController::class, 'unblock']);
-    Route::post('/{id}/cancel', [LoadingOrderController::class, 'cancel']);
-
-    // Timeline
-    Route::get('/{id}/events-audit', [LoadingOrderController::class, 'eventsAudit']);
-});
-
-Route::prefix('plant-visits')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-
-    Route::get('', [PlantVisitController::class, 'index']);
-    Route::get('/{id}', [PlantVisitController::class, 'show']);
-    Route::post('', [PlantVisitController::class, 'store']);
-
-    // Step + location lifecycle
-    Route::post('/{id}/advance-step', [PlantVisitController::class, 'advanceStep']);
-    Route::post('/{id}/change-location', [PlantVisitController::class, 'changeLocation']);
-
-    // Status transitions (POST + audit + event; reason required on
-    // wait/block/raise-clarification/force-close)
-    Route::post('/{id}/wait', [PlantVisitController::class, 'wait']);
-    Route::post('/{id}/resume', [PlantVisitController::class, 'resume']);
-    Route::post('/{id}/block', [PlantVisitController::class, 'block']);
-    Route::post('/{id}/unblock', [PlantVisitController::class, 'unblock']);
-    Route::post('/{id}/raise-clarification', [PlantVisitController::class, 'raiseClarification']);
-    Route::post('/{id}/mark-ready-for-exit', [PlantVisitController::class, 'markReadyForExit']);
-    Route::post('/{id}/close', [PlantVisitController::class, 'close']);
-    Route::post('/{id}/force-close', [PlantVisitController::class, 'forceClose']);
-
-    // Timeline
-    Route::get('/{id}/events-audit', [PlantVisitController::class, 'eventsAudit']);
-});
-
-Route::prefix('sap-sync')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-    //
-    // SAP Sync / Order Import Status is STRICTLY read-only in MVP per V1.5 §2.2:
-    //   - no POST /retry (V1.5 §4.2 — "no manual retry action in MVP")
-    //   - no order creation / editing / assignment (belongs in /loading-orders)
-    //   - no DELETE, no bulk, no quality / document decisions
-    // Write endpoints arrive only when the SAP_SYNC_* audit constants in
-    // App\Enums\AuditAction get a real emitter.
-
-    Route::get('', [\App\Http\Controllers\Api\SapSyncController::class, 'index']);
-    Route::get('/{id}', [\App\Http\Controllers\Api\SapSyncController::class, 'show']);
-});
-
-Route::prefix('gate-terminal-monitor')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-    //
-    // Read-only per Gate & Terminal Monitor V2.3 §2.2:
-    //   - no remote gate opening, force exit, or PLC/ESD commands
-    //   - no order assignment, quality decision, or document handling here
-    //   - no bulk, no DELETE, no POST in this slice
-    // Write endpoints arrive only when the GATE_TERMINAL_* audit constants
-    // in App\Enums\AuditAction get a real emitter.
-
-    Route::get('/touchpoints', [GateTerminalMonitorController::class, 'touchpoints']);
-    Route::get('/sessions', [GateTerminalMonitorController::class, 'sessions']);
-    Route::get('/sessions/{id}', [GateTerminalMonitorController::class, 'show']);
-});
-
-Route::prefix('documents-reports/operational-documents')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-    //
-    // Operational Documents V1.2 — certificates, delivery notes and QM
-    // documents. Lifecycle actions (print/reprint/handover/invalidate)
-    // are auditable; reprint and invalidate require a reason per V1.2
-    // §13 + §18. No bulk actions and no hard delete (V1.2 §2.2).
-
-    Route::get('', [OperationalDocumentController::class, 'index']);
-    Route::get('/{id}', [OperationalDocumentController::class, 'show']);
-    Route::get('/{id}/preview', [OperationalDocumentController::class, 'preview']);
-    Route::get('/{id}/print-history', [OperationalDocumentController::class, 'printHistory']);
-
-    Route::post('/{id}/print', [OperationalDocumentController::class, 'print']);
-    Route::post('/{id}/reprint', [OperationalDocumentController::class, 'reprint']);
-    Route::post('/{id}/hand-over', [OperationalDocumentController::class, 'handOver']);
-    Route::post('/{id}/invalidate', [OperationalDocumentController::class, 'invalidate']);
-});
-
-Route::prefix('documents-reports/reports')->group(function () {
-    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
-    //
-    // Reports V2.1 is READ-ONLY (§2.1 / §3). Endpoints aggregate from other
-    // modules' tables and never mutate them. Drill-down is a returned
-    // `routePath` string for the FE to navigate to — corrective actions
-    // belong to the owning module.
-
-    Route::get('', [ReportsController::class, 'hub']);
-    Route::get('/{reportId}', [ReportsController::class, 'show']);
-    Route::get('/{reportId}/drill-down', [ReportsController::class, 'drillDown']);
-    Route::post('/{reportId}/export', [ReportsController::class, 'export']);
-});
+/*
+|--------------------------------------------------------------------------
+| Routing & Access Rules
+|--------------------------------------------------------------------------
+|
+| Two access tiers:
+|
+|   1. PUBLIC — `/api/terminal/*`
+|      Driver terminal login (V3). Identity is ESTABLISHED here:
+|        - GET  /config/{terminal}        terminal config (no auth)
+|        - GET  /safety-info              safety bullets (no auth)
+|        - POST /auth/tan                 driver TAN login (no auth)
+|        - POST /auth/chip                driver chip login (no auth)
+|        - POST /auth/manager-logon       Manager popup → Sanctum token
+|        - GET  /session/{id}             driver checks own session
+|        - POST /session/{id}/language    driver changes language
+|        - POST /session/{id}/logout      driver logs out manually
+|      Driver session id in the URL is the credential — Sanctum is for
+|      dashboard users, not for driver terminals (drivers have no users row).
+|
+|   2. SANCTUM-PROTECTED — everything else
+|      Requires `Authorization: Bearer <token>` (token returned by
+|      `POST /api/terminal/auth/manager-logon`). Each route then asserts
+|      one Spatie permission seeded by RolePermissionSeeder.
+|
+| Role → permission map lives in `database/seeders/RolePermissionSeeder.php`
+| (constants `PERMISSIONS_BY_MODULE` and `ROLE_PERMISSIONS`). The 7 demo
+| users seeded by AdminUserSeeder cover one role each plus locked/disabled
+| accounts for the V3 §11.3 error paths.
+*/
+
+/*
+|--------------------------------------------------------------------------
+| Public — Driver Terminal Login (V3)
+|--------------------------------------------------------------------------
+*/
 
 Route::prefix('terminal')->group(function () {
-    // Driver Terminal Login (V3). Public endpoints — identity is established
-    // BY these calls. Manager Logon issues a Sanctum personal access token
-    // that dashboard routes will require once their middleware is re-enabled.
-    // No bulk, no DELETE.
-
-    // Read
+    // Terminal info + safety content — accessible before authentication so
+    // the kiosk page can render the welcome screen.
     Route::get('/config/{terminal}', [TerminalAuthController::class, 'config']);
     Route::get('/safety-info', [TerminalAuthController::class, 'safetyInfo']);
-    Route::get('/session/{id}', [TerminalAuthController::class, 'session']);
 
-    // Driver identification
+    // Driver identification — TAN / chip / Tab-simulation chip
     Route::post('/auth/tan', [TerminalAuthController::class, 'authenticateTan']);
     Route::post('/auth/chip', [TerminalAuthController::class, 'authenticateChip']);
 
-    // Manager / Operator popup (V3 §11) — Sanctum token on success
+    // Manager / Operator popup (V3 §11) — issues a Sanctum personal access
+    // token on success. This is the only entry point that returns a token
+    // usable for the protected routes below.
     Route::post('/auth/manager-logon', [TerminalAuthController::class, 'managerLogon']);
 
-    // Session lifecycle
+    // Driver session lifecycle — identity is the session id in the URL.
+    // Service layer validates the session exists; no Sanctum (drivers are
+    // not dashboard users).
+    Route::get('/session/{id}', [TerminalAuthController::class, 'session']);
     Route::post('/session/{id}/language', [TerminalAuthController::class, 'changeLanguage']);
     Route::post('/session/{id}/logout', [TerminalAuthController::class, 'logout']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Protected — Dashboard (Sanctum + Spatie permission)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    /*
+     * Companies — Master Data
+     * Permissions: companies.view (read) / companies.manage (write)
+     */
+    Route::prefix('companies')->group(function () {
+        Route::get('', [CompanyController::class, 'index'])->middleware('permission:companies.view');
+        Route::get('/{id}', [CompanyController::class, 'show'])->middleware('permission:companies.view');
+
+        Route::post('', [CompanyController::class, 'store'])->middleware('permission:companies.manage');
+        Route::put('/{id}', [CompanyController::class, 'update'])->middleware('permission:companies.manage');
+        Route::patch('/{id}/activate', [CompanyController::class, 'activate'])->middleware('permission:companies.manage');
+        Route::patch('/{id}/deactivate', [CompanyController::class, 'deactivate'])->middleware('permission:companies.manage');
+        Route::delete('/{id}', [CompanyController::class, 'destroy'])->middleware('permission:companies.manage');
+    });
+
+    /*
+     * Users — Administration
+     * Permissions: users.view (read) / users.manage (write + lifecycle)
+     */
+    Route::prefix('users')->group(function () {
+        Route::get('', [UserController::class, 'index'])->middleware('permission:users.view');
+        Route::get('/{id}', [UserController::class, 'show'])->middleware('permission:users.view');
+
+        Route::post('', [UserController::class, 'store'])->middleware('permission:users.manage');
+        Route::put('/{id}', [UserController::class, 'update'])->middleware('permission:users.manage');
+
+        Route::post('/{id}/disable', [UserController::class, 'disable'])->middleware('permission:users.manage');
+        Route::post('/{id}/enable', [UserController::class, 'enable'])->middleware('permission:users.manage');
+        Route::post('/{id}/lock', [UserController::class, 'lock'])->middleware('permission:users.manage');
+        Route::post('/{id}/unlock', [UserController::class, 'unlock'])->middleware('permission:users.manage');
+        Route::post('/{id}/reset-access', [UserController::class, 'resetAccess'])->middleware('permission:users.manage');
+
+        Route::patch('/{id}/activate', [UserController::class, 'activate'])->middleware('permission:users.manage');
+        Route::patch('/{id}/deactivate', [UserController::class, 'deactivate'])->middleware('permission:users.manage');
+        Route::patch('/{id}/roles', [UserController::class, 'updateRoles'])->middleware('permission:users.manage');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('permission:users.manage');
+    });
+
+    /*
+     * BayLines — operational state for Loading Control
+     * Permissions: loading_control.view / loading_control.manage
+     */
+    Route::prefix('baylines')->group(function () {
+        Route::get('/', function () {
+            return response()->json(['message' => 'Welcome to the HYWOS API']);
+        });
+
+        Route::get('', [BayLineController::class, 'index'])->middleware('permission:loading_control.view');
+        Route::get('/{id}', [BayLineController::class, 'show'])->middleware('permission:loading_control.view');
+
+        Route::post('', [BayLineController::class, 'store'])->middleware('permission:loading_control.manage');
+        Route::put('/{id}', [BayLineController::class, 'update'])->middleware('permission:loading_control.manage');
+        Route::patch('/{id}/activate', [BayLineController::class, 'activate'])->middleware('permission:loading_control.manage');
+        Route::patch('/{id}/deactivate', [BayLineController::class, 'deactivate'])->middleware('permission:loading_control.manage');
+        Route::delete('/{id}', [BayLineController::class, 'destroy'])->middleware('permission:loading_control.manage');
+    });
+
+    /*
+     * Parkings / Trailer Pool — Operations
+     * Permissions: plant_visits.view / plant_visits.manage
+     */
+    Route::prefix('parkings')->group(function () {
+        Route::get('', [\App\Http\Controllers\Api\ParkingController::class, 'index'])->middleware('permission:plant_visits.view');
+        Route::get('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'show'])->middleware('permission:plant_visits.view');
+
+        Route::post('', [\App\Http\Controllers\Api\ParkingController::class, 'store'])->middleware('permission:plant_visits.manage');
+        Route::put('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'update'])->middleware('permission:plant_visits.manage');
+        Route::patch('/{id}/activate', [\App\Http\Controllers\Api\ParkingController::class, 'activate'])->middleware('permission:plant_visits.manage');
+        Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\ParkingController::class, 'deactivate'])->middleware('permission:plant_visits.manage');
+        Route::delete('/{id}', [\App\Http\Controllers\Api\ParkingController::class, 'destroy'])->middleware('permission:plant_visits.manage');
+
+        // Lifecycle actions (V2.1 §16.1) — POST + required reason + audit + event.
+        Route::post('/{id}/reserve', [\App\Http\Controllers\Api\ParkingController::class, 'reserve'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/occupy', [\App\Http\Controllers\Api\ParkingController::class, 'occupy'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/clear', [\App\Http\Controllers\Api\ParkingController::class, 'clear'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/block', [\App\Http\Controllers\Api\ParkingController::class, 'block'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/unblock', [\App\Http\Controllers\Api\ParkingController::class, 'unblock'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/out-of-service', [\App\Http\Controllers\Api\ParkingController::class, 'outOfService'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/restore', [\App\Http\Controllers\Api\ParkingController::class, 'restore'])->middleware('permission:plant_visits.manage');
+    });
+
+    /*
+     * Customers — Master Data
+     * Permissions: customers.view / customers.update (edit) / customers.manage (critical)
+     */
+    Route::prefix('customers')->group(function () {
+        Route::get('', [\App\Http\Controllers\Api\CustomerController::class, 'index'])->middleware('permission:customers.view');
+        Route::get('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'show'])->middleware('permission:customers.view');
+
+        Route::post('', [\App\Http\Controllers\Api\CustomerController::class, 'store'])->middleware('permission:customers.update');
+        Route::put('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'update'])->middleware('permission:customers.update');
+
+        // Critical (V1 §10.2): block/unblock + activate/deactivate + delete
+        Route::post('/{id}/block', [\App\Http\Controllers\Api\CustomerController::class, 'block'])->middleware('permission:customers.manage');
+        Route::post('/{id}/unblock', [\App\Http\Controllers\Api\CustomerController::class, 'unblock'])->middleware('permission:customers.manage');
+        Route::patch('/{id}/activate', [\App\Http\Controllers\Api\CustomerController::class, 'activate'])->middleware('permission:customers.manage');
+        Route::patch('/{id}/deactivate', [\App\Http\Controllers\Api\CustomerController::class, 'deactivate'])->middleware('permission:customers.manage');
+        Route::delete('/{id}', [\App\Http\Controllers\Api\CustomerController::class, 'destroy'])->middleware('permission:customers.manage');
+    });
+
+    /*
+     * Plant Configuration — Administration
+     * Permissions: plant_configuration.view (read) / plant_configuration.manage (write)
+     */
+    Route::prefix('plant-configuration')->group(function () {
+        Route::get('', [PlantConfigurationController::class, 'show'])->middleware('permission:plant_configuration.view');
+        Route::get('/review', [PlantConfigurationController::class, 'review'])->middleware('permission:plant_configuration.view');
+        Route::get('/objects/{type}/{id}', [PlantConfigurationController::class, 'showObject'])->middleware('permission:plant_configuration.view');
+        Route::get('/change-requests/{id}', [PlantConfigurationController::class, 'showChangeRequest'])->middleware('permission:plant_configuration.view');
+
+        // Draft lifecycle + structural creation + activation — all critical
+        Route::post('/draft', [PlantConfigurationController::class, 'startDraft'])->middleware('permission:plant_configuration.manage');
+        Route::put('/draft', [PlantConfigurationController::class, 'updateDraft'])->middleware('permission:plant_configuration.manage');
+        Route::post('/validate', [PlantConfigurationController::class, 'validateConfiguration'])->middleware('permission:plant_configuration.manage');
+        Route::post('/activate', [PlantConfigurationController::class, 'activate'])->middleware('permission:plant_configuration.manage');
+        Route::post('/areas', [PlantConfigurationController::class, 'storeArea'])->middleware('permission:plant_configuration.manage');
+        Route::post('/gates', [PlantConfigurationController::class, 'storeGate'])->middleware('permission:plant_configuration.manage');
+        Route::post('/terminals', [PlantConfigurationController::class, 'storeTerminal'])->middleware('permission:plant_configuration.manage');
+
+        Route::post('/change-requests', [PlantConfigurationController::class, 'submitChangeRequest'])->middleware('permission:plant_configuration.manage');
+        Route::post('/change-requests/{id}/approve', [PlantConfigurationController::class, 'approveChangeRequest'])->middleware('permission:plant_configuration.manage');
+        Route::post('/change-requests/{id}/reject', [PlantConfigurationController::class, 'rejectChangeRequest'])->middleware('permission:plant_configuration.manage');
+        Route::post('/change-requests/{id}/apply', [PlantConfigurationController::class, 'applyChangeRequest'])->middleware('permission:plant_configuration.manage');
+    });
+
+    /*
+     * Drivers — Master Data
+     * Permissions: drivers.view / drivers.update / drivers.manage (block/TAN — critical)
+     */
+    Route::prefix('drivers')->group(function () {
+        Route::get('', [DriverController::class, 'index'])->middleware('permission:drivers.view');
+        Route::get('/{id}', [DriverController::class, 'show'])->middleware('permission:drivers.view');
+        Route::get('/{id}/auth-media', [DriverController::class, 'authMedia'])->middleware('permission:drivers.view');
+        Route::get('/{id}/plant-visits', [DriverController::class, 'plantVisits'])->middleware('permission:drivers.view');
+        Route::get('/{id}/events-audit', [DriverController::class, 'eventsAudit'])->middleware('permission:drivers.view');
+        Route::post('/export', [DriverController::class, 'export'])->middleware('permission:reports.export');
+
+        Route::post('', [DriverController::class, 'store'])->middleware('permission:drivers.update');
+        Route::put('/{id}', [DriverController::class, 'update'])->middleware('permission:drivers.update');
+
+        // Critical
+        Route::post('/{id}/block', [DriverController::class, 'block'])->middleware('permission:drivers.manage');
+        Route::post('/{id}/unblock', [DriverController::class, 'unblock'])->middleware('permission:drivers.manage');
+        Route::post('/{id}/tan', [DriverController::class, 'createTan'])->middleware('permission:tans.manage');
+    });
+
+    /*
+     * Loading Control — Operations
+     * Permissions: loading_control.view / loading_control.manage
+     */
+    Route::prefix('loading-control')->group(function () {
+        Route::get('/station-view', [LoadingControlController::class, 'stationView'])->middleware('permission:loading_control.view');
+        Route::get('/active-loadings', [LoadingControlController::class, 'activeLoadings'])->middleware('permission:loading_control.view');
+        Route::get('/loadings/{id}', [LoadingControlController::class, 'show'])->middleware('permission:loading_control.view');
+        Route::get('/loadings/{id}/events', [LoadingControlController::class, 'events'])->middleware('permission:loading_control.view');
+        Route::get('/loadings/{id}/audit', [LoadingControlController::class, 'audit'])->middleware('permission:loading_control.view');
+
+        Route::post('/loadings/{id}/notes', [LoadingControlController::class, 'addNote'])->middleware('permission:loading_control.manage');
+    });
+
+    /*
+     * Trailers — Master Data
+     * Permissions: trailers.view / trailers.update / trailers.manage
+     */
+    Route::prefix('trailers')->group(function () {
+        Route::get('', [TrailerController::class, 'index'])->middleware('permission:trailers.view');
+        Route::get('/{id}', [TrailerController::class, 'show'])->middleware('permission:trailers.view');
+        Route::get('/{id}/auth-media', [TrailerController::class, 'authMedia'])->middleware('permission:trailers.view');
+        Route::get('/{id}/plant-visits', [TrailerController::class, 'plantVisits'])->middleware('permission:trailers.view');
+        Route::get('/{id}/loadings', [TrailerController::class, 'loadings'])->middleware('permission:trailers.view');
+        Route::get('/{id}/documents', [TrailerController::class, 'documents'])->middleware('permission:trailers.view');
+        Route::get('/{id}/events-audit', [TrailerController::class, 'eventsAudit'])->middleware('permission:trailers.view');
+        Route::post('/export', [TrailerController::class, 'export'])->middleware('permission:reports.export');
+
+        Route::post('', [TrailerController::class, 'store'])->middleware('permission:trailers.update');
+        Route::put('/{id}', [TrailerController::class, 'update'])->middleware('permission:trailers.update');
+
+        Route::post('/{id}/block', [TrailerController::class, 'block'])->middleware('permission:trailers.manage');
+        Route::post('/{id}/unblock', [TrailerController::class, 'unblock'])->middleware('permission:trailers.manage');
+    });
+
+    /*
+     * Freight Forwarders / Carriers — Master Data
+     * Permissions: carriers.view / carriers.update / carriers.manage
+     */
+    Route::prefix('freight-forwarders-carriers')->group(function () {
+        Route::get('', [CarrierController::class, 'index'])->middleware('permission:carriers.view');
+        Route::get('/{id}', [CarrierController::class, 'show'])->middleware('permission:carriers.view');
+        Route::get('/{id}/drivers', [CarrierController::class, 'drivers'])->middleware('permission:carriers.view');
+        Route::get('/{id}/vehicles', [CarrierController::class, 'vehicles'])->middleware('permission:carriers.view');
+        Route::get('/{id}/trailers', [CarrierController::class, 'trailers'])->middleware('permission:carriers.view');
+        Route::get('/{id}/orders', [CarrierController::class, 'orders'])->middleware('permission:carriers.view');
+        Route::get('/{id}/plant-visits', [CarrierController::class, 'plantVisits'])->middleware('permission:carriers.view');
+        Route::get('/{id}/events-audit', [CarrierController::class, 'eventsAudit'])->middleware('permission:carriers.view');
+        Route::post('/export', [CarrierController::class, 'export'])->middleware('permission:reports.export');
+
+        Route::post('', [CarrierController::class, 'store'])->middleware('permission:carriers.update');
+        Route::put('/{id}', [CarrierController::class, 'update'])->middleware('permission:carriers.update');
+
+        Route::post('/{id}/block', [CarrierController::class, 'block'])->middleware('permission:carriers.manage');
+        Route::post('/{id}/unblock', [CarrierController::class, 'unblock'])->middleware('permission:carriers.manage');
+    });
+
+    /*
+     * Tractors / Vehicles — Master Data
+     * Permissions: vehicles.view / vehicles.update / vehicles.manage
+     */
+    Route::prefix('tractors-vehicles')->group(function () {
+        Route::get('', [TractorVehicleController::class, 'index'])->middleware('permission:vehicles.view');
+        Route::get('/{id}', [TractorVehicleController::class, 'show'])->middleware('permission:vehicles.view');
+        Route::get('/{id}/couplings', [TractorVehicleController::class, 'couplings'])->middleware('permission:vehicles.view');
+        Route::get('/{id}/plant-visits', [TractorVehicleController::class, 'plantVisits'])->middleware('permission:vehicles.view');
+        Route::get('/{id}/clarifications', [TractorVehicleController::class, 'clarifications'])->middleware('permission:vehicles.view');
+        Route::get('/{id}/events-audit', [TractorVehicleController::class, 'eventsAudit'])->middleware('permission:vehicles.view');
+        Route::post('/export', [TractorVehicleController::class, 'export'])->middleware('permission:reports.export');
+
+        Route::post('', [TractorVehicleController::class, 'store'])->middleware('permission:vehicles.update');
+        Route::put('/{id}', [TractorVehicleController::class, 'update'])->middleware('permission:vehicles.update');
+
+        Route::post('/{id}/block', [TractorVehicleController::class, 'block'])->middleware('permission:vehicles.manage');
+        Route::post('/{id}/unblock', [TractorVehicleController::class, 'unblock'])->middleware('permission:vehicles.manage');
+    });
+
+    /*
+     * Master Data Export — Master Data
+     * Permission: reports.export (export work crosses all master data)
+     */
+    Route::prefix('master-data-export')->group(function () {
+        Route::get('', [MasterDataExportController::class, 'index'])->middleware('permission:reports.export');
+        Route::get('/{id}', [MasterDataExportController::class, 'show'])->middleware('permission:reports.export');
+        Route::get('/{id}/download', [MasterDataExportController::class, 'download'])->middleware('permission:reports.export');
+
+        Route::post('', [MasterDataExportController::class, 'store'])->middleware('permission:reports.export');
+        Route::post('/{id}/retry', [MasterDataExportController::class, 'retry'])->middleware('permission:reports.export');
+    });
+
+    /*
+     * Chip Cards — Master Data
+     * Permissions: chip_cards.view / chip_cards.manage (all writes — assignment + lifecycle are critical per V1 §10.2)
+     */
+    Route::prefix('chip-cards')->group(function () {
+        Route::get('', [ChipCardController::class, 'index'])->middleware('permission:chip_cards.view');
+        Route::get('/{id}', [ChipCardController::class, 'show'])->middleware('permission:chip_cards.view');
+        Route::get('/{id}/assignment-history', [ChipCardController::class, 'assignmentHistory'])->middleware('permission:chip_cards.view');
+        Route::get('/{id}/usage-history', [ChipCardController::class, 'usageHistory'])->middleware('permission:chip_cards.view');
+        Route::get('/{id}/events-audit', [ChipCardController::class, 'eventsAudit'])->middleware('permission:chip_cards.view');
+        Route::post('/export', [ChipCardController::class, 'export'])->middleware('permission:reports.export');
+
+        Route::post('', [ChipCardController::class, 'store'])->middleware('permission:chip_cards.manage');
+        Route::put('/{id}', [ChipCardController::class, 'update'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/assign', [ChipCardController::class, 'assign'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/unassign', [ChipCardController::class, 'unassign'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/block', [ChipCardController::class, 'block'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/unblock', [ChipCardController::class, 'unblock'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/mark-lost', [ChipCardController::class, 'markLost'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/mark-defective', [ChipCardController::class, 'markDefective'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/replace', [ChipCardController::class, 'replace'])->middleware('permission:chip_cards.manage');
+        Route::post('/{id}/archive', [ChipCardController::class, 'archive'])->middleware('permission:chip_cards.manage');
+    });
+
+    /*
+     * TANs — Master Data
+     * Permissions: tans.view / tans.manage (generate + revoke — critical per V1.3 §5.1)
+     */
+    Route::prefix('tans')->group(function () {
+        Route::get('', [TanController::class, 'index'])->middleware('permission:tans.view');
+        Route::get('/{id}', [TanController::class, 'show'])->middleware('permission:tans.view');
+        Route::get('/{id}/usage-history', [TanController::class, 'usageHistory'])->middleware('permission:tans.view');
+        Route::get('/{id}/security-events', [TanController::class, 'securityEvents'])->middleware('permission:tans.view');
+        Route::get('/{id}/events-audit', [TanController::class, 'eventsAudit'])->middleware('permission:tans.view');
+        Route::post('/export', [TanController::class, 'export'])->middleware('permission:reports.export');
+
+        Route::post('', [TanController::class, 'store'])->middleware('permission:tans.manage');
+        Route::post('/{id}/revoke', [TanController::class, 'revoke'])->middleware('permission:tans.manage');
+        Route::post('/{id}/expire-now', [TanController::class, 'expireNow'])->middleware('permission:tans.manage');
+    });
+
+    /*
+     * Clarification Cases — Operations
+     * Permissions: clarification_cases.view / clarification_cases.manage
+     */
+    Route::prefix('clarification-cases')->group(function () {
+        Route::get('', [ClarificationCaseController::class, 'index'])->middleware('permission:clarification_cases.view');
+        Route::get('/{id}', [ClarificationCaseController::class, 'show'])->middleware('permission:clarification_cases.view');
+
+        Route::post('', [ClarificationCaseController::class, 'store'])->middleware('permission:clarification_cases.manage');
+        Route::post('/{id}/acknowledge', [ClarificationCaseController::class, 'acknowledge'])->middleware('permission:clarification_cases.manage');
+        Route::post('/{id}/assign', [ClarificationCaseController::class, 'assign'])->middleware('permission:clarification_cases.manage');
+        Route::post('/{id}/move-to-waiting-for-owner', [ClarificationCaseController::class, 'moveToWaitingForOwner'])->middleware('permission:clarification_cases.manage');
+        Route::post('/{id}/resolve', [ClarificationCaseController::class, 'resolve'])->middleware('permission:clarification_cases.manage');
+        Route::post('/{id}/close', [ClarificationCaseController::class, 'close'])->middleware('permission:clarification_cases.manage');
+    });
+
+    /*
+     * Loading Orders — Orders
+     * Permissions: loading_orders.view / .create / .update / .manage (block/cancel/assign)
+     */
+    Route::prefix('loading-orders')->group(function () {
+        Route::get('', [LoadingOrderController::class, 'index'])->middleware('permission:loading_orders.view');
+        Route::get('/{id}', [LoadingOrderController::class, 'show'])->middleware('permission:loading_orders.view');
+        Route::get('/{id}/events-audit', [LoadingOrderController::class, 'eventsAudit'])->middleware('permission:loading_orders.view');
+
+        Route::post('', [LoadingOrderController::class, 'store'])->middleware('permission:loading_orders.create');
+        Route::put('/{id}', [LoadingOrderController::class, 'update'])->middleware('permission:loading_orders.update');
+
+        Route::post('/{id}/assign-driver', [LoadingOrderController::class, 'assignDriver'])->middleware('permission:loading_orders.manage');
+        Route::post('/{id}/unassign-driver', [LoadingOrderController::class, 'unassignDriver'])->middleware('permission:loading_orders.manage');
+        Route::post('/{id}/assign-trailer', [LoadingOrderController::class, 'assignTrailer'])->middleware('permission:loading_orders.manage');
+        Route::post('/{id}/unassign-trailer', [LoadingOrderController::class, 'unassignTrailer'])->middleware('permission:loading_orders.manage');
+        Route::post('/{id}/block', [LoadingOrderController::class, 'block'])->middleware('permission:loading_orders.manage');
+        Route::post('/{id}/unblock', [LoadingOrderController::class, 'unblock'])->middleware('permission:loading_orders.manage');
+        Route::post('/{id}/cancel', [LoadingOrderController::class, 'cancel'])->middleware('permission:loading_orders.manage');
+    });
+
+    /*
+     * Plant Visits — Operations
+     * Permissions: plant_visits.view / plant_visits.manage
+     */
+    Route::prefix('plant-visits')->group(function () {
+        Route::get('', [PlantVisitController::class, 'index'])->middleware('permission:plant_visits.view');
+        Route::get('/{id}', [PlantVisitController::class, 'show'])->middleware('permission:plant_visits.view');
+        Route::get('/{id}/events-audit', [PlantVisitController::class, 'eventsAudit'])->middleware('permission:plant_visits.view');
+
+        Route::post('', [PlantVisitController::class, 'store'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/advance-step', [PlantVisitController::class, 'advanceStep'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/change-location', [PlantVisitController::class, 'changeLocation'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/wait', [PlantVisitController::class, 'wait'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/resume', [PlantVisitController::class, 'resume'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/block', [PlantVisitController::class, 'block'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/unblock', [PlantVisitController::class, 'unblock'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/raise-clarification', [PlantVisitController::class, 'raiseClarification'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/mark-ready-for-exit', [PlantVisitController::class, 'markReadyForExit'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/close', [PlantVisitController::class, 'close'])->middleware('permission:plant_visits.manage');
+        Route::post('/{id}/force-close', [PlantVisitController::class, 'forceClose'])->middleware('permission:plant_visits.manage');
+    });
+
+    /*
+     * SAP Sync / Order Import Status — read-only per V1.5 §2.2
+     * Permission: sap_sync.view
+     */
+    Route::prefix('sap-sync')->group(function () {
+        Route::get('', [\App\Http\Controllers\Api\SapSyncController::class, 'index'])->middleware('permission:sap_sync.view');
+        Route::get('/{id}', [\App\Http\Controllers\Api\SapSyncController::class, 'show'])->middleware('permission:sap_sync.view');
+    });
+
+    /*
+     * Gate & Terminal Monitor — read-only per V2.3 §2.2
+     * Permission: gate_terminal.view
+     */
+    Route::prefix('gate-terminal-monitor')->group(function () {
+        Route::get('/touchpoints', [GateTerminalMonitorController::class, 'touchpoints'])->middleware('permission:gate_terminal.view');
+        Route::get('/sessions', [GateTerminalMonitorController::class, 'sessions'])->middleware('permission:gate_terminal.view');
+        Route::get('/sessions/{id}', [GateTerminalMonitorController::class, 'show'])->middleware('permission:gate_terminal.view');
+    });
+
+    /*
+     * Operational Documents — Documents & Reports
+     * Permissions: operational_documents.view (read) / .print (print) / .manage (reprint/handover/invalidate — critical per V1.2 §13)
+     */
+    Route::prefix('documents-reports/operational-documents')->group(function () {
+        Route::get('', [OperationalDocumentController::class, 'index'])->middleware('permission:operational_documents.view');
+        Route::get('/{id}', [OperationalDocumentController::class, 'show'])->middleware('permission:operational_documents.view');
+        Route::get('/{id}/preview', [OperationalDocumentController::class, 'preview'])->middleware('permission:operational_documents.view');
+        Route::get('/{id}/print-history', [OperationalDocumentController::class, 'printHistory'])->middleware('permission:operational_documents.view');
+
+        Route::post('/{id}/print', [OperationalDocumentController::class, 'print'])->middleware('permission:operational_documents.print');
+        Route::post('/{id}/reprint', [OperationalDocumentController::class, 'reprint'])->middleware('permission:operational_documents.manage');
+        Route::post('/{id}/hand-over', [OperationalDocumentController::class, 'handOver'])->middleware('permission:operational_documents.manage');
+        Route::post('/{id}/invalidate', [OperationalDocumentController::class, 'invalidate'])->middleware('permission:operational_documents.manage');
+    });
+
+    /*
+     * Reports — Documents & Reports (V2.1)
+     * Permissions: reports.view (read) / reports.export (export)
+     */
+    Route::prefix('documents-reports/reports')->group(function () {
+        Route::get('', [ReportsController::class, 'hub'])->middleware('permission:reports.view');
+        Route::get('/{reportId}', [ReportsController::class, 'show'])->middleware('permission:reports.view');
+        Route::get('/{reportId}/drill-down', [ReportsController::class, 'drillDown'])->middleware('permission:reports.view');
+        Route::post('/{reportId}/export', [ReportsController::class, 'export'])->middleware('permission:reports.export');
+    });
+
 });
