@@ -119,6 +119,11 @@ class LoadingOperationSeeder extends Seeder
             $driver = $pick($drivers, $i);
             $customer = $pick($customers, $i);
 
+            // bay_code is a lookup helper for this seeder only; the table
+            // stores bay_line_id (resolved above). Strip it before insert so
+            // array_merge doesn't push it into the SQL column list.
+            unset($row['bay_code']);
+
             LoadingOperation::firstOrCreate(
                 ['display_no' => $row['display_no']],
                 array_merge(
