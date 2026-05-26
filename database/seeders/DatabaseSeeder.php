@@ -54,6 +54,10 @@ class DatabaseSeeder extends Seeder
             // Operational Documents V1.2 — uses LoadingOrder + PlantVisit ids
             // for soft-FK snapshots; must run after both seeders above.
             OperationalDocumentSeeder::class,
+            // Driver Terminal Login (V3) demo TANs + chip cards + terminal
+            // activation. Must run after DriverSeeder (binds existing drivers
+            // by code) and TerminalPanelSeeder (flips TERM-DRV-1 to active).
+            TerminalAuthDemoSeeder::class,
         ]);
     }
 }

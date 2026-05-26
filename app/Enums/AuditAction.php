@@ -194,4 +194,17 @@ class AuditAction
     public const GATE_TERMINAL_NEEDS_OPERATOR_FLAGGED = 'gate_terminal.needs_operator_flagged';
     public const GATE_TERMINAL_RESOLVED = 'gate_terminal.resolved';
     public const GATE_TERMINAL_DEVICE_FAULT = 'gate_terminal.device_fault';
+
+    // Driver Terminal Login (V3) — emitted by TerminalAuthController. Each
+    // identification attempt produces one audit row regardless of outcome
+    // so failed attempts remain traceable (§9 US-DLOGIN-09 + §17 + §21.1).
+    public const TERMINAL_LOGIN_TAN = 'terminal.login_tan';
+    public const TERMINAL_LOGIN_CHIP = 'terminal.login_chip';
+    public const TERMINAL_LOGIN_FAILED = 'terminal.login_failed';
+    public const TERMINAL_TRAINING_REDIRECT = 'terminal.training_redirect';
+    public const TERMINAL_LANGUAGE_CHANGED = 'terminal.language_changed';
+    public const TERMINAL_SESSION_LOGOUT = 'terminal.session_logout';
+    public const TERMINAL_SESSION_TIMEOUT = 'terminal.session_timeout';
+    public const TERMINAL_MANAGER_LOGON = 'terminal.manager_logon';
+    public const TERMINAL_MANAGER_LOGON_FAILED = 'terminal.manager_logon_failed';
 }

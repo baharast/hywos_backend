@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\TanController;
+use App\Http\Controllers\Api\TerminalAuthController;
 use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
 use App\Http\Controllers\Api\UserController;
@@ -456,4 +457,27 @@ Route::prefix('documents-reports/reports')->group(function () {
     Route::get('/{reportId}', [ReportsController::class, 'show']);
     Route::get('/{reportId}/drill-down', [ReportsController::class, 'drillDown']);
     Route::post('/{reportId}/export', [ReportsController::class, 'export']);
+});
+
+Route::prefix('terminal')->group(function () {
+    // Driver Terminal Login (V3). Public endpoints — identity is established
+    // BY these calls. Manager Logon issues a Sanctum personal access token
+    // that dashboard routes will require once their middleware is re-enabled.
+    // No bulk, no DELETE.
+
+    // Read
+    Route::get('/config/{terminal}', [TerminalAuthController::class, 'config']);
+    Route::get('/safety-info', [TerminalAuthController::class, 'safetyInfo']);
+    Route::get('/session/{id}', [TerminalAuthController::class, 'session']);
+
+    // Driver identification
+    Route::post('/auth/tan', [TerminalAuthController::class, 'authenticateTan']);
+    Route::post('/auth/chip', [TerminalAuthController::class, 'authenticateChip']);
+
+    // Manager / Operator popup (V3 §11) — Sanctum token on success
+    Route::post('/auth/manager-logon', [TerminalAuthController::class, 'managerLogon']);
+
+    // Session lifecycle
+    Route::post('/session/{id}/language', [TerminalAuthController::class, 'changeLanguage']);
+    Route::post('/session/{id}/logout', [TerminalAuthController::class, 'logout']);
 });
