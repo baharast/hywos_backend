@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ChipCardController;
 use App\Http\Controllers\Api\ClarificationCaseController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\DriverWorkflowController;
 use App\Http\Controllers\Api\GateTerminalMonitorController;
 use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\LoadingOrderController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
 use App\Http\Controllers\Api\ReportsController;
+use App\Http\Controllers\Api\SafetyTrainingController;
 use App\Http\Controllers\Api\TanController;
 use App\Http\Controllers\Api\TerminalAuthController;
 use App\Http\Controllers\Api\TractorVehicleController;
@@ -79,6 +81,31 @@ Route::prefix('terminal')->group(function () {
     Route::get('/session/{id}', [TerminalAuthController::class, 'session']);
     Route::post('/session/{id}/language', [TerminalAuthController::class, 'changeLanguage']);
     Route::post('/session/{id}/logout', [TerminalAuthController::class, 'logout']);
+
+    // Driver post-login workflow (V6 §8). Same auth model as the lifecycle
+    // routes above — the session id IS the identity; no Sanctum.
+    // DriverWorkflowController rejects unknown / logged-out sessions with
+    // 404 SESSION_NOT_FOUND via DriverWorkflowService::findActiveSession().
+    Route::get('/session/{id}/orders', [DriverWorkflowController::class, 'orders']);
+    Route::post('/session/{id}/trailer-info', [DriverWorkflowController::class, 'trailerInfo']);
+    Route::post('/session/{id}/trailer-check', [DriverWorkflowController::class, 'trailerCheck']);
+    Route::post('/session/{id}/tractor-plate', [DriverWorkflowController::class, 'tractorPlate']);
+    Route::post('/session/{id}/task', [DriverWorkflowController::class, 'task']);
+    Route::post('/session/{id}/order', [DriverWorkflowController::class, 'confirmOrder']);
+    Route::get('/session/{id}/bay-line-assignment', [DriverWorkflowController::class, 'bayLineAssignment']);
+    Route::post('/session/{id}/print-delivery-note', [DriverWorkflowController::class, 'printDeliveryNote']);
+    Route::post('/session/{id}/complete', [DriverWorkflowController::class, 'complete']);
+
+    // Driver Safety Training (V6 §7). Catalog endpoints are anonymous so
+    // the kiosk overview/exam pages can render before a session is bound;
+    // the two writes use the session id in the URL as credential, same
+    // pattern as `/session/{id}/logout`.
+    Route::get('/safety-training/modules', [SafetyTrainingController::class, 'modules']);
+    Route::get('/safety-training/modules/{moduleId}', [SafetyTrainingController::class, 'module']);
+    Route::get('/safety-training/exam', [SafetyTrainingController::class, 'exam']);
+
+    Route::post('/session/{id}/training/module-completed', [SafetyTrainingController::class, 'markModuleCompleted']);
+    Route::post('/session/{id}/training/exam-submitted', [SafetyTrainingController::class, 'submitExam']);
 });
 
 /*

@@ -207,4 +207,15 @@ class AuditAction
     public const TERMINAL_SESSION_TIMEOUT = 'terminal.session_timeout';
     public const TERMINAL_MANAGER_LOGON = 'terminal.manager_logon';
     public const TERMINAL_MANAGER_LOGON_FAILED = 'terminal.manager_logon_failed';
+
+    // Driver Workflow (V6 §8) — emitted by DriverWorkflowController for the
+    // trailer/tractor/task/order/bay-line/print/complete steps that follow a
+    // successful terminal login. Each writes one row + one event so the
+    // kiosk-side narrative is fully reconstructable from the audit log.
+    public const TERMINAL_WORKFLOW_TRAILER_SET = 'terminal.workflow.trailer_set';
+    public const TERMINAL_WORKFLOW_TRACTOR_SET = 'terminal.workflow.tractor_set';
+    public const TERMINAL_WORKFLOW_TASK_SELECTED = 'terminal.workflow.task_selected';
+    public const TERMINAL_WORKFLOW_ORDER_CONFIRMED = 'terminal.workflow.order_confirmed';
+    public const TERMINAL_WORKFLOW_DELIVERY_NOTE_PRINTED = 'terminal.workflow.delivery_note_printed';
+    public const TERMINAL_WORKFLOW_COMPLETED = 'terminal.workflow.completed';
 }
