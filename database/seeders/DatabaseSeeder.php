@@ -51,6 +51,9 @@ class DatabaseSeeder extends Seeder
             // Trailer Parking 2-slot board (V2.1) — needs Trailer + LoadingOrder ids
             ParkingSeeder::class,
             LoadingOperationSeeder::class,
+            // Operational Documents V1.2 — uses LoadingOrder + PlantVisit ids
+            // for soft-FK snapshots; must run after both seeders above.
+            OperationalDocumentSeeder::class,
         ]);
     }
 }

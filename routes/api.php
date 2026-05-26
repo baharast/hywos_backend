@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\GateTerminalMonitorController;
 use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\LoadingOrderController;
 use App\Http\Controllers\Api\MasterDataExportController;
+use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
 use App\Http\Controllers\Api\TanController;
@@ -421,4 +422,23 @@ Route::prefix('gate-terminal-monitor')->group(function () {
     Route::get('/touchpoints', [GateTerminalMonitorController::class, 'touchpoints']);
     Route::get('/sessions', [GateTerminalMonitorController::class, 'sessions']);
     Route::get('/sessions/{id}', [GateTerminalMonitorController::class, 'show']);
+});
+
+Route::prefix('documents-reports/operational-documents')->group(function () {
+    // NOTE: Middleware temporarily disabled so endpoints are publicly accessible for development.
+    //
+    // Operational Documents V1.2 — certificates, delivery notes and QM
+    // documents. Lifecycle actions (print/reprint/handover/invalidate)
+    // are auditable; reprint and invalidate require a reason per V1.2
+    // §13 + §18. No bulk actions and no hard delete (V1.2 §2.2).
+
+    Route::get('', [OperationalDocumentController::class, 'index']);
+    Route::get('/{id}', [OperationalDocumentController::class, 'show']);
+    Route::get('/{id}/preview', [OperationalDocumentController::class, 'preview']);
+    Route::get('/{id}/print-history', [OperationalDocumentController::class, 'printHistory']);
+
+    Route::post('/{id}/print', [OperationalDocumentController::class, 'print']);
+    Route::post('/{id}/reprint', [OperationalDocumentController::class, 'reprint']);
+    Route::post('/{id}/hand-over', [OperationalDocumentController::class, 'handOver']);
+    Route::post('/{id}/invalidate', [OperationalDocumentController::class, 'invalidate']);
 });

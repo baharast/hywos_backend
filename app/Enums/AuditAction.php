@@ -70,8 +70,18 @@ class AuditAction
     public const QUALITY_DECISION_APPROVED = 'quality.decision_approved';
     public const QUALITY_DECISION_REJECTED = 'quality.decision_rejected';
 
-    // Documents
+    // Documents — Operational Documents V1.2 lifecycle. Each maps to a
+    // §12 lifecycle status transition. `DOCUMENT_REPRINTED` predates the
+    // module and is reused for the reprint action; the rest are new.
+    public const DOCUMENT_GENERATED = 'document.generated';
+    public const DOCUMENT_QUEUED_FOR_PRINT = 'document.queued_for_print';
+    public const DOCUMENT_PRINTED = 'document.printed';
+    public const DOCUMENT_PRINT_FAILED = 'document.print_failed';
     public const DOCUMENT_REPRINTED = 'document.reprinted';
+    public const DOCUMENT_HANDED_OVER = 'document.handed_over';
+    public const DOCUMENT_BLOCKED = 'document.blocked';
+    public const DOCUMENT_INVALIDATED = 'document.invalidated';
+    public const DOCUMENT_CANCELLED = 'document.cancelled';
 
     // Trailer
     public const TRAILER_CREATED = 'trailer.created';
