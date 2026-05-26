@@ -71,14 +71,17 @@ class TerminalAuthService
             return $this->failNoSession(LoginMethod::TAN, LoginResultCode::TERMINAL_OFFLINE, 'Terminal not active.', $terminalId);
         }
 
-        // V1.3 §5.1 TAN lookup. We accept either `tan_reference` (the
-        // human-readable id) or the raw `identifier_value` (single-use
-        // secret). The raw value is hidden from API; lookup-by-hash would
-        // be safer but the existing schema doesn't store one for TANs.
+        // V6 §16.1 TAN format is `XXX-XXXX` (7 digits with one dash). The
+        // seeder stores `tan_reference` as digits only so the FE can submit
+        // either form; we normalise by stripping non-digits before lookup.
+        // We also still allow the raw `identifier_value` (single-use secret)
+        // and the original un-normalised string for legacy callers.
+        $digits = preg_replace('/\D/', '', $tanValue) ?? '';
         $tan = AuthMedium::query()
             ->tans()
-            ->where(function ($q) use ($tanValue) {
-                $q->where('tan_reference', $tanValue)
+            ->where(function ($q) use ($tanValue, $digits) {
+                $q->where('tan_reference', $digits)
+                    ->orWhere('tan_reference', $tanValue)
                     ->orWhere('identifier_value', $tanValue);
             })
             ->first();
@@ -180,7 +183,8 @@ class TerminalAuthService
                 session: $session,
                 driver: $driver,
                 terminal: $terminal,
-                nextRoute: $this->resolveNextRoute($driverCheck)
+                nextRoute: $this->resolveNextRoute($driverCheck, LoginMethod::TAN),
+                method: LoginMethod::TAN
             );
         });
     }
@@ -297,7 +301,8 @@ class TerminalAuthService
                 session: $session,
                 driver: $driver,
                 terminal: $terminal,
-                nextRoute: $this->resolveNextRoute($driverCheck)
+                nextRoute: $this->resolveNextRoute($driverCheck, LoginMethod::CHIP_CARD),
+                method: LoginMethod::CHIP_CARD
             );
         });
     }
@@ -696,7 +701,8 @@ class TerminalAuthService
             session: $session,
             driver: $driver,
             terminal: $terminal,
-            nextRoute: null
+            nextRoute: null,
+            method: $method
         );
     }
 
@@ -731,7 +737,8 @@ class TerminalAuthService
             session: null,
             driver: null,
             terminal: null,
-            nextRoute: null
+            nextRoute: null,
+            method: $method
         );
     }
 
@@ -744,13 +751,28 @@ class TerminalAuthService
         return in_array('de', $supported, true) ? 'de' : ($supported[0] ?? 'de');
     }
 
-    protected function resolveNextRoute(string $code): ?string
+    /**
+     * V6 §6.14 routing decisions:
+     *   chip success       → /terminal/trailer-info
+     *   tan  success       → /terminal/trailer-check
+     *   training_required  → /terminal/safety-training?required=1
+     *   any failure        → null (FE stays on login screen and shows error)
+     *
+     * The pre-V6 single-path `/terminal/trailer-identification` is gone;
+     * the FE now branches based on identification method per V6 §6.14
+     * to match the safer chip flow vs. the heavier TAN flow.
+     */
+    protected function resolveNextRoute(string $code, string $method = ''): ?string
     {
-        return match ($code) {
-            LoginResultCode::SUCCESS => '/terminal/trailer-identification',
-            LoginResultCode::TRAINING_REQUIRED => '/terminal/safety-training',
-            default => null,
-        };
+        if ($code === LoginResultCode::TRAINING_REQUIRED) {
+            return '/terminal/safety-training?required=1';
+        }
+        if ($code === LoginResultCode::SUCCESS) {
+            return $method === LoginMethod::CHIP_CARD
+                ? '/terminal/trailer-info'
+                : '/terminal/trailer-check';
+        }
+        return null;
     }
 
     protected function maskTan(string $raw): string

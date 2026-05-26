@@ -111,4 +111,41 @@ class LoginResultCode
             default => 'danger',
         };
     }
+
+    /**
+     * Translate our richer internal codes into the method-prefixed strings
+     * V6 §10.3 expects (`tan_invalid`, `tan_expired`, `tan_used`,
+     * `chip_unknown`, `chip_blocked`, `driver_blocked`, `training_required`,
+     * `backend_unavailable`).
+     *
+     * Accepts either `LoginMethod::TAN` ('tan') or `LoginMethod::CHIP_CARD`
+     * ('chip_card') for $method — the internal value, not V6's `chip`.
+     */
+    public static function v6Code(string $code, string $method): string
+    {
+        $isChip = $method === LoginMethod::CHIP_CARD || $method === 'chip';
+
+        return match ($code) {
+            self::SUCCESS => 'success',
+            self::TRAINING_REQUIRED => 'training_required',
+            self::DRIVER_BLOCKED, self::DRIVER_INACTIVE => 'driver_blocked',
+            self::CHIP_BLOCKED => 'chip_blocked',
+            self::CHIP_UNASSIGNED => 'chip_unknown',
+
+            // V6 has no `revoked` / `pending` — group as the closest match.
+            self::USED, self::REVOKED => $isChip ? 'chip_blocked' : 'tan_used',
+            self::EXPIRED => $isChip ? 'chip_blocked' : 'tan_expired',
+            self::PENDING => $isChip ? 'chip_unknown' : 'tan_invalid',
+            self::INVALID => $isChip ? 'chip_unknown' : 'tan_invalid',
+
+            // Infrastructure problems all collapse to backend_unavailable.
+            self::READER_OFFLINE,
+            self::TERMINAL_OFFLINE,
+            self::TERMINAL_SERVICE_MODE,
+            self::BACKEND_UNAVAILABLE,
+            self::TOO_MANY_ATTEMPTS => 'backend_unavailable',
+
+            default => $isChip ? 'chip_unknown' : 'tan_invalid',
+        };
+    }
 }

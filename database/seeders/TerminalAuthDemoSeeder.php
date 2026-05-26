@@ -58,51 +58,49 @@ class TerminalAuthDemoSeeder extends Seeder
     protected function seedTans(): void
     {
         // Driver bindings — read by driver_code so we tolerate seed order.
-        $d1 = Driver::query()->where('driver_code', 'DRV-1001')->first(); // training=valid → success
-        $d2 = Driver::query()->where('driver_code', 'DRV-1003')->first(); // training=expired → training_required
-        $d3 = Driver::query()->where('driver_code', 'DRV-1005')->first(); // block_status=blocked → driver_blocked
-        $d4 = Driver::query()->where('driver_code', 'DRV-1002')->first(); // training=valid (filler for expired/consumed/revoked/pending TANs)
+        // V6 demo IDs (drv-001, drv-101, drv-002) don't exist in our backend;
+        // we keep DRV-NNNN and bind each V6 TAN to the driver whose existing
+        // training/block STATE matches the V6 expectation (see §16.1).
+        $d1 = Driver::query()->where('driver_code', 'DRV-1001')->first(); // training=valid, clear     → success
+        $d2 = Driver::query()->where('driver_code', 'DRV-1003')->first(); // training=expired, clear   → training_required
+        $d3 = Driver::query()->where('driver_code', 'DRV-1005')->first(); // block_status=blocked      → driver_blocked
 
-        if (! $d1 || ! $d2 || ! $d3 || ! $d4) {
+        if (! $d1 || ! $d2 || ! $d3) {
             return;
         }
 
+        // V6 §16.1 TAN matrix. tan_reference stores the digits only;
+        // display_identifier carries the human-readable XXX-XXXX form.
+        // TerminalAuthService::authenticateWithTan() strips non-digits on
+        // input so both `482-9173` and `4829173` resolve to the same row.
         $rows = [
-            // 11111 — success path
+            // 482-9173 → success (driver M. Schmidt, trainingValid=true equivalent)
             [
-                'tan' => '11111', 'driver' => $d1,
+                'digits' => '4829173', 'display' => '482-9173', 'driver' => $d1,
                 'status' => AuthMediumStatus::ACTIVE,
                 'usage_state' => TanUsageState::UNUSED,
                 'valid_from' => now()->subDay(),
                 'expires_at' => now()->addDays(30),
             ],
-            // 22222 — training_required path
+            // 100-0000 → training_required (driver T. Müller, trainingValid=false equivalent)
             [
-                'tan' => '22222', 'driver' => $d2,
+                'digits' => '1000000', 'display' => '100-0000', 'driver' => $d2,
                 'status' => AuthMediumStatus::ACTIVE,
                 'usage_state' => TanUsageState::UNUSED,
                 'valid_from' => now()->subDay(),
                 'expires_at' => now()->addDays(30),
             ],
-            // 33333 — driver_blocked path
+            // 000-0000 → expired (driver fine; TAN past expires_at)
             [
-                'tan' => '33333', 'driver' => $d3,
-                'status' => AuthMediumStatus::ACTIVE,
-                'usage_state' => TanUsageState::UNUSED,
-                'valid_from' => now()->subDay(),
-                'expires_at' => now()->addDays(30),
-            ],
-            // 44444 — expired TAN (driver is fine; TAN itself past expiry)
-            [
-                'tan' => '44444', 'driver' => $d4,
+                'digits' => '0000000', 'display' => '000-0000', 'driver' => $d1,
                 'status' => AuthMediumStatus::ACTIVE,
                 'usage_state' => TanUsageState::UNUSED,
                 'valid_from' => now()->subDays(10),
                 'expires_at' => now()->subDay(),
             ],
-            // 55555 — already used / consumed
+            // 111-1111 → used / consumed (USED takes priority over EXPIRED in evaluateTanLifecycle)
             [
-                'tan' => '55555', 'driver' => $d1,
+                'digits' => '1111111', 'display' => '111-1111', 'driver' => $d1,
                 'status' => AuthMediumStatus::USED,
                 'usage_state' => TanUsageState::CONSUMED,
                 'valid_from' => now()->subDays(2),
@@ -111,27 +109,12 @@ class TerminalAuthDemoSeeder extends Seeder
                 'consumption_count' => 1,
                 'used_at' => now()->subHours(3),
             ],
-            // 66666 — revoked
+            // 332-2233 → driver_blocked (NOT in V6 §16.1 but kept so the
+            // FE smoke-test page can verify the driver-blocked branch lights
+            // up in dev mode; V6 spec collapses everything not listed to
+            // tan_invalid, which would hide this real failure mode).
             [
-                'tan' => '66666', 'driver' => $d4,
-                'status' => AuthMediumStatus::BLOCKED,
-                'usage_state' => TanUsageState::BLOCKED,
-                'valid_from' => now()->subDay(),
-                'expires_at' => now()->addDays(30),
-                'revoked_at' => now()->subHours(5),
-                'revocation_reason' => 'Demo seed — revoked for REVOKED test path.',
-            ],
-            // 77777 — pending (valid_from in future)
-            [
-                'tan' => '77777', 'driver' => $d4,
-                'status' => AuthMediumStatus::ACTIVE,
-                'usage_state' => TanUsageState::UNUSED,
-                'valid_from' => now()->addHours(6),
-                'expires_at' => now()->addDays(30),
-            ],
-            // 88888 — backup success TAN (driver 1)
-            [
-                'tan' => '88888', 'driver' => $d1,
+                'digits' => '3322233', 'display' => '332-2233', 'driver' => $d3,
                 'status' => AuthMediumStatus::ACTIVE,
                 'usage_state' => TanUsageState::UNUSED,
                 'valid_from' => now()->subDay(),
@@ -145,15 +128,15 @@ class TerminalAuthDemoSeeder extends Seeder
 
             $tan = AuthMedium::query()
                 ->where('medium_type', AuthMediumType::TAN)
-                ->where('tan_reference', $r['tan'])
+                ->where('tan_reference', $r['digits'])
                 ->first();
 
             $payload = [
                 'medium_type' => AuthMediumType::TAN,
-                'tan_reference' => $r['tan'],
-                'tan_masked' => '***' . substr($r['tan'], -2),
-                'identifier_value' => $r['tan'],
-                'display_identifier' => "TAN-{$r['tan']}",
+                'tan_reference' => $r['digits'],          // digits only ("4829173")
+                'tan_masked' => '***-' . substr($r['digits'], -4),
+                'identifier_value' => $r['digits'],
+                'display_identifier' => $r['display'],    // human form ("482-9173")
                 'driver_id' => $driver->id,
                 'status' => $r['status'],
                 'usage_state' => $r['usage_state'],
@@ -166,7 +149,7 @@ class TerminalAuthDemoSeeder extends Seeder
                 'used_at' => $r['used_at'] ?? null,
                 'revoked_at' => $r['revoked_at'] ?? null,
                 'revocation_reason' => $r['revocation_reason'] ?? null,
-                'reason' => 'Demo seed for terminal login V3 test matrix.',
+                'reason' => 'Demo seed for terminal login V6 test matrix.',
             ];
 
             if ($tan) {
