@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ActiveAnalysisController;
 use App\Http\Controllers\Api\AnalysisDeviceController;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CalibrationProfileController;
@@ -546,6 +547,30 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [AnalysisDeviceController::class, 'show'])->middleware('permission:analysis.view');
         Route::get('/{id}/channels', [AnalysisDeviceController::class, 'channels'])->middleware('permission:analysis.view');
         Route::get('/{id}/events', [AnalysisDeviceController::class, 'events'])->middleware('permission:analysis.view');
+    });
+
+    /*
+     * Active Analyses (V1.4) — action-first operational queue + workbench.
+     * Permissions: analysis.view (read) / analysis.manage (8 user actions
+     * per V1.4 §5 canonical catalogue).
+     *
+     * The 8 write endpoints map 1:1 to the spec's canonical action list:
+     * put on hold / repeat / cancel / release loading (VA-2) / reject
+     * loading (VA-4) / open fault case (VA-5+HA-4) / repeat measurement
+     * (HA-3) / manual functional approval (HA-5).
+     */
+    Route::prefix('active-analyses')->group(function () {
+        Route::get('', [ActiveAnalysisController::class, 'index'])->middleware('permission:analysis.view');
+        Route::get('/{id}', [ActiveAnalysisController::class, 'show'])->middleware('permission:analysis.view');
+
+        Route::post('/{id}/hold', [ActiveAnalysisController::class, 'hold'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/repeat', [ActiveAnalysisController::class, 'repeat'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/cancel', [ActiveAnalysisController::class, 'cancel'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/release-loading', [ActiveAnalysisController::class, 'releaseLoading'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/reject-loading', [ActiveAnalysisController::class, 'rejectLoading'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/open-fault-case', [ActiveAnalysisController::class, 'openFaultCase'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/repeat-measurement', [ActiveAnalysisController::class, 'repeatMeasurement'])->middleware('permission:analysis.manage');
+        Route::post('/{id}/manual-approval', [ActiveAnalysisController::class, 'manualApproval'])->middleware('permission:analysis.manage');
     });
 
 });

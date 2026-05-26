@@ -255,4 +255,17 @@ class AuditAction
     public const ANALYSIS_DEVICE_RESTORED = 'analysis_device.restored';
     public const ANALYSIS_DEVICE_FAULT_RAISED = 'analysis_device.fault_raised';
     public const ANALYSIS_DEVICE_CALIBRATION_DUE = 'analysis_device.calibration_due';
+
+    // Active Analyses (V1.4) — emitted by ActiveAnalysisService for the
+    // 8 user actions in the V1.4 §5 canonical catalogue. Each action
+    // emits one audit row + one event row; the service is the only
+    // place that writes them.
+    public const ANALYSIS_PUT_ON_HOLD = 'analysis.put_on_hold';
+    public const ANALYSIS_REPEAT_REQUESTED = 'analysis.repeat_requested';
+    public const ANALYSIS_CANCELLED = 'analysis.cancelled';
+    public const ANALYSIS_LOADING_RELEASED = 'analysis.loading_released';
+    public const ANALYSIS_LOADING_REJECTED = 'analysis.loading_rejected';
+    public const ANALYSIS_FAULT_CASE_OPENED = 'analysis.fault_case_opened';
+    public const ANALYSIS_MEASUREMENT_REPEATED = 'analysis.measurement_repeated';
+    public const ANALYSIS_MANUAL_APPROVED = 'analysis.manual_approved';
 }

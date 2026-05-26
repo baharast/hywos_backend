@@ -71,6 +71,13 @@ class DatabaseSeeder extends Seeder
             // CalibrationProfileSeeder later resolves device_id from
             // analysis_devices.code).
             AnalysisDeviceSeeder::class,
+            // Active Analyses (V1.4) — 7 demo analyses covering the V1.4
+            // §6 action-availability matrix (release loading, repeat,
+            // reject, repeat measurement, manual approval, running,
+            // on-hold). Must run after LoadingOrderSeeder (binds
+            // order_no), AnalysisDeviceSeeder (device_id) and
+            // ProductSpecificationSeeder (product_spec_id).
+            ActiveAnalysisSeeder::class,
         ]);
     }
 }
