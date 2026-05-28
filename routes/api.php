@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
 use App\Http\Controllers\Api\ProductSpecificationController;
+use App\Http\Controllers\Api\QualityDecisionController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\SafetyTrainingController;
 use App\Http\Controllers\Api\TanController;
@@ -571,6 +572,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/open-fault-case', [ActiveAnalysisController::class, 'openFaultCase'])->middleware('permission:analysis.manage');
         Route::post('/{id}/repeat-measurement', [ActiveAnalysisController::class, 'repeatMeasurement'])->middleware('permission:analysis.manage');
         Route::post('/{id}/manual-approval', [ActiveAnalysisController::class, 'manualApproval'])->middleware('permission:analysis.manage');
+    });
+
+    /*
+     * Results & Quality Decisions (V1.1) — read-only review surface.
+     * Permission: analysis.view (no write endpoints; lifecycle actions
+     * for open analyses live in /active-analyses per V1.1 §4).
+     *
+     * Default list returns only closed/cancelled rows. Pass
+     * `include_open_decisions=true` to widen for read-only review;
+     * the resource sets `actionOwner=active_analyses` on those rows.
+     */
+    Route::prefix('results-quality-decisions')->group(function () {
+        Route::get('', [QualityDecisionController::class, 'index'])->middleware('permission:analysis.view');
+        Route::get('/{id}', [QualityDecisionController::class, 'show'])->middleware('permission:analysis.view');
     });
 
 });
