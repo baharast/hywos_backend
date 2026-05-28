@@ -268,4 +268,17 @@ class AuditAction
     public const ANALYSIS_FAULT_CASE_OPENED = 'analysis.fault_case_opened';
     public const ANALYSIS_MEASUREMENT_REPEATED = 'analysis.measurement_repeated';
     public const ANALYSIS_MANUAL_APPROVED = 'analysis.manual_approved';
+
+    // Interface Health (V1.4) — emitted by InterfaceHealthService when an
+    // operator hits "Retry" on an exact interface. Demo stamps the
+    // request only; no real connector orchestration is wired.
+    public const INTERFACE_RETRY_REQUESTED = 'interface.retry_requested';
+
+    // Hardware Devices (V1.4) — emitted by HardwareDeviceService for the
+    // 3 safe write actions allowed by V1.4 §10 (service mode toggle and
+    // non-invasive connection test). NO PLC writes, NO gate open, NO
+    // ESD reset are ever emitted from this module.
+    public const HARDWARE_DEVICE_SERVICE_MODE_SET = 'hardware_device.service_mode_set';
+    public const HARDWARE_DEVICE_SERVICE_MODE_CLEARED = 'hardware_device.service_mode_cleared';
+    public const HARDWARE_DEVICE_CONNECTION_TEST_RUN = 'hardware_device.connection_test_run';
 }

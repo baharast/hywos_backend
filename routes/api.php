@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\DriverWorkflowController;
 use App\Http\Controllers\Api\GateTerminalMonitorController;
+use App\Http\Controllers\Api\HardwareDeviceController;
+use App\Http\Controllers\Api\InterfaceHealthController;
 use App\Http\Controllers\Api\LoadingControlController;
 use App\Http\Controllers\Api\LoadingOrderController;
 use App\Http\Controllers\Api\MasterDataExportController;
@@ -586,6 +588,38 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('results-quality-decisions')->group(function () {
         Route::get('', [QualityDecisionController::class, 'index'])->middleware('permission:analysis.view');
         Route::get('/{id}', [QualityDecisionController::class, 'show'])->middleware('permission:analysis.view');
+    });
+
+    /*
+     * Interface Health (V1.4 §9) — SAP/PLC/printer/cloud/VPN comm boundary
+     * monitor. Read-mostly: list + detail + safe manual retry stub.
+     * Permissions: system_devices.view (read) / system_devices.manage (retry).
+     */
+    Route::prefix('interface-health')->group(function () {
+        Route::get('', [InterfaceHealthController::class, 'index'])->middleware('permission:system_devices.view');
+        Route::get('/{id}', [InterfaceHealthController::class, 'show'])->middleware('permission:system_devices.view');
+        Route::post('/{id}/retry', [InterfaceHealthController::class, 'retry'])->middleware('permission:system_devices.manage');
+    });
+
+    /*
+     * Hardware Devices (V1.4) — master device registry + Operational
+     * Summary Bar + 3 safe writes. Read-mostly per V1.4 §10: no PLC
+     * writes, no gate open, no force-release, no ESD reset. The 3
+     * allowed writes (service-mode set/restore + non-invasive connection
+     * test) are audit-tracked and gated by system_devices.manage.
+     *
+     * The 4 internal hardware tabs (Terminals & Panels, Printers, Card
+     * Readers, PLC / OPC UA Health) soft-FK to hardware_devices.id and
+     * ship in later slices.
+     */
+    Route::prefix('hardware-devices')->group(function () {
+        Route::get('', [HardwareDeviceController::class, 'index'])->middleware('permission:system_devices.view');
+        Route::get('/{id}', [HardwareDeviceController::class, 'show'])->middleware('permission:system_devices.view');
+        Route::get('/{id}/events', [HardwareDeviceController::class, 'events'])->middleware('permission:system_devices.view');
+
+        Route::post('/{id}/service-mode', [HardwareDeviceController::class, 'setServiceMode'])->middleware('permission:system_devices.manage');
+        Route::post('/{id}/restore', [HardwareDeviceController::class, 'restoreFromServiceMode'])->middleware('permission:system_devices.manage');
+        Route::post('/{id}/connection-test', [HardwareDeviceController::class, 'connectionTest'])->middleware('permission:system_devices.manage');
     });
 
 });

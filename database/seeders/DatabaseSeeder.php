@@ -78,6 +78,18 @@ class DatabaseSeeder extends Seeder
             // order_no), AnalysisDeviceSeeder (device_id) and
             // ProductSpecificationSeeder (product_spec_id).
             ActiveAnalysisSeeder::class,
+            // Interface Health (V1.4 §9) — 11 exact interfaces seeded
+            // standalone (no FK dependency on other modules; the
+            // affected-process labels are denormalised strings).
+            InterfaceHealthSeeder::class,
+            // Hardware Devices (V1.4) — 28 demo rows for the master
+            // device registry. Standalone: the other hardware tabs
+            // (Terminals & Panels, Printers, Card Readers, PLC/OPC UA
+            // Health) will soft-FK to hardware_devices.id in later
+            // slices. One row (HD-ANALYZER-52) carries the same
+            // vendor_tag as AnalysisDeviceSeeder's AN-OS-01 so support
+            // can correlate, but the rows are NOT FK-linked.
+            HardwareDeviceSeeder::class,
         ]);
     }
 }

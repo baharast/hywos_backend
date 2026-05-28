@@ -86,6 +86,14 @@ class RolePermissionSeeder extends Seeder
             'devices.manage',
             'interface_health.view',
         ],
+        // System & Devices (V1.4) — Hardware Devices + Interface Health
+        // routes use these permissions. Distinct from the legacy
+        // `devices.*` / `interface_health.view` triad above (those drive
+        // existing role assignments and a future Hardware Devices CRUD).
+        'system_devices' => [
+            'system_devices.view',
+            'system_devices.manage',
+        ],
         'administration' => [
             'users.view',
             'users.manage',                      // create / disable / lock / reset-access — critical
@@ -123,6 +131,7 @@ class RolePermissionSeeder extends Seeder
             'drivers.view', 'trailers.view', 'vehicles.view',
             'customers.view', 'carriers.view',
             'chip_cards.view', 'tans.view',
+            'system_devices.view', 'system_devices.manage',
         ],
 
         'dispatcher_manager' => [
@@ -144,6 +153,7 @@ class RolePermissionSeeder extends Seeder
             'vehicles.view', 'vehicles.update',
             'customers.view', 'carriers.view',
             'chip_cards.view', 'tans.view',
+            'system_devices.view',
         ],
 
         'operator' => [
@@ -159,6 +169,7 @@ class RolePermissionSeeder extends Seeder
             'alarms.view', 'alarms.acknowledge',
             'event_journal.view',
             'drivers.view', 'trailers.view', 'vehicles.view',
+            'system_devices.view',
         ],
 
         'analysis_specialist' => [
@@ -171,6 +182,7 @@ class RolePermissionSeeder extends Seeder
             'event_journal.view', 'audit_trail.view',
             'alarms.view',
             'drivers.view', 'trailers.view',
+            'system_devices.view',
         ],
 
         'it_support' => [
@@ -188,6 +200,7 @@ class RolePermissionSeeder extends Seeder
             'drivers.view', 'trailers.view', 'vehicles.view',
             'customers.view', 'carriers.view',
             'chip_cards.view', 'tans.view',
+            'system_devices.view', 'system_devices.manage',
         ],
 
         'auditor' => [
@@ -210,6 +223,7 @@ class RolePermissionSeeder extends Seeder
             'chip_cards.view', 'tans.view',
             'devices.view', 'interface_health.view',
             'users.view', 'roles.view', 'plant_configuration.view', 'companies.view',
+            'system_devices.view',
         ],
     ];
 
