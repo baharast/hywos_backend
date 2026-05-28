@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
+use App\Http\Controllers\Api\PrinterTabController;
 use App\Http\Controllers\Api\ProductSpecificationController;
 use App\Http\Controllers\Api\QualityDecisionController;
 use App\Http\Controllers\Api\ReportsController;
@@ -633,6 +634,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('terminals-panels')->group(function () {
         Route::get('', [TerminalPanelTabController::class, 'index'])->middleware('permission:system_devices.view');
         Route::get('/{deviceId}', [TerminalPanelTabController::class, 'show'])->middleware('permission:system_devices.view');
+    });
+
+    /*
+     * Printers (V1.4 §6) — internal Hardware Devices tab.
+     * Read-only composite over hardware_devices + document_print_attempts
+     * + operational_documents. Service-mode writes live on the parent
+     * /api/hardware-devices registry; reprint actions live on
+     * /api/documents-reports/operational-documents/{id}/reprint.
+     */
+    Route::prefix('printers')->group(function () {
+        Route::get('', [PrinterTabController::class, 'index'])->middleware('permission:system_devices.view');
+        Route::get('/{deviceId}', [PrinterTabController::class, 'show'])->middleware('permission:system_devices.view');
     });
 
 });
