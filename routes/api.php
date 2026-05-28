@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\SafetyTrainingController;
 use App\Http\Controllers\Api\TanController;
 use App\Http\Controllers\Api\TerminalAuthController;
+use App\Http\Controllers\Api\TerminalPanelTabController;
 use App\Http\Controllers\Api\TractorVehicleController;
 use App\Http\Controllers\Api\TrailerController;
 use App\Http\Controllers\Api\UserController;
@@ -620,6 +621,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/service-mode', [HardwareDeviceController::class, 'setServiceMode'])->middleware('permission:system_devices.manage');
         Route::post('/{id}/restore', [HardwareDeviceController::class, 'restoreFromServiceMode'])->middleware('permission:system_devices.manage');
         Route::post('/{id}/connection-test', [HardwareDeviceController::class, 'connectionTest'])->middleware('permission:system_devices.manage');
+    });
+
+    /*
+     * Terminals & Panels (V1.4 §5) — internal Hardware Devices tab.
+     * Read-only composite over hardware_devices + terminal_sessions.
+     * Service-mode writes live on the parent /api/hardware-devices
+     * registry; session state changes are owned by Gate & Terminal
+     * Monitor.
+     */
+    Route::prefix('terminals-panels')->group(function () {
+        Route::get('', [TerminalPanelTabController::class, 'index'])->middleware('permission:system_devices.view');
+        Route::get('/{deviceId}', [TerminalPanelTabController::class, 'show'])->middleware('permission:system_devices.view');
     });
 
 });
