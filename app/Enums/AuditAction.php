@@ -281,4 +281,11 @@ class AuditAction
     public const HARDWARE_DEVICE_SERVICE_MODE_SET = 'hardware_device.service_mode_set';
     public const HARDWARE_DEVICE_SERVICE_MODE_CLEARED = 'hardware_device.service_mode_cleared';
     public const HARDWARE_DEVICE_CONNECTION_TEST_RUN = 'hardware_device.connection_test_run';
+
+    // Printers tab (V1.4 §6) — emitted by PrinterTabService for the 2
+    // safe writes allowed by V1.4 §6/§10. NO physical printer commands
+    // are issued; these audit a NEW document_print_attempts row that the
+    // existing D1 emitter will pick up.
+    public const PRINTER_JOB_RETRY_REQUESTED = 'printer_job.retry_requested';
+    public const PRINTER_JOB_REROUTED = 'printer_job.rerouted';
 }

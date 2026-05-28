@@ -638,14 +638,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
      * Printers (V1.4 §6) — internal Hardware Devices tab.
-     * Read-only composite over hardware_devices + document_print_attempts
-     * + operational_documents. Service-mode writes live on the parent
-     * /api/hardware-devices registry; reprint actions live on
+     * Composite over hardware_devices + document_print_attempts +
+     * operational_documents. The 2 safe writes per V1.4 §6/§10
+     * (retry failed job, reroute to replacement) append a new
+     * `document_print_attempts` row; no physical printer commands are
+     * issued. Service-mode writes for the device itself still live on
+     * /api/hardware-devices; reprint actions for documents stay on
      * /api/documents-reports/operational-documents/{id}/reprint.
      */
     Route::prefix('printers')->group(function () {
         Route::get('', [PrinterTabController::class, 'index'])->middleware('permission:system_devices.view');
         Route::get('/{deviceId}', [PrinterTabController::class, 'show'])->middleware('permission:system_devices.view');
+
+        Route::get('/{printerId}/jobs', [PrinterTabController::class, 'jobs'])->middleware('permission:system_devices.view');
+        Route::post('/{printerId}/jobs/{attemptId}/retry', [PrinterTabController::class, 'retryJob'])->middleware('permission:system_devices.manage');
+        Route::post('/{printerId}/jobs/{attemptId}/reroute', [PrinterTabController::class, 'rerouteJob'])->middleware('permission:system_devices.manage');
     });
 
 });

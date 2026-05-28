@@ -90,6 +90,11 @@ class DatabaseSeeder extends Seeder
             // vendor_tag as AnalysisDeviceSeeder's AN-OS-01 so support
             // can correlate, but the rows are NOT FK-linked.
             HardwareDeviceSeeder::class,
+            // Printers tab demo jobs (V1.4 §6) — ~10 document_print_attempts
+            // rows across HD-PRINTER-DRV-01 + HD-PRINTER-OPR-01. Must run
+            // AFTER HardwareDeviceSeeder (resolves printer ids) and
+            // OperationalDocumentSeeder (writes the parent documents).
+            PrinterJobDemoSeeder::class,
         ]);
     }
 }

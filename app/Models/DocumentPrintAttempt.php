@@ -32,6 +32,9 @@ class DocumentPrintAttempt extends Model
         'status',
         'printer_id',
         'printer_name',
+        // V1.4 §6 — Printers-tab additive columns (soft FKs to
+        // hardware_devices.id and sibling attempt rows).
+        'printer_hardware_id',
         'print_job_id',
         'requested_at',
         'requested_by_user_id',
@@ -40,6 +43,8 @@ class DocumentPrintAttempt extends Model
         'failure_reason',
         'is_reprint',
         'reprint_reason',
+        'retry_of_attempt_id',
+        'replacement_of_attempt_id',
         'correlation_id',
         'created_at',
     ];

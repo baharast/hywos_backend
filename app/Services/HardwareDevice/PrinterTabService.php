@@ -2,18 +2,28 @@
 
 namespace App\Services\HardwareDevice;
 
+use App\Enums\AuditAction;
 use App\Enums\DocumentPrintStatus;
 use App\Enums\DocumentType;
+use App\Enums\EventCategory;
+use App\Enums\EventSeverity;
 use App\Enums\HardwareDeviceHealth;
 use App\Enums\HardwareDeviceType;
 use App\Enums\HardwarePhysicalLocation;
+use App\Enums\PrinterJobStatus;
 use App\Enums\PrinterQueueState;
+use App\Http\Middleware\CorrelationIdMiddleware;
 use App\Models\DocumentPrintAttempt;
 use App\Models\HardwareDevice;
 use App\Models\OperationalDocument;
+use App\Services\Audit\AuditLogger;
+use App\Services\Events\EventLogger;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Source-facing read for V1.4 §6 Printers internal tab.
@@ -33,6 +43,8 @@ class PrinterTabService
 {
     public function __construct(
         protected HardwareDeviceService $hardwareDevices,
+        protected ?AuditLogger $audit = null,
+        protected ?EventLogger $events = null,
     ) {}
 
     /* ============================================================
@@ -561,5 +573,272 @@ class PrinterTabService
             ->orderByDesc('attempt_no')
             ->limit(20)
             ->get();
+    }
+
+    /* ============================================================
+     * V1.4 §6 jobs feed + §10 safe writes
+     *
+     * The 2 writes NEVER send a physical command to a printer — they
+     * append a NEW row to `document_print_attempts` which the existing
+     * D1 emitter picks up. Each write produces one audit + one event.
+     * ============================================================ */
+
+    /**
+     * Paginated job feed for `GET /printers/{id}/jobs`. Filters by
+     * `status`, `date_from`, `date_to`. Newest first; stable secondary
+     * sort by id so paginator pages don't shuffle within a tie.
+     */
+    public function jobsForPrinter(HardwareDevice $printer, array $filters, int $perPage): LengthAwarePaginator
+    {
+        $query = $this->attemptsForPrinter($printer);
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        if (! empty($filters['date_from'])) {
+            $query->where('requested_at', '>=', Carbon::parse($filters['date_from']));
+        }
+        if (! empty($filters['date_to'])) {
+            $query->where('requested_at', '<=', Carbon::parse($filters['date_to']));
+        }
+
+        return $query->orderByDesc('requested_at')->orderBy('id')->paginate($perPage);
+    }
+
+    /**
+     * Retry a failed / cancelled attempt by writing a new queued row on
+     * the SAME printer. Both rows stay in the append-only history; the
+     * new row carries `retry_of_attempt_id = $original->id` so the FE
+     * can follow the chain.
+     *
+     * @return array{newAttempt: DocumentPrintAttempt, printer: ?HardwareDevice}
+     */
+    public function retryJob(string $attemptId, ?string $reason = null): array
+    {
+        $original = DocumentPrintAttempt::find($attemptId);
+        if (! $original) {
+            throw new \DomainException('PRINT_ATTEMPT_NOT_FOUND');
+        }
+        if (! PrinterJobStatus::isRetryable($original->status)) {
+            throw new \DomainException('PRINTER_JOB_NOT_RETRYABLE');
+        }
+
+        $printer = $this->printerFromAttempt($original);
+
+        return DB::transaction(function () use ($original, $printer, $reason) {
+            $newAttempt = DocumentPrintAttempt::create([
+                'id' => (string) Str::uuid(),
+                'document_id' => $original->document_id,
+                'attempt_no' => $this->nextAttemptNoForDocument($original->document_id),
+                'status' => PrinterJobStatus::QUEUED,
+                // Preserve the original's printer linkage on both
+                // columns so existing readers (printer_id) AND the
+                // new soft FK (printer_hardware_id) resolve.
+                'printer_id' => $original->printer_id ?: $printer?->id,
+                'printer_name' => $original->printer_name ?: $printer?->asset_tag,
+                'printer_hardware_id' => $printer?->id ?? $original->printer_hardware_id,
+                'requested_at' => now(),
+                'requested_by_user_id' => optional(request()?->user())?->getKey(),
+                'requested_by_label' => optional(request()?->user())?->name,
+                'is_reprint' => false,
+                'retry_of_attempt_id' => $original->id,
+                'correlation_id' => $this->currentCorrelationId(),
+            ]);
+
+            $this->writeAudit(
+                $newAttempt,
+                AuditAction::PRINTER_JOB_RETRY_REQUESTED,
+                [
+                    'original_attempt_id' => $original->id,
+                    'original_status' => $original->status,
+                    'printer_name' => $original->printer_name,
+                ],
+                [
+                    'new_attempt_id' => $newAttempt->id,
+                    'status' => $newAttempt->status,
+                    'printer_hardware_id' => $printer?->id,
+                ],
+                $reason
+            );
+            $this->writeEvent(
+                'printer_job.retry_requested',
+                $newAttempt,
+                'Retry queued for failed print attempt on ' . ($original->printer_name ?? 'unknown printer'),
+                [
+                    'original_attempt_id' => $original->id,
+                    'printer_hardware_id' => $printer?->id,
+                    'document_id' => $original->document_id,
+                    'reason' => $reason,
+                ],
+                EventSeverity::INFO
+            );
+
+            return ['newAttempt' => $newAttempt, 'printer' => $printer];
+        });
+    }
+
+    /**
+     * Reroute a failed attempt to a DIFFERENT printer. Marks the
+     * original as `rerouted` (terminal) and queues a fresh attempt on
+     * the replacement.
+     *
+     * @return array{newAttempt: DocumentPrintAttempt, replacement: HardwareDevice, originalPrinter: ?HardwareDevice}
+     */
+    public function rerouteToReplacement(string $attemptId, string $replacementPrinterId, string $reason): array
+    {
+        $original = DocumentPrintAttempt::find($attemptId);
+        if (! $original) {
+            throw new \DomainException('PRINT_ATTEMPT_NOT_FOUND');
+        }
+        if (! PrinterJobStatus::isReroutable($original->status)) {
+            throw new \DomainException('PRINTER_JOB_NOT_REROUTABLE');
+        }
+
+        $replacement = HardwareDevice::find($replacementPrinterId);
+        if (! $replacement
+            || $replacement->device_type !== HardwareDeviceType::PRINTER
+            || (bool) $replacement->service_mode
+            || in_array($replacement->health, [HardwareDeviceHealth::FAULT, HardwareDeviceHealth::OFFLINE], true)
+        ) {
+            throw new \DomainException('PRINTER_REPLACEMENT_INVALID');
+        }
+
+        $originalPrinter = $this->printerFromAttempt($original);
+
+        return DB::transaction(function () use ($original, $replacement, $reason, $originalPrinter) {
+            // `status` is in the model's MUTABLE_AFTER_CREATE whitelist,
+            // so marking the original 'rerouted' sticks past the
+            // immutability hook. `failure_reason` is also writable
+            // post-create.
+            $original->update([
+                'status' => PrinterJobStatus::REROUTED,
+                'failure_reason' => $original->failure_reason
+                    ?: 'Rerouted to replacement printer',
+            ]);
+
+            $newAttempt = DocumentPrintAttempt::create([
+                'id' => (string) Str::uuid(),
+                'document_id' => $original->document_id,
+                'attempt_no' => $this->nextAttemptNoForDocument($original->document_id),
+                'status' => PrinterJobStatus::QUEUED,
+                'printer_id' => $replacement->id,
+                'printer_name' => $replacement->asset_tag,
+                'printer_hardware_id' => $replacement->id,
+                'requested_at' => now(),
+                'requested_by_user_id' => optional(request()?->user())?->getKey(),
+                'requested_by_label' => optional(request()?->user())?->name,
+                'is_reprint' => false,
+                'replacement_of_attempt_id' => $original->id,
+                'reprint_reason' => null,
+                'correlation_id' => $this->currentCorrelationId(),
+            ]);
+
+            $this->writeAudit(
+                $newAttempt,
+                AuditAction::PRINTER_JOB_REROUTED,
+                [
+                    'original_attempt_id' => $original->id,
+                    'original_printer_hardware_id' => $originalPrinter?->id,
+                    'original_status' => PrinterJobStatus::FAILED,
+                ],
+                [
+                    'new_attempt_id' => $newAttempt->id,
+                    'replacement_printer_hardware_id' => $replacement->id,
+                    'replacement_asset_tag' => $replacement->asset_tag,
+                ],
+                $reason
+            );
+            $this->writeEvent(
+                'printer_job.rerouted',
+                $newAttempt,
+                'Print job rerouted: ' . ($original->printer_name ?? 'unknown') . " → {$replacement->asset_tag}",
+                [
+                    'original_attempt_id' => $original->id,
+                    'replacement_printer_hardware_id' => $replacement->id,
+                    'document_id' => $original->document_id,
+                    'reason' => $reason,
+                ],
+                EventSeverity::WARNING
+            );
+
+            return [
+                'newAttempt' => $newAttempt,
+                'replacement' => $replacement,
+                'originalPrinter' => $originalPrinter,
+            ];
+        });
+    }
+
+    /* ----- internals used by the writes ----- */
+
+    /**
+     * Either side of the link counts when locating attempts: the new
+     * `printer_hardware_id` soft FK OR the legacy `printer_id` Track A
+     * uses as hardware_devices.id OR an `asset_tag` match against
+     * the legacy `printer_name` string.
+     */
+    protected function attemptsForPrinter(HardwareDevice $printer): Builder
+    {
+        return DocumentPrintAttempt::query()
+            ->where(function ($q) use ($printer) {
+                $q->where('printer_hardware_id', $printer->id)
+                    ->orWhere('printer_id', $printer->id)
+                    ->orWhere('printer_name', $printer->asset_tag);
+            });
+    }
+
+    protected function printerFromAttempt(DocumentPrintAttempt $attempt): ?HardwareDevice
+    {
+        foreach (['printer_hardware_id', 'printer_id'] as $fkColumn) {
+            if (! empty($attempt->{$fkColumn})) {
+                $row = HardwareDevice::find($attempt->{$fkColumn});
+                if ($row && $row->device_type === HardwareDeviceType::PRINTER) {
+                    return $row;
+                }
+            }
+        }
+        if (! empty($attempt->printer_name)) {
+            return HardwareDevice::query()
+                ->where('asset_tag', $attempt->printer_name)
+                ->where('device_type', HardwareDeviceType::PRINTER)
+                ->first();
+        }
+        return null;
+    }
+
+    protected function nextAttemptNoForDocument(string $documentId): int
+    {
+        $max = (int) DocumentPrintAttempt::query()
+            ->where('document_id', $documentId)
+            ->max('attempt_no');
+        return $max + 1;
+    }
+
+    protected function currentCorrelationId(): ?string
+    {
+        $request = request();
+        if (! $request) {
+            return null;
+        }
+        $cid = $request->attributes->get(CorrelationIdMiddleware::ATTRIBUTE);
+        return $cid ? (string) $cid : null;
+    }
+
+    /**
+     * Optional dependencies — guard so the read endpoints keep working
+     * if the service is constructed without audit/event loggers.
+     */
+    protected function writeAudit($entity, string $action, ?array $old, ?array $new, ?string $reason): void
+    {
+        if ($this->audit) {
+            $this->audit->record($entity, $action, $old, $new, $reason, null);
+        }
+    }
+
+    protected function writeEvent(string $type, $entity, string $message, array $details, string $severity): void
+    {
+        if ($this->events) {
+            $this->events->record($type, $entity, $message, $details, EventCategory::SYSTEM, $severity);
+        }
     }
 }
