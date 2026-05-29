@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
 use App\Http\Controllers\Api\CardReaderTabController;
+use App\Http\Controllers\Api\PlcHealthTabController;
 use App\Http\Controllers\Api\PrinterTabController;
 use App\Http\Controllers\Api\ProductSpecificationController;
 use App\Http\Controllers\Api\QualityDecisionController;
@@ -665,6 +666,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('card-readers')->group(function () {
         Route::get('', [CardReaderTabController::class, 'index'])->middleware('permission:system_devices.view');
         Route::get('/{deviceId}', [CardReaderTabController::class, 'show'])->middleware('permission:system_devices.view');
+    });
+
+    /*
+     * PLC / OPC UA Health (V1.4 §8) — internal Hardware Devices tab.
+     * Read-only composite over hardware_devices. NO bypass / reset /
+     * force controls per V1.4 §8 boundary note. Connector orchestration
+     * lives in Interface Health; signal samples + safety diagnostics
+     * are TBC for V1 until the sibling table lands.
+     */
+    Route::prefix('plc-health')->group(function () {
+        Route::get('', [PlcHealthTabController::class, 'index'])->middleware('permission:system_devices.view');
+        Route::get('/{deviceId}', [PlcHealthTabController::class, 'show'])->middleware('permission:system_devices.view');
     });
 
 });
