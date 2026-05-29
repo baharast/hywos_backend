@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ActiveAnalysisController;
 use App\Http\Controllers\Api\AnalysisDeviceController;
 use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\EventJournalController;
+use App\Http\Controllers\Api\LogbookController;
 use App\Http\Controllers\Api\SecurityEventController;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CalibrationProfileController;
@@ -717,6 +718,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('alarms-events/security-events')->group(function () {
         Route::get('', [SecurityEventController::class, 'index'])->middleware('permission:security_events.view');
         Route::get('/{id}', [SecurityEventController::class, 'show'])->middleware('permission:security_events.view');
+    });
+
+    /*
+     * Alarms & Events V1 §7.5 — Safety & Operations Logbook.
+     * Human-created shift / safety / operations notes + follow-up
+     * workflow. Per §7.5: no silent overwrite of text — corrections
+     * land on logbook_entry_corrections with mandatory reason.
+     */
+    Route::prefix('alarms-events/logbook')->group(function () {
+        Route::get('', [LogbookController::class, 'index'])->middleware('permission:logbook.view');
+        Route::get('/{id}', [LogbookController::class, 'show'])->middleware('permission:logbook.view');
+
+        Route::post('', [LogbookController::class, 'store'])->middleware('permission:logbook.manage');
+        Route::post('/{id}/follow-up', [LogbookController::class, 'addFollowUp'])->middleware('permission:logbook.manage');
+        Route::post('/{id}/follow-up/done', [LogbookController::class, 'markFollowUpDone'])->middleware('permission:logbook.manage');
+        Route::post('/{id}/correct', [LogbookController::class, 'correct'])->middleware('permission:logbook.manage');
     });
 
 });

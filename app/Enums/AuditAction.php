@@ -288,4 +288,13 @@ class AuditAction
     // existing D1 emitter will pick up.
     public const PRINTER_JOB_RETRY_REQUESTED = 'printer_job.retry_requested';
     public const PRINTER_JOB_REROUTED = 'printer_job.rerouted';
+
+    // Safety & Operations Logbook (Alarms & Events V1 §7.5) — emitted
+    // by LogbookService. Logbook is human-created shift / safety /
+    // operations notes; the correction record stores the old text +
+    // new text on a corrections table so silent overwrite never happens.
+    public const LOGBOOK_ENTRY_CREATED = 'logbook_entry.created';
+    public const LOGBOOK_FOLLOWUP_ADDED = 'logbook_entry.followup_added';
+    public const LOGBOOK_FOLLOWUP_COMPLETED = 'logbook_entry.followup_completed';
+    public const LOGBOOK_ENTRY_CORRECTED = 'logbook_entry.corrected';
 }
