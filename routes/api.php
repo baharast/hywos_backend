@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\MasterDataExportController;
 use App\Http\Controllers\Api\OperationalDocumentController;
 use App\Http\Controllers\Api\PlantConfigurationController;
 use App\Http\Controllers\Api\PlantVisitController;
+use App\Http\Controllers\Api\CardReaderTabController;
 use App\Http\Controllers\Api\PrinterTabController;
 use App\Http\Controllers\Api\ProductSpecificationController;
 use App\Http\Controllers\Api\QualityDecisionController;
@@ -653,6 +654,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{printerId}/jobs', [PrinterTabController::class, 'jobs'])->middleware('permission:system_devices.view');
         Route::post('/{printerId}/jobs/{attemptId}/retry', [PrinterTabController::class, 'retryJob'])->middleware('permission:system_devices.manage');
         Route::post('/{printerId}/jobs/{attemptId}/reroute', [PrinterTabController::class, 'rerouteJob'])->middleware('permission:system_devices.manage');
+    });
+
+    /*
+     * Card Readers / Trailer-Chip Readers (V1.4 §7) — internal Hardware
+     * Devices tab. Read-only composite over hardware_devices +
+     * terminal_sessions. NO force-match / force-success / gate-open /
+     * loading-release / safety-bypass per V1.4 §7's action-menu rule.
+     */
+    Route::prefix('card-readers')->group(function () {
+        Route::get('', [CardReaderTabController::class, 'index'])->middleware('permission:system_devices.view');
+        Route::get('/{deviceId}', [CardReaderTabController::class, 'show'])->middleware('permission:system_devices.view');
     });
 
 });
