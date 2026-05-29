@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ActiveAnalysisController;
 use App\Http\Controllers\Api\AnalysisDeviceController;
 use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\EventJournalController;
+use App\Http\Controllers\Api\SecurityEventController;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CalibrationProfileController;
 use App\Http\Controllers\Api\CarrierController;
@@ -703,6 +704,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('alarms-events/event-journal')->group(function () {
         Route::get('', [EventJournalController::class, 'index'])->middleware('permission:event_journal.view');
         Route::get('/{id}', [EventJournalController::class, 'show'])->middleware('permission:event_journal.view');
+    });
+
+    /*
+     * Alarms & Events V1 §7.6 — Security Events (restricted subview).
+     * READ-ONLY in V1 over event_logs filtered to event_category=security.
+     * Gated by `security_events.view` — admin / IT / operations_manager.
+     * Sensitive payload keys (passwords, chip UIDs, TANs, tokens) are
+     * scrubbed before exposure. mark-reviewed write workflow is
+     * forward-contract until a security_event_reviews table lands.
+     */
+    Route::prefix('alarms-events/security-events')->group(function () {
+        Route::get('', [SecurityEventController::class, 'index'])->middleware('permission:security_events.view');
+        Route::get('/{id}', [SecurityEventController::class, 'show'])->middleware('permission:security_events.view');
     });
 
 });

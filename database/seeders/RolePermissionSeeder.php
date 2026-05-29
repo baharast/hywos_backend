@@ -59,6 +59,9 @@ class RolePermissionSeeder extends Seeder
             'alarms.acknowledge',                // critical when alarm gates exit
             'event_journal.view',
             'audit_trail.view',
+            'security_events.view',              // V1 §7.6 restricted subview — admin / IT / operations_manager only
+            'logbook.view',
+            'logbook.manage',                    // create / correct entries; follow-up done
         ],
         'master_data' => [
             'drivers.view',
@@ -128,6 +131,8 @@ class RolePermissionSeeder extends Seeder
             'reports.view', 'reports.export',
             'alarms.view', 'alarms.acknowledge',
             'event_journal.view', 'audit_trail.view',
+            'security_events.view',
+            'logbook.view', 'logbook.manage',
             'drivers.view', 'trailers.view', 'vehicles.view',
             'customers.view', 'carriers.view',
             'chip_cards.view', 'tans.view',
@@ -148,6 +153,7 @@ class RolePermissionSeeder extends Seeder
             'reports.view',
             'alarms.view',
             'event_journal.view',
+            'logbook.view', 'logbook.manage',
             'drivers.view', 'drivers.update',
             'trailers.view', 'trailers.update',
             'vehicles.view', 'vehicles.update',
@@ -168,6 +174,7 @@ class RolePermissionSeeder extends Seeder
             'reports.view',
             'alarms.view', 'alarms.acknowledge',
             'event_journal.view',
+            'logbook.view', 'logbook.manage',
             'drivers.view', 'trailers.view', 'vehicles.view',
             'system_devices.view',
         ],
@@ -191,6 +198,8 @@ class RolePermissionSeeder extends Seeder
             'gate_terminal.view',
             'sap_sync.view',
             'alarms.view', 'event_journal.view', 'audit_trail.view',
+            'security_events.view',
+            'logbook.view', 'logbook.manage',
             'devices.view', 'devices.manage', 'interface_health.view',
             'users.view', 'users.manage',
             'roles.view',
@@ -218,6 +227,7 @@ class RolePermissionSeeder extends Seeder
             'reports.view', 'reports.export',
             'alarms.view',
             'event_journal.view', 'audit_trail.view',
+            'logbook.view',
             'drivers.view', 'trailers.view', 'vehicles.view',
             'customers.view', 'carriers.view',
             'chip_cards.view', 'tans.view',
