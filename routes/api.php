@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ActiveAnalysisController;
 use App\Http\Controllers\Api\AnalysisDeviceController;
+use App\Http\Controllers\Api\ActiveAlarmController;
 use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\EventJournalController;
 use App\Http\Controllers\Api\LogbookController;
@@ -734,6 +735,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/follow-up', [LogbookController::class, 'addFollowUp'])->middleware('permission:logbook.manage');
         Route::post('/{id}/follow-up/done', [LogbookController::class, 'markFollowUpDone'])->middleware('permission:logbook.manage');
         Route::post('/{id}/correct', [LogbookController::class, 'correct'])->middleware('permission:logbook.manage');
+    });
+
+    /*
+     * Alarms & Events V1 §6 — Active Alarms (live operational queue).
+     * 5 workflow writes per §6.9: acknowledge / assign / mark-in-progress /
+     * resolve / close. Software acknowledgement is a workflow record
+     * only — NEVER a physical reset per §6.10. NO PLC writes, no force
+     * release, no remote gate open, no safety bypass.
+     */
+    Route::prefix('alarms-events/active-alarms')->group(function () {
+        Route::get('', [ActiveAlarmController::class, 'index'])->middleware('permission:alarms.view');
+        Route::get('/{id}', [ActiveAlarmController::class, 'show'])->middleware('permission:alarms.view');
+
+        Route::post('/{id}/acknowledge', [ActiveAlarmController::class, 'acknowledge'])->middleware('permission:alarms.acknowledge');
+        Route::post('/{id}/assign', [ActiveAlarmController::class, 'assign'])->middleware('permission:alarms.acknowledge');
+        Route::post('/{id}/mark-in-progress', [ActiveAlarmController::class, 'markInProgress'])->middleware('permission:alarms.acknowledge');
+        Route::post('/{id}/resolve', [ActiveAlarmController::class, 'resolve'])->middleware('permission:alarms.acknowledge');
+        Route::post('/{id}/close', [ActiveAlarmController::class, 'close'])->middleware('permission:alarms.acknowledge');
     });
 
 });

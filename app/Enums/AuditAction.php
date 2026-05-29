@@ -297,4 +297,14 @@ class AuditAction
     public const LOGBOOK_FOLLOWUP_ADDED = 'logbook_entry.followup_added';
     public const LOGBOOK_FOLLOWUP_COMPLETED = 'logbook_entry.followup_completed';
     public const LOGBOOK_ENTRY_CORRECTED = 'logbook_entry.corrected';
+
+    // Active Alarms (Alarms & Events V1 §6) — emitted by AlarmService
+    // for the 5 workflow actions allowed by V1 §6.9. Software
+    // acknowledgement is a WORKFLOW RECORD only, never a physical reset
+    // per V1 §6.10.
+    public const ALARM_ACKNOWLEDGED = 'alarm.acknowledged';
+    public const ALARM_ASSIGNED = 'alarm.assigned';
+    public const ALARM_MARKED_IN_PROGRESS = 'alarm.marked_in_progress';
+    public const ALARM_RESOLVED = 'alarm.resolved';
+    public const ALARM_CLOSED = 'alarm.closed';
 }
