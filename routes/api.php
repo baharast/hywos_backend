@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ActiveAnalysisController;
 use App\Http\Controllers\Api\AnalysisDeviceController;
 use App\Http\Controllers\Api\AuditTrailController;
+use App\Http\Controllers\Api\EventJournalController;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CalibrationProfileController;
 use App\Http\Controllers\Api\CarrierController;
@@ -691,6 +692,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('alarms-events/audit-trail')->group(function () {
         Route::get('', [AuditTrailController::class, 'index'])->middleware('permission:audit_trail.view');
         Route::get('/{id}', [AuditTrailController::class, 'show'])->middleware('permission:audit_trail.view');
+    });
+
+    /*
+     * Alarms & Events V1 §7.4 — Event Journal (default subview).
+     * READ-ONLY surface over the existing event_logs table. Security
+     * events are excluded by event_category filter and live behind a
+     * separate permission boundary in the Security Events subview.
+     */
+    Route::prefix('alarms-events/event-journal')->group(function () {
+        Route::get('', [EventJournalController::class, 'index'])->middleware('permission:event_journal.view');
+        Route::get('/{id}', [EventJournalController::class, 'show'])->middleware('permission:event_journal.view');
     });
 
 });
