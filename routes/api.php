@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ActiveAnalysisController;
 use App\Http\Controllers\Api\AnalysisDeviceController;
+use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\BayLineController;
 use App\Http\Controllers\Api\CalibrationProfileController;
 use App\Http\Controllers\Api\CarrierController;
@@ -678,6 +679,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('plc-health')->group(function () {
         Route::get('', [PlcHealthTabController::class, 'index'])->middleware('permission:system_devices.view');
         Route::get('/{deviceId}', [PlcHealthTabController::class, 'show'])->middleware('permission:system_devices.view');
+    });
+
+    /*
+     * Alarms & Events V1 §8 — Change Log / Audit Trail.
+     * READ-ONLY surface over the existing audit_logs table. Writes
+     * happen only as side-effects of other modules' actions via
+     * App\Services\Audit\AuditLogger. Four-eyes approval workflow is
+     * forward-contract.
+     */
+    Route::prefix('alarms-events/audit-trail')->group(function () {
+        Route::get('', [AuditTrailController::class, 'index'])->middleware('permission:audit_trail.view');
+        Route::get('/{id}', [AuditTrailController::class, 'show'])->middleware('permission:audit_trail.view');
     });
 
 });
