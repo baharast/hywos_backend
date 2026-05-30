@@ -198,6 +198,7 @@ class DriverWorkflowController extends ApiController
             'order' => $this->service->orderRow($order),
             'task' => $data['task'],
             'nextRoute' => $this->service->nextRouteAfterOrder($data['task']),
+            'fillingTan' => $this->service->fillingTanFor($order),
         ], 'Order confirmed');
     }
 

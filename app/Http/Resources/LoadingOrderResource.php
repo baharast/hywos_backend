@@ -8,6 +8,7 @@ use App\Enums\AuthMediumType;
 use App\Enums\DriverTask;
 use App\Enums\LoadingOrderSource;
 use App\Enums\LoadingOrderStatus;
+use App\Enums\TanPurpose;
 use App\Enums\TanUsageState;
 use App\Models\AuthMedium;
 use App\Models\LoadingOrder;
@@ -83,7 +84,14 @@ class LoadingOrderResource extends JsonResource
                 'name' => $order->assigned_bay_line_name,
             ] : null,
 
-            'tan' => $this->tanObject($order),
+            // V1 "entry TAN" — issued at order create when a driver
+            // is already assigned. Used at the gate / driver terminal.
+            'tan' => $this->tanObject($order, TanPurpose::GATE_ENTRY),
+
+            // V1 "filling TAN" — initially null. Auto-issued when the
+            // driver confirms a filling task at the terminal. Shown on
+            // the kiosk so the driver knows what to enter at the bayline.
+            'fillingTan' => $this->tanObject($order, TanPurpose::FILLING),
 
             'taskFlow' => $taskFlow ? [
                 'value' => $taskFlow,
@@ -151,17 +159,18 @@ class LoadingOrderResource extends JsonResource
 
     /**
      * Compact TAN block for the management list. Returns null when the
-     * order has no active TAN attached (chip-card-only drivers, or
-     * orders without an assigned driver yet).
+     * order has no active TAN of the given purpose. Filling TANs are
+     * null until the driver confirms a filling task at the terminal.
      *
      * Raw identifier_value / identifier_hash are never returned — only
      * the masked / display fields the FE can render.
      */
-    protected function tanObject(LoadingOrder $order): ?array
+    protected function tanObject(LoadingOrder $order, string $purpose): ?array
     {
         $tan = AuthMedium::query()
             ->where('medium_type', AuthMediumType::TAN)
             ->where('order_id', $order->id)
+            ->where('tan_purpose', $purpose)
             ->where('status', AuthMediumStatus::ACTIVE)
             ->orderByDesc('issued_at')
             ->first();
@@ -175,6 +184,11 @@ class LoadingOrderResource extends JsonResource
             'reference' => $tan->tan_reference,
             'display' => $tan->display_identifier ?? $tan->tan_masked,
             'status' => $tan->status,
+            'purpose' => [
+                'value' => $purpose,
+                'label' => TanPurpose::label($purpose),
+                'tone' => TanPurpose::tone($purpose),
+            ],
             'usageState' => [
                 'value' => $usage,
                 'label' => TanUsageState::label($usage),

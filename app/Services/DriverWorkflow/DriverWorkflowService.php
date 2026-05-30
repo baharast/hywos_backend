@@ -6,10 +6,15 @@ use App\Enums\AuditAction;
 use App\Enums\EventCategory;
 use App\Enums\EventSeverity;
 use App\Enums\GateTerminalSessionState;
+use App\Enums\TanPurpose;
+use App\Enums\TanUsageState;
+use App\Models\AuthMedium;
+use App\Models\Driver;
 use App\Models\LoadingOrder;
 use App\Models\TerminalSession;
 use App\Services\Audit\AuditLogger;
 use App\Services\Events\EventLogger;
+use App\Services\LoadingOrders\OrderProvisioningService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +53,7 @@ class DriverWorkflowService
     public function __construct(
         protected AuditLogger $audit,
         protected EventLogger $events,
+        protected OrderProvisioningService $provisioning,
     ) {}
 
     /* ============================================================
@@ -367,9 +373,65 @@ class DriverWorkflowService
                 EventCategory::OPERATIONS,
                 EventSeverity::INFO
             );
+
+            // Issue (or fetch the existing) filling-station TAN for
+            // tasks that route forward to the bayline. parking / exit
+            // tasks don't need one. Best-effort: failure logs a
+            // warning and does NOT roll back the confirmation.
+            if ($task === 'filling' && $session->driver_id) {
+                $driver = Driver::find($session->driver_id);
+                if ($driver !== null) {
+                    $tan = $this->provisioning->provisionFillingTanFor($order, $driver);
+                    if ($tan !== null) {
+                        $tan->update([
+                            'related_terminal_session_id' => $session->id,
+                        ]);
+                    }
+                }
+            }
         });
 
         return $order;
+    }
+
+    /**
+     * Compact FE shape of the filling TAN attached to a confirmed
+     * order. Returns null when the driver hasn't confirmed a filling
+     * task at the terminal yet.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function fillingTanFor(LoadingOrder $order): ?array
+    {
+        $tan = AuthMedium::query()
+            ->where('order_id', $order->id)
+            ->where('tan_purpose', TanPurpose::FILLING)
+            ->where('status', 'active')
+            ->orderByDesc('issued_at')
+            ->first();
+
+        if ($tan === null) return null;
+
+        $usage = $tan->usage_state ?? TanUsageState::UNUSED;
+
+        return [
+            'id' => $tan->id,
+            'reference' => $tan->tan_reference,
+            'display' => $tan->display_identifier ?? $tan->tan_masked,
+            'purpose' => [
+                'value' => TanPurpose::FILLING,
+                'label' => TanPurpose::label(TanPurpose::FILLING),
+                'tone' => TanPurpose::tone(TanPurpose::FILLING),
+            ],
+            'usageState' => [
+                'value' => $usage,
+                'label' => TanUsageState::label($usage),
+                'tone' => TanUsageState::tone($usage),
+            ],
+            'isSingleUse' => (bool) $tan->is_single_use,
+            'issuedAt' => $tan->issued_at?->toIso8601String(),
+            'expiresAt' => $tan->expires_at?->toIso8601String(),
+        ];
     }
 
     /* ============================================================
@@ -410,6 +472,7 @@ class DriverWorkflowService
         return [
             'bayLine' => $bayLine,
             'order' => $this->orderRow($order),
+            'fillingTan' => $this->fillingTanFor($order),
             'reason' => $bayLine === null
                 ? 'Order has no active loading operation; bay line not yet assigned.'
                 : null,

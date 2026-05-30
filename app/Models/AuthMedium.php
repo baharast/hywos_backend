@@ -64,6 +64,7 @@ class AuthMedium extends Model
         'consumed_at',
         'consumption_count',
         'usage_state',
+        'tan_purpose',
         'related_plant_visit_id',
         'related_terminal_session_id',
         'reason',

@@ -4,6 +4,7 @@ namespace App\Services\LoadingOrders;
 
 use App\Enums\AuthMediumStatus;
 use App\Enums\AuthMediumType;
+use App\Enums\TanPurpose;
 use App\Enums\TanUsageState;
 use App\Models\AuthMedium;
 use App\Models\BayLine;
@@ -52,6 +53,7 @@ class OrderProvisioningService
             $existing = AuthMedium::query()
                 ->where('medium_type', AuthMediumType::TAN)
                 ->where('order_id', $order->id)
+                ->where('tan_purpose', TanPurpose::GATE_ENTRY)
                 ->where('status', AuthMediumStatus::ACTIVE)
                 ->first();
 
@@ -86,7 +88,8 @@ class OrderProvisioningService
                 'identifier_hash' => $hash,
                 'display_identifier' => $masked,
                 'tan_masked' => $masked,
-                'tan_reference' => $this->nextTanReference(),
+                'tan_reference' => $this->nextTanReference('TAN'),
+                'tan_purpose' => TanPurpose::GATE_ENTRY,
                 'is_single_use' => true,
                 'status' => AuthMediumStatus::ACTIVE,
                 'usage_state' => TanUsageState::UNUSED,
@@ -98,6 +101,83 @@ class OrderProvisioningService
             ]);
         } catch (\Throwable $e) {
             Log::warning('OrderProvisioningService::provisionTanFor failed', [
+                'order_id' => $order->id,
+                'driver_id' => $driver->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Issue (or fetch the existing) filling-station TAN for an order
+     * the driver has just confirmed at the terminal.
+     *
+     * Distinct from the gate-entry TAN: this one is shown on the
+     * terminal kiosk as "use this TAN at bayline X". The reference
+     * uses an `FT-` prefix so the driver can tell the two TANs apart
+     * at a glance.
+     *
+     * Idempotent for the same (order, driver) tuple — re-confirming
+     * the order does NOT mint a new TAN. If the driver changed since
+     * the last filling TAN was issued, the old one is BLOCKED and a
+     * new one minted (same rotation rule as the entry TAN).
+     */
+    public function provisionFillingTanFor(LoadingOrder $order, ?Driver $driver = null): ?AuthMedium
+    {
+        if ($driver === null && $order->assigned_driver_id !== null) {
+            $driver = Driver::find($order->assigned_driver_id);
+        }
+        if ($driver === null) {
+            return null;
+        }
+
+        try {
+            $existing = AuthMedium::query()
+                ->where('medium_type', AuthMediumType::TAN)
+                ->where('order_id', $order->id)
+                ->where('tan_purpose', TanPurpose::FILLING)
+                ->where('status', AuthMediumStatus::ACTIVE)
+                ->first();
+
+            if ($existing !== null && $existing->driver_id === $driver->id) {
+                return $existing;
+            }
+
+            if ($existing !== null) {
+                $existing->update([
+                    'status' => AuthMediumStatus::BLOCKED,
+                    'usage_state' => TanUsageState::BLOCKED,
+                    'revoked_at' => now(),
+                    'revocation_reason' => 'Order reassigned to a different driver',
+                ]);
+            }
+
+            $hash = hash('sha256', random_bytes(16));
+            $masked = '••' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+
+            return AuthMedium::create([
+                'id' => (string) Str::uuid(),
+                'medium_type' => AuthMediumType::TAN,
+                'driver_id' => $driver->id,
+                'order_id' => $order->id,
+                'identifier_value' => null,
+                'identifier_hash' => $hash,
+                'display_identifier' => $masked,
+                'tan_masked' => $masked,
+                'tan_reference' => $this->nextTanReference('FT'),
+                'tan_purpose' => TanPurpose::FILLING,
+                'is_single_use' => true,
+                'status' => AuthMediumStatus::ACTIVE,
+                'usage_state' => TanUsageState::UNUSED,
+                'consumption_count' => 0,
+                'issued_at' => now(),
+                'valid_from' => now(),
+                'expires_at' => null,
+                'reason' => "Auto-issued for filling station, order {$order->order_no}",
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('OrderProvisioningService::provisionFillingTanFor failed', [
                 'order_id' => $order->id,
                 'driver_id' => $driver->id,
                 'error' => $e->getMessage(),
@@ -163,14 +243,18 @@ class OrderProvisioningService
     }
 
     /**
-     * Generates the next TAN reference in the TAN-YYYY-NNNN sequence.
-     * Uses a max+1 pickup on `tan_reference` so re-seeding stays stable
-     * even when older numbers exist with gaps.
+     * Generates the next TAN reference for the given prefix family.
+     *   TAN-YYYY-NNNN   gate-entry credential
+     *   FT-YYYY-NNNN    filling-station credential
+     *
+     * Uses a max+1 pickup on `tan_reference` for the matching prefix
+     * so the two sequences advance independently and gaps in older
+     * numbers don't reset the counter.
      */
-    protected function nextTanReference(): string
+    protected function nextTanReference(string $family = 'TAN'): string
     {
         $year = (int) now()->format('Y');
-        $prefix = "TAN-{$year}-";
+        $prefix = "{$family}-{$year}-";
 
         $lastNo = AuthMedium::query()
             ->where('tan_reference', 'like', $prefix . '%')
