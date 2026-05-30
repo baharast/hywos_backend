@@ -7,10 +7,31 @@ use App\Enums\AuthMediumType;
 use App\Enums\TanUsageState;
 use App\Models\AuthMedium;
 use App\Models\Driver;
-use App\Services\Tans\TanPolicy;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
+/**
+ * Seeds the TAN management list (`/api/tans`) with predictable test
+ * values per V6 §16.1.
+ *
+ * Following the same convention as TerminalAuthDemoSeeder, each row
+ * carries a fixed 7-digit `code` (instead of a random one) so devs can
+ * actually log in at the kiosk using these TANs. The code is stored
+ * in `identifier_value` (hidden from API), hashed into
+ * `identifier_hash` (for authenticateWithTan() lookup), and exposed
+ * via:
+ *   - `display_identifier` = full human "XXX-XXXX" form (seed convention)
+ *   - `tan_masked`         = safe "***-XXXX" mask (the only form
+ *                            production-issued TANs would expose)
+ *
+ * Code mapping: `TAN-2026-NNNN` → `100NNNN` (e.g. TAN-2026-0001 →
+ * `1000001` = `100-0001`). All values are 7 digits starting with 1,
+ * so they fall inside the V6 generator range
+ * [TanPolicy::VALUE_DIGITS = 7].
+ *
+ * The non-active rows (consumed / revoked / expired) keep their codes
+ * too so devs can verify each lifecycle branch.
+ */
 class TanSeeder extends Seeder
 {
     public function run(): void
@@ -29,8 +50,9 @@ class TanSeeder extends Seeder
             // ----- Non-active samples (kept so the state matrix stays covered).
             [
                 'tan_reference' => 'TAN-2026-0002',
+                'code'   => '1000002',
                 'driver' => $klaus,
-                'state' => 'consumed',
+                'state'  => 'consumed',
                 'expires_at' => now()->subDay()->addMinutes(30),
                 'used_at' => now()->subDay(),
                 'consumed_at' => now()->subDay(),
@@ -38,8 +60,9 @@ class TanSeeder extends Seeder
             ],
             [
                 'tan_reference' => 'TAN-2026-0003',
+                'code'   => '1000003',
                 'driver' => $tomasz,
-                'state' => 'revoked',
+                'state'  => 'revoked',
                 'expires_at' => now()->addDays(3),
                 'revoked_at' => now()->subHours(6),
                 'revocation_reason' => 'Driver lost phone',
@@ -47,8 +70,9 @@ class TanSeeder extends Seeder
             ],
             [
                 'tan_reference' => 'TAN-2026-0004',
+                'code'   => '1000004',
                 'driver' => $anna,
-                'state' => 'expired',
+                'state'  => 'expired',
                 'expires_at' => now()->subDays(2),
                 'reason' => 'Single-loading exception',
             ],
@@ -61,71 +85,81 @@ class TanSeeder extends Seeder
             // treat NULL as "no expiry".
             [
                 'tan_reference' => 'TAN-2026-0001',
+                'code'   => '1000001',
                 'driver' => $max,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Driver chip not yet issued',
             ],
             [
                 'tan_reference' => 'TAN-2026-0005',
+                'code'   => '1000005',
                 'driver' => $max,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Walk-in driver, chip pending',
             ],
             [
                 'tan_reference' => 'TAN-2026-0006',
+                'code'   => '1000006',
                 'driver' => $anna,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Replacement chip ordered, TAN bridge',
             ],
             [
                 'tan_reference' => 'TAN-2026-0007',
+                'code'   => '1000007',
                 'driver' => $tomasz,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Cross-border permit override',
             ],
             [
                 'tan_reference' => 'TAN-2026-0008',
+                'code'   => '1000008',
                 'driver' => $pierre,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Spot loading approved by dispatcher',
             ],
             [
                 'tan_reference' => 'TAN-2026-0009',
+                'code'   => '1000009',
                 'driver' => $pierre,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Second-leg pickup, single use',
             ],
             [
                 'tan_reference' => 'TAN-2026-0010',
+                'code'   => '1000010',
                 'driver' => $klaus,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Chip lost; emergency bridge issued',
             ],
             [
                 'tan_reference' => 'TAN-2026-0011',
+                'code'   => '1000011',
                 'driver' => $helena,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'New driver onboarding, awaiting chip',
             ],
             [
                 'tan_reference' => 'TAN-2026-0012',
+                'code'   => '1000012',
                 'driver' => $helena,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Last-minute one-off loading',
             ],
             [
                 'tan_reference' => 'TAN-2026-0013',
+                'code'   => '1000013',
                 'driver' => $anna,
-                'state' => 'active',
+                'state'  => 'active',
                 'expires_at' => null,
                 'reason' => 'Holiday cover for primary driver',
             ],
@@ -151,55 +185,53 @@ class TanSeeder extends Seeder
             };
             $consumptionCount = $state === 'consumed' ? 1 : 0;
 
-            // Generate a CSPRNG-backed V6 §16.1 7-digit value, mirror the
-            // production TanController format so demo data matches what a
-            // real dispatcher would see.
-            //   - rawValue        7-digit string ("4829173")          — used for the hash; never persisted in plain
-            //   - displayHuman    "XXX-XXXX" form ("482-9173")        — driver-facing label
-            //   - masked          "***-XXXX" form ("***-9173")        — list view + post-creation reveal
-            //
-            // identifier_value stays null (matches production write path);
-            // identifier_hash holds the SHA-256 so seeded rows behave like
-            // real TANs against the lookup code without exposing the value.
-            $min = (int) str_pad('1', TanPolicy::VALUE_DIGITS, '0');
-            $max = (int) str_repeat('9', TanPolicy::VALUE_DIGITS);
-            $rawValue = (string) random_int($min, $max);
+            // Per-row fixed code (V6 §16.1 7-digit). Hash + masked + human
+            // forms are derived from it so the lookup, list view and kiosk
+            // all agree on the same value. Mirrors TerminalAuthDemoSeeder's
+            // known-value test pattern.
+            $rawValue = $row['code'];
             $displayHuman = substr($rawValue, 0, 3) . '-' . substr($rawValue, 3);
             $masked = '***-' . substr($rawValue, -4);
             $hash = hash('sha256', $rawValue);
 
-            $created = AuthMedium::firstOrCreate(
-                ['tan_reference' => $row['tan_reference']],
-                [
-                    'id' => (string) Str::uuid(),
-                    'medium_type' => AuthMediumType::TAN,
-                    'driver_id' => $row['driver']->id,
-                    'identifier_value' => null,
-                    'identifier_hash' => $hash,
-                    'display_identifier' => $masked,
-                    'tan_masked' => $masked,
-                    'is_single_use' => true,
-                    'status' => $status,
-                    'usage_state' => $usageState,
-                    'consumption_count' => $consumptionCount,
-                    'issued_at' => now()->subDays(1),
-                    'valid_from' => now()->subDays(1),
-                    'expires_at' => $row['expires_at'],
-                    'used_at' => $row['used_at'] ?? null,
-                    'consumed_at' => $row['consumed_at'] ?? null,
-                    'revoked_at' => $row['revoked_at'] ?? null,
-                    'revocation_reason' => $row['revocation_reason'] ?? null,
-                    'reason' => $row['reason'] ?? null,
-                ]
-            );
+            // firstOrCreate UPDATES the existing row on re-seed so the hash
+            // matches the documented `code` even if a previous random-value
+            // run already inserted the reference.
+            $payload = [
+                'medium_type' => AuthMediumType::TAN,
+                'driver_id' => $row['driver']->id,
+                'identifier_value' => $rawValue,         // hidden from API per AuthMedium::$hidden
+                'identifier_hash' => $hash,
+                'display_identifier' => $displayHuman,   // "100-0001" — seed convention
+                'tan_masked' => $masked,                 // "***-0001" — safe mask
+                'is_single_use' => true,
+                'status' => $status,
+                'usage_state' => $usageState,
+                'consumption_count' => $consumptionCount,
+                'issued_at' => now()->subDays(1),
+                'valid_from' => now()->subDays(1),
+                'expires_at' => $row['expires_at'],
+                'used_at' => $row['used_at'] ?? null,
+                'consumed_at' => $row['consumed_at'] ?? null,
+                'revoked_at' => $row['revoked_at'] ?? null,
+                'revocation_reason' => $row['revocation_reason'] ?? null,
+                'reason' => $row['reason'] ?? null,
+            ];
 
-            // Only on freshly-created rows (firstOrCreate may have hit an
-            // existing one): print the human form to the seeder console
-            // so the dev knows which 7-digit code to use against the
-            // active TANs in this run. Re-running the seeder against an
-            // existing row keeps the original hash; the new $rawValue
-            // here would NOT work for that row.
-            if ($created->wasRecentlyCreated && $state === 'active') {
+            $tan = AuthMedium::query()
+                ->where('tan_reference', $row['tan_reference'])
+                ->first();
+
+            if ($tan) {
+                $tan->update($payload);
+            } else {
+                AuthMedium::create(array_merge([
+                    'id' => (string) Str::uuid(),
+                    'tan_reference' => $row['tan_reference'],
+                ], $payload));
+            }
+
+            if ($state === 'active') {
                 $this->command?->info("Seeded {$row['tan_reference']} → {$displayHuman} (driver {$row['driver']->driver_code})");
             }
         }
