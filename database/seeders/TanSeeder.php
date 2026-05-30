@@ -20,16 +20,12 @@ class TanSeeder extends Seeder
         $max    = Driver::where('driver_code', 'DRV-1001')->first();
         $anna   = Driver::where('driver_code', 'DRV-1002')->first();
         $tomasz = Driver::where('driver_code', 'DRV-1003')->first();
+        $pierre = Driver::where('driver_code', 'DRV-1004')->first();
         $klaus  = Driver::where('driver_code', 'DRV-1005')->first();
+        $helena = Driver::where('driver_code', 'DRV-1006')->first();
 
         $rows = [
-            [
-                'tan_reference' => 'TAN-2026-0001',
-                'driver' => $max,
-                'state' => 'active',
-                'expires_at' => now()->addDays(7),
-                'reason' => 'Driver chip not yet issued',
-            ],
+            // ----- Non-active samples (kept so the state matrix stays covered).
             [
                 'tan_reference' => 'TAN-2026-0002',
                 'driver' => $klaus,
@@ -55,12 +51,82 @@ class TanSeeder extends Seeder
                 'expires_at' => now()->subDays(2),
                 'reason' => 'Single-loading exception',
             ],
+
+            // ----- 10 active TANs spread across the seeded driver pool.
+            // expires_at is null on every active row per current ops rule:
+            // active TANs are open-ended bridges until consumed or
+            // explicitly revoked. The auth_media.expires_at column is
+            // nullable, and downstream filters (TansExporter etc.) already
+            // treat NULL as "no expiry".
+            [
+                'tan_reference' => 'TAN-2026-0001',
+                'driver' => $max,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Driver chip not yet issued',
+            ],
             [
                 'tan_reference' => 'TAN-2026-0005',
                 'driver' => $max,
-                'state' => 'expiring_soon',
-                'expires_at' => now()->addHours(2),
+                'state' => 'active',
+                'expires_at' => null,
                 'reason' => 'Walk-in driver, chip pending',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0006',
+                'driver' => $anna,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Replacement chip ordered, TAN bridge',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0007',
+                'driver' => $tomasz,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Cross-border permit override',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0008',
+                'driver' => $pierre,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Spot loading approved by dispatcher',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0009',
+                'driver' => $pierre,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Second-leg pickup, single use',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0010',
+                'driver' => $klaus,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Chip lost; emergency bridge issued',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0011',
+                'driver' => $helena,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'New driver onboarding, awaiting chip',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0012',
+                'driver' => $helena,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Last-minute one-off loading',
+            ],
+            [
+                'tan_reference' => 'TAN-2026-0013',
+                'driver' => $anna,
+                'state' => 'active',
+                'expires_at' => null,
+                'reason' => 'Holiday cover for primary driver',
             ],
         ];
 

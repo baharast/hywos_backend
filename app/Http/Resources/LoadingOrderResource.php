@@ -3,9 +3,13 @@
 namespace App\Http\Resources;
 
 use App\Enums\AssignmentState;
+use App\Enums\AuthMediumStatus;
+use App\Enums\AuthMediumType;
 use App\Enums\DriverTask;
 use App\Enums\LoadingOrderSource;
 use App\Enums\LoadingOrderStatus;
+use App\Enums\TanUsageState;
+use App\Models\AuthMedium;
 use App\Models\LoadingOrder;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -73,6 +77,14 @@ class LoadingOrderResource extends JsonResource
                 'assignmentState' => $this->stateObject($order->trailer_assignment_state),
             ],
 
+            'bayLine' => $order->assigned_bay_line_id ? [
+                'id' => $order->assigned_bay_line_id,
+                'code' => $order->assigned_bay_line_code,
+                'name' => $order->assigned_bay_line_name,
+            ] : null,
+
+            'tan' => $this->tanObject($order),
+
             'taskFlow' => $taskFlow ? [
                 'value' => $taskFlow,
                 'label' => DriverTask::label($taskFlow),
@@ -134,6 +146,43 @@ class LoadingOrderResource extends JsonResource
             'value' => $value,
             'label' => AssignmentState::label($value),
             'tone' => AssignmentState::tone($value),
+        ];
+    }
+
+    /**
+     * Compact TAN block for the management list. Returns null when the
+     * order has no active TAN attached (chip-card-only drivers, or
+     * orders without an assigned driver yet).
+     *
+     * Raw identifier_value / identifier_hash are never returned — only
+     * the masked / display fields the FE can render.
+     */
+    protected function tanObject(LoadingOrder $order): ?array
+    {
+        $tan = AuthMedium::query()
+            ->where('medium_type', AuthMediumType::TAN)
+            ->where('order_id', $order->id)
+            ->where('status', AuthMediumStatus::ACTIVE)
+            ->orderByDesc('issued_at')
+            ->first();
+
+        if ($tan === null) return null;
+
+        $usage = $tan->usage_state ?? TanUsageState::UNUSED;
+
+        return [
+            'id' => $tan->id,
+            'reference' => $tan->tan_reference,
+            'display' => $tan->display_identifier ?? $tan->tan_masked,
+            'status' => $tan->status,
+            'usageState' => [
+                'value' => $usage,
+                'label' => TanUsageState::label($usage),
+                'tone' => TanUsageState::tone($usage),
+            ],
+            'isSingleUse' => (bool) $tan->is_single_use,
+            'expiresAt' => $tan->expires_at?->toIso8601String(),
+            'issuedAt' => $tan->issued_at?->toIso8601String(),
         ];
     }
 }

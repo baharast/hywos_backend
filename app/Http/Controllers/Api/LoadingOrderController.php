@@ -28,6 +28,7 @@ use App\Models\Trailer;
 use App\Services\ApiResponse;
 use App\Services\Audit\AuditLogger;
 use App\Services\Events\EventLogger;
+use App\Services\LoadingOrders\OrderProvisioningService;
 use App\Services\Sap\SapFieldGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,8 +102,12 @@ class LoadingOrderController extends ApiController
         return $this->success(new LoadingOrderResource($order), 'Loading order retrieved');
     }
 
-    public function store(CreateLoadingOrderRequest $request, AuditLogger $audit, EventLogger $events)
-    {
+    public function store(
+        CreateLoadingOrderRequest $request,
+        AuditLogger $audit,
+        EventLogger $events,
+        OrderProvisioningService $provisioning
+    ) {
         $data = $request->validated();
 
         // Strip any forbidden fields defensively (Laravel already validates only
@@ -155,7 +160,7 @@ class LoadingOrderController extends ApiController
         $data['source'] = 'manual';
         $data['is_sap_owned'] = false;
 
-        return DB::transaction(function () use ($data, $audit, $events) {
+        return DB::transaction(function () use ($data, $audit, $events, $provisioning) {
             $data['order_no'] = $this->nextOrderNo();
 
             // TODO: re-enable when auth lands — populate created_by_user_id from request()->user().
@@ -178,6 +183,17 @@ class LoadingOrderController extends ApiController
                 EventCategory::OPERATIONS,
                 EventSeverity::INFO
             );
+
+            // Auto-provision a bay line on every order (best-effort).
+            $provisioning->provisionBayLineFor($order);
+
+            // Auto-provision a single-use TAN when a driver was set at
+            // create-time — the driver needs it for gate entry. Failure
+            // logs a warning and does NOT block creation; chip-card-only
+            // drivers can be re-issued a TAN later via assignDriver.
+            if (! empty($order->assigned_driver_id)) {
+                $provisioning->provisionTanFor($order->fresh());
+            }
 
             return ApiResponse::success(new LoadingOrderResource($order->fresh()), 'Loading order created', 201);
         });
@@ -268,8 +284,13 @@ class LoadingOrderController extends ApiController
         });
     }
 
-    public function assignDriver(AssignDriverRequest $request, $id, AuditLogger $audit, EventLogger $events)
-    {
+    public function assignDriver(
+        AssignDriverRequest $request,
+        $id,
+        AuditLogger $audit,
+        EventLogger $events,
+        OrderProvisioningService $provisioning
+    ) {
         $order = LoadingOrder::find($id);
         if (! $order) {
             return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
@@ -283,7 +304,7 @@ class LoadingOrderController extends ApiController
             return $conflict;
         }
 
-        return DB::transaction(function () use ($order, $driver, $audit, $events) {
+        return DB::transaction(function () use ($order, $driver, $audit, $events, $provisioning) {
             $old = $audit->snapshotModel($order);
 
             $order->update([
@@ -309,6 +330,11 @@ class LoadingOrderController extends ApiController
                 EventCategory::OPERATIONS,
                 EventSeverity::INFO
             );
+
+            // Issue (or rotate) the driver's TAN now that they're bound
+            // to this order. provisionTanFor is idempotent for the same
+            // driver and rotates when the driver changed.
+            $provisioning->provisionTanFor($order->fresh(), $driver);
 
             return $this->success(new LoadingOrderResource($order->fresh()), 'Driver assigned');
         });

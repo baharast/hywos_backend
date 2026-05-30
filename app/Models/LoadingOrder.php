@@ -51,6 +51,9 @@ class LoadingOrder extends Model
         'assigned_trailer_id',
         'assigned_trailer_label',
         'assigned_trailer_plate',
+        'assigned_bay_line_id',
+        'assigned_bay_line_code',
+        'assigned_bay_line_name',
         'task_flow',
         'requires_certificate',
         'requires_delivery_note',
@@ -129,6 +132,22 @@ class LoadingOrder extends Model
     public function trailer(): BelongsTo
     {
         return $this->belongsTo(Trailer::class, 'assigned_trailer_id', 'id');
+    }
+
+    public function bayLine(): BelongsTo
+    {
+        return $this->belongsTo(BayLine::class, 'assigned_bay_line_id', 'id');
+    }
+
+    /**
+     * Active TAN attached to this order. Single-use, may be null if
+     * the order has no assigned driver (or chip-card driver).
+     */
+    public function activeTan(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(AuthMedium::class, 'order_id', 'id')
+            ->where('medium_type', \App\Enums\AuthMediumType::TAN)
+            ->where('status', \App\Enums\AuthMediumStatus::ACTIVE);
     }
 
     /* ----- Scopes ----- */
