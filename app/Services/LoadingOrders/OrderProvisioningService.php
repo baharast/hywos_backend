@@ -10,6 +10,7 @@ use App\Models\AuthMedium;
 use App\Models\BayLine;
 use App\Models\Driver;
 use App\Models\LoadingOrder;
+use App\Services\Tans\TanPolicy;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -76,8 +77,7 @@ class OrderProvisioningService
                 ]);
             }
 
-            $hash = hash('sha256', random_bytes(16));
-            $masked = '••' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            [$hash, $masked] = $this->generateTanCredential();
 
             return AuthMedium::create([
                 'id' => (string) Str::uuid(),
@@ -153,8 +153,7 @@ class OrderProvisioningService
                 ]);
             }
 
-            $hash = hash('sha256', random_bytes(16));
-            $masked = '••' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            [$hash, $masked] = $this->generateTanCredential();
 
             return AuthMedium::create([
                 'id' => (string) Str::uuid(),
@@ -240,6 +239,33 @@ class OrderProvisioningService
             ]);
             return null;
         }
+    }
+
+    /**
+     * V6 §16.1 TAN credential generator. Returns the (identifier_hash,
+     * tan_masked) pair shared by both gate-entry and filling paths.
+     *
+     * Generates a 7-digit value via CSPRNG (random_int min/max derived
+     * from TanPolicy::VALUE_DIGITS), then:
+     *   - hashes it with SHA-256 → identifier_hash (persisted)
+     *   - masks the last 4 digits as "***-XXXX" → tan_masked + display
+     *
+     * The raw value is NOT returned (and not stored) — auto-issued TANs
+     * skip the one-time-reveal step. A driver who needs the actual
+     * code receives it through the kiosk during the workflow (we send
+     * back the masked form there; the raw value path is reserved for
+     * the manual TanController::generate flow per `oneTimeFullValue`).
+     *
+     * @return array{0:string,1:string} [hash, masked]
+     */
+    protected function generateTanCredential(): array
+    {
+        $min = (int) str_pad('1', TanPolicy::VALUE_DIGITS, '0');
+        $max = (int) str_repeat('9', TanPolicy::VALUE_DIGITS);
+        $rawValue = (string) random_int($min, $max);
+        $hash = hash('sha256', $rawValue);
+        $masked = '***-' . substr($rawValue, -4);
+        return [$hash, $masked];
     }
 
     /**

@@ -79,11 +79,19 @@ class TanController extends ApiController
         }
 
         return DB::transaction(function () use ($driver, $request, $audit, $events) {
-            // Cryptographically-strong 6-digit value via random_int (CSPRNG-backed).
+            // Cryptographically-strong V6 §16.1 7-digit value via random_int
+            // (CSPRNG-backed). The min/max are derived from VALUE_DIGITS so
+            // the policy constant stays the single source of truth. The
+            // raw value leaves the backend exactly once — in oneTimeFullValue
+            // on this response — and is never persisted in plain form.
             $min = (int) str_pad('1', TanPolicy::VALUE_DIGITS, '0');
             $max = (int) str_repeat('9', TanPolicy::VALUE_DIGITS);
             $rawValue = (string) random_int($min, $max);
-            $masked = '••' . substr($rawValue, -4);
+            // V6 §16.1 visual format: dispatcher sees a masked "***-XXXX"
+            // after the one-time reveal (last 4 digits identify the row
+            // but cannot authenticate). display_identifier stores the same
+            // masked form — never the raw value.
+            $masked = '***-' . substr($rawValue, -4);
 
             $reference = $this->nextTanReference();
 

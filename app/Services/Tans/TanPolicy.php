@@ -22,6 +22,12 @@ class TanPolicy
 
     /**
      * Length of the generated numeric TAN value.
+     *
+     * Per V6 §16.1 the TAN is 7 digits and is presented to the driver
+     * in the human-readable form `XXX-XXXX` (3+4). Backend stores the
+     * digits-only form on `auth_media.identifier_value` and the masked
+     * form `***-XXXX` on `auth_media.tan_masked`. The display form
+     * (`XXX-XXXX`) lives on `auth_media.display_identifier`.
      */
-    public const VALUE_DIGITS = 6;
+    public const VALUE_DIGITS = 7;
 }

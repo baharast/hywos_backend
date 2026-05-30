@@ -7,6 +7,7 @@ use App\Enums\AuthMediumType;
 use App\Enums\TanUsageState;
 use App\Models\AuthMedium;
 use App\Models\Driver;
+use App\Services\Tans\TanPolicy;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -150,12 +151,24 @@ class TanSeeder extends Seeder
             };
             $consumptionCount = $state === 'consumed' ? 1 : 0;
 
-            // Generate an opaque sha256 hash from random bytes — we deliberately
-            // do not store any guessable identifier_value for seeded rows.
-            $hash = hash('sha256', random_bytes(16));
-            $masked = '••' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            // Generate a CSPRNG-backed V6 §16.1 7-digit value, mirror the
+            // production TanController format so demo data matches what a
+            // real dispatcher would see.
+            //   - rawValue        7-digit string ("4829173")          — used for the hash; never persisted in plain
+            //   - displayHuman    "XXX-XXXX" form ("482-9173")        — driver-facing label
+            //   - masked          "***-XXXX" form ("***-9173")        — list view + post-creation reveal
+            //
+            // identifier_value stays null (matches production write path);
+            // identifier_hash holds the SHA-256 so seeded rows behave like
+            // real TANs against the lookup code without exposing the value.
+            $min = (int) str_pad('1', TanPolicy::VALUE_DIGITS, '0');
+            $max = (int) str_repeat('9', TanPolicy::VALUE_DIGITS);
+            $rawValue = (string) random_int($min, $max);
+            $displayHuman = substr($rawValue, 0, 3) . '-' . substr($rawValue, 3);
+            $masked = '***-' . substr($rawValue, -4);
+            $hash = hash('sha256', $rawValue);
 
-            AuthMedium::firstOrCreate(
+            $created = AuthMedium::firstOrCreate(
                 ['tan_reference' => $row['tan_reference']],
                 [
                     'id' => (string) Str::uuid(),
@@ -179,6 +192,16 @@ class TanSeeder extends Seeder
                     'reason' => $row['reason'] ?? null,
                 ]
             );
+
+            // Only on freshly-created rows (firstOrCreate may have hit an
+            // existing one): print the human form to the seeder console
+            // so the dev knows which 7-digit code to use against the
+            // active TANs in this run. Re-running the seeder against an
+            // existing row keeps the original hash; the new $rawValue
+            // here would NOT work for that row.
+            if ($created->wasRecentlyCreated && $state === 'active') {
+                $this->command?->info("Seeded {$row['tan_reference']} → {$displayHuman} (driver {$row['driver']->driver_code})");
+            }
         }
     }
 }
