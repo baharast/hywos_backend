@@ -20,6 +20,9 @@ fulfillable visit (driver + trailer + readiness checks).
 | Seeder — 5 demo orders covering DRAFT / NEEDS_ASSIGNMENT / READY / IN_PROGRESS / BLOCKED | ✅ implemented |
 | `LOADING_ORDER_*` audit constants | ✅ implemented (11 of them; emitted by the controller) |
 | **REST endpoints** (CRUD, assign-driver, assign-trailer, unassign-*, block, unblock, cancel, events-audit) | ✅ **implemented** — see §3 / §4 / §6 / §7 |
+| Auto-provisioning side effects on create (bay line + gate-entry TAN) via `OrderProvisioningService` | ✅ implemented — see §5.4 |
+| `bayLine` / `tan` / `fillingTan` exposed on the resource | ✅ implemented — see §4.2 / §8 |
+| `assigned_bay_line_id` / `_code` / `_name` columns on `loading_orders` (migration `2026_05_30_140000_add_bay_line_to_loading_orders`) | ✅ implemented |
 | SAP import endpoint | ⏳ not implemented yet (see SAP Sync spec for the inbound shape) |
 
 This document describes the data model + resource shape + status derivation
@@ -199,6 +202,26 @@ state), bulk endpoints, export.
         "assignmentState": { "value": "assigned", "label": "Assigned", "tone": "success" }
       },
 
+      "bayLine": {
+        "id":   "uuid",
+        "code": "BL-01",
+        "name": "Bay Line 01"
+      },
+
+      "tan": {
+        "id": "uuid",
+        "reference": "TAN-2026-0042",
+        "display":   "••5837",
+        "status":    "active",
+        "purpose":   { "value": "gate_entry", "label": "Gate entry", "tone": "info" },
+        "usageState":{ "value": "unused",     "label": "Unused",      "tone": "info" },
+        "isSingleUse": true,
+        "expiresAt":   null,
+        "issuedAt":    "2026-05-25T09:30:00+00:00"
+      },
+
+      "fillingTan": null,
+
       "taskFlow":     { "value": "trailer_filling", "label": "Trailer Filling" },
       "currentStep":  null,
 
@@ -325,6 +348,48 @@ When `status = in_progress`, `activePlantVisit` becomes:
 Returns the full Loading Order resource. `status` will be `draft`,
 `needs_assignment`, or `ready` depending on what was provided.
 
+### 5.4 Auto-provisioning side effects
+
+The controller fires two best-effort side effects **inside the same DB
+transaction** as the order create. Both are wired through
+`App\Services\LoadingOrders\OrderProvisioningService`:
+
+#### Bay line
+
+- Picks the first `is_active = true` + `status_code = 'free'` bayline
+  whose `allowed_product` matches the order's `product_quality` (or any
+  active free line when `product_quality` is unset).
+- Stable ordering by `code` for deterministic demo behaviour.
+- Bay-line `status_code` stays `free` — actual reservation belongs to
+  Loading Control (V3.2 §8). This is just the planned bay for the
+  management list.
+- On success the order row gets `assigned_bay_line_id`,
+  `assigned_bay_line_code`, `assigned_bay_line_name` populated and the
+  resource returns the `bayLine` object documented in §4.2.
+- On failure (no candidate / DB error) → warning logged, `bayLine: null`
+  on the response. The 201 is still returned.
+
+#### TAN (gate-entry)
+
+- Only fires when `assigned_driver_id` was set at create time. Without
+  a driver, `tan: null`.
+- Issues a single-use TAN bound to the driver AND the order
+  (`auth_media.order_id = order.id`, `tan_purpose = 'gate_entry'`,
+  `is_single_use = true`).
+- `expires_at = null` (open-ended); the dispatcher revokes manually if
+  the order is cancelled or reassigned.
+- Reference format: `TAN-YYYY-NNNN`. See
+  [14-tans.md §1.1](14-tans.md#11-tan_purpose-and-the-two-issuance-paths).
+- **Idempotent + driver-rotating**: re-running provisioning on the same
+  order with the same driver returns the existing TAN. If the driver
+  changes (via `POST /{id}/assign-driver`), the previous gate-entry TAN
+  is `BLOCKED` with reason `Order reassigned to a different driver`
+  and a new one minted.
+
+`fillingTan` is **always null** at create time. It is provisioned later
+when the driver confirms a `task=filling` order at the kiosk — see
+[23-driver-workflow.md §5](23-driver-workflow.md#5-confirm-order--post-apiterminalsessionidorder).
+
 ---
 
 ## 6. Update — `PUT /api/loading-orders/{id}` (forward contract)
@@ -399,6 +464,12 @@ POST /api/loading-orders/{id}/assign-trailer
 - Rejects with `409 DRIVER_BLOCKED` / `TRAILER_BLOCKED` /
   `TRAILER_CHIP_MISSING` when the target is not in a usable state.
 - Rejects with `423 ORDER_LOCKED_BY_EXECUTION` when an active visit exists.
+- **`assign-driver` also rotates the gate-entry TAN**: any previous
+  active TAN with `tan_purpose='gate_entry'` for this order is
+  `BLOCKED` with reason `Order reassigned to a different driver`, then
+  a fresh TAN is issued for the new driver. The filling TAN
+  (`tan_purpose='filling'`) is NOT touched here — it rotates only at
+  terminal confirm time. See [§5.4](#54-auto-provisioning-side-effects).
 
 ### 7.2 Unassign driver / trailer
 
@@ -464,6 +535,9 @@ Field path uses dotted notation for nested objects.
 | `driver.assignmentState` | object | derived | `{value, label, tone}` (§2) |
 | `trailer.id` / `.label` / `.plate` | uuid / string / string \| null | `assigned_trailer_*` | denormalized |
 | `trailer.assignmentState` | object | derived | `{value, label, tone}` (§2) |
+| `bayLine.id` / `.code` / `.name` | uuid / string / string \| null | `assigned_bay_line_*` | denormalized; auto-picked at create-time (§5.4). Null when no candidate matched. |
+| `tan` | object \| null | composite (see [14-tans.md §1.1](14-tans.md#11-tan_purpose-and-the-two-issuance-paths)) | Gate-entry TAN (`tan_purpose='gate_entry'`). Null until a driver is assigned. `expires_at` is `null` (open-ended). Raw TAN value is never returned. |
+| `fillingTan` | object \| null | composite (see [14-tans.md §1.1](14-tans.md#11-tan_purpose-and-the-two-issuance-paths)) | Filling-station TAN (`tan_purpose='filling'`, `FT-YYYY-NNNN`). Null until the driver confirms a `task=filling` order at the kiosk — see [23-driver-workflow.md §5](23-driver-workflow.md#5-confirm-order--post-apiterminalsessionidorder). |
 | `taskFlow.value` / `.label` | enum | `task_flow` | DriverTask |
 | `currentStep` | string \| null | `current_step` | echoes the plant_visit step when in progress |
 | `documents.requiresCertificate` / `.requiresDeliveryNote` / `.requiresQmDocument` | booleans | `requires_*` | drives the documents readiness panel |
@@ -522,6 +596,20 @@ Field path uses dotted notation for nested objects.
   use them as the user-facing identifier in URLs / search.
 - **`source = sap`** orders should also show the SAP reference next to the
   order number. Filter and search must work against it.
+- **`tan` block** — show the reference (`TAN-2026-NNNN`) + masked value
+  (`••XXXX`) inline in the order row. Add an "expires" chip only when
+  `expiresAt` is non-null; auto-issued TANs are open-ended (null). The
+  raw 6-digit value is never returned by this endpoint — it was shown
+  exactly once on `POST /api/tans` (manual flow) or never (auto flow,
+  driver picks it up via the kiosk).
+- **`fillingTan` block** — null until the driver confirms a `task=filling`
+  order at the kiosk. When populated, render with a distinct visual
+  treatment (different colour / `purpose.tone = success`) so the
+  dispatcher can tell entry vs filling at a glance. Reference prefix is
+  `FT-YYYY-NNNN`.
+- **`bayLine` block** — shows the planned bay. Stays `free` on the
+  bayline side until Loading Control actually reserves it; this is
+  intentional — `bayLine` here is the planned slot, not the reservation.
 
 ---
 
@@ -592,6 +680,11 @@ CREATE TABLE loading_orders (
   assigned_trailer_id           CHAR(36) NULL,
   assigned_trailer_label        VARCHAR(100) NULL,
   assigned_trailer_plate        VARCHAR(50)  NULL,
+
+  -- Added by 2026_05_30_140000_add_bay_line_to_loading_orders.php
+  assigned_bay_line_id          CHAR(36)     NULL,   -- soft FK to baylines.id
+  assigned_bay_line_code        VARCHAR(50)  NULL,   -- denormalized
+  assigned_bay_line_name        VARCHAR(100) NULL,   -- denormalized
 
   task_flow                     VARCHAR(40)  NULL,  -- DriverTask enum
 
