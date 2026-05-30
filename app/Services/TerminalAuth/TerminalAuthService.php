@@ -71,17 +71,25 @@ class TerminalAuthService
             return $this->failNoSession(LoginMethod::TAN, LoginResultCode::TERMINAL_OFFLINE, 'Terminal not active.', $terminalId);
         }
 
-        // V6 §16.1 TAN format is `XXX-XXXX` (7 digits with one dash). The
-        // seeder stores `tan_reference` as digits only so the FE can submit
-        // either form; we normalise by stripping non-digits before lookup.
-        // We also still allow the raw `identifier_value` (single-use secret)
-        // and the original un-normalised string for legacy callers.
+        // V6 §16.1 TAN format is `XXX-XXXX` (7 digits with one dash). We
+        // strip non-digits before lookup so the FE can submit either form.
+        // Two seeders coexist with different storage conventions, so the
+        // lookup tries all four combinations:
+        //   - TerminalAuthDemoSeeder: stores the 7-digit code in
+        //     `tan_reference` (matches via `tan_reference = digits`)
+        //   - TanSeeder + production TanController: stores the 7-digit
+        //     code in `identifier_value` and the human management ID
+        //     ("TAN-YYYY-NNNN") in `tan_reference` (matches via
+        //     `identifier_value = digits`)
+        // The two `tanValue` checks keep legacy callers that pass an
+        // already-normalised value working without a regression.
         $digits = preg_replace('/\D/', '', $tanValue) ?? '';
         $tan = AuthMedium::query()
             ->tans()
             ->where(function ($q) use ($tanValue, $digits) {
                 $q->where('tan_reference', $digits)
                     ->orWhere('tan_reference', $tanValue)
+                    ->orWhere('identifier_value', $digits)
                     ->orWhere('identifier_value', $tanValue);
             })
             ->first();
