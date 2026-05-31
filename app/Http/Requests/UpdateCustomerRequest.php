@@ -12,17 +12,25 @@ class UpdateCustomerRequest extends FormRequest
         return $this->user() ? $this->user()->can('customers.update') : true;
     }
 
+    /**
+     * Strip any client-supplied `code` BEFORE validation. The customer
+     * code is a system identifier minted at create time and immutable
+     * for the row's lifetime — drop it silently rather than failing.
+     */
+    public function prepareForValidation(): void
+    {
+        if ($this->has('code')) {
+            $this->offsetUnset('code');
+        }
+    }
+
     public function rules()
     {
         $id = $this->route('id');
 
         return [
-            'code' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('customers', 'code')->ignore($id),
-            ],
+            // code intentionally absent — see prepareForValidation().
+            // Identifier is system-managed and cannot be edited via PUT.
             'name' => 'required|string|max:255',
             'legal_name' => 'nullable|string|max:255',
             'sap_customer_no' => [

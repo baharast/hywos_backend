@@ -55,6 +55,13 @@ class TrailerController extends ApiController
     {
         $data = $request->validated();
 
+        // System generates trailer_code (TR-NNNN) so the admin form
+        // doesn't have to. Provided values (idempotent imports) are
+        // accepted as-is; otherwise pick the next monotonic suffix.
+        if (empty($data['trailer_code'])) {
+            $data['trailer_code'] = $this->nextTrailerCode();
+        }
+
         return DB::transaction(function () use ($data, $audit, $events) {
             $trailer = Trailer::create($data);
 
@@ -490,5 +497,23 @@ class TrailerController extends ApiController
             'blocked' => $blocked,
             'needsAttention' => $needsAttention,
         ];
+    }
+
+    /**
+     * Next trailer_code in the `TR-NNNN` family. Uses a max+1 scan on
+     * the matching prefix so gaps from deleted demo rows don't reset
+     * the counter, and starts at 1001 to mirror the seeded range.
+     */
+    protected function nextTrailerCode(): string
+    {
+        $prefix = 'TR-';
+
+        $lastNo = Trailer::query()
+            ->where('trailer_code', 'like', $prefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(trailer_code, " . (strlen($prefix) + 1) . ") AS UNSIGNED)) AS max_no")
+            ->value('max_no');
+
+        $next = max(1001, ((int) ($lastNo ?? 0)) + 1);
+        return $prefix . $next;
     }
 }

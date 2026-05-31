@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Driver;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateDriverRequest extends FormRequest
 {
@@ -13,15 +12,23 @@ class UpdateDriverRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Strip any client-supplied `driver_code` BEFORE validation. The
+     * code is a system identifier minted at create time and immutable
+     * for the row's lifetime — drop it silently rather than failing.
+     */
+    public function prepareForValidation(): void
+    {
+        if ($this->has('driver_code')) {
+            $this->offsetUnset('driver_code');
+        }
+    }
+
     public function rules()
     {
-        $id = $this->route('id');
-
         return [
-            'driver_code' => [
-                'sometimes', 'required', 'string', 'max:50',
-                Rule::unique('drivers', 'driver_code')->ignore($id),
-            ],
+            // driver_code intentionally absent — see prepareForValidation().
+            // Identifier is system-managed and cannot be edited via PUT.
             'first_name' => 'sometimes|required|string|max:100',
             'last_name' => 'sometimes|required|string|max:100',
 

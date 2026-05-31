@@ -85,6 +85,14 @@ class CustomerController extends ApiController
     public function store(StoreCustomerRequest $request)
     {
         $data = $request->validated();
+
+        // System generates the customer code (CUST-NNNN) so the admin
+        // form doesn't have to. Provided values still pass through so
+        // SAP / external imports stay idempotent.
+        if (empty($data['code'])) {
+            $data['code'] = $this->nextCustomerCode();
+        }
+
         $customer = Customer::create($data);
 
         return $this->created(new CustomerResource($customer), 'Customer created');
@@ -276,5 +284,23 @@ class CustomerController extends ApiController
         $customer->update(['is_active' => false]);
 
         return $this->success(null, 'Customer deactivated');
+    }
+
+    /**
+     * Next customer code in the `CUST-N` family. Max+1 scan keeps the
+     * counter monotonic across gaps. Starts at 1 to mirror the seeded
+     * range (CUST-1..CUST-4).
+     */
+    protected function nextCustomerCode(): string
+    {
+        $prefix = 'CUST-';
+
+        $lastNo = Customer::query()
+            ->where('code', 'like', $prefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(code, " . (strlen($prefix) + 1) . ") AS UNSIGNED)) AS max_no")
+            ->value('max_no');
+
+        $next = max(1, ((int) ($lastNo ?? 0)) + 1);
+        return $prefix . $next;
     }
 }

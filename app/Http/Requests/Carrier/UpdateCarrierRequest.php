@@ -14,17 +14,25 @@ class UpdateCarrierRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Strip any client-supplied `carrier_code` BEFORE validation. The
+     * code is a system identifier minted at create time and immutable
+     * for the row's lifetime — drop it silently rather than failing.
+     */
+    public function prepareForValidation(): void
+    {
+        if ($this->has('carrier_code')) {
+            $this->offsetUnset('carrier_code');
+        }
+    }
+
     public function rules()
     {
         $id = $this->route('id');
 
         return [
-            'carrier_code' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('freight_forwarders', 'carrier_code')->ignore($id),
-            ],
+            // carrier_code intentionally absent — see prepareForValidation().
+            // Identifier is system-managed and cannot be edited via PUT.
             'carrier_name' => 'required|string|max:255',
             'legal_name' => 'nullable|string|max:255',
             'sap_reference' => [

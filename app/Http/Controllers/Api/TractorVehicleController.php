@@ -130,6 +130,13 @@ class TractorVehicleController extends ApiController
     {
         $data = $request->validated();
 
+        // System generates vehicle_code (TR-NNN) so the admin form
+        // doesn't have to. Provided values pass through unchanged so
+        // SAP / external imports stay idempotent.
+        if (empty($data['vehicle_code'])) {
+            $data['vehicle_code'] = $this->nextVehicleCode();
+        }
+
         return DB::transaction(function () use ($data, $audit, $events) {
             $vehicle = TractorVehicle::create($data);
             $vehicle->load(['carrier', 'defaultDriver']);
@@ -420,5 +427,24 @@ class TractorVehicleController extends ApiController
             'format' => 'json',
             'note' => 'CSV/XLSX delivery TBC',
         ], 'Vehicle export prepared');
+    }
+
+    /**
+     * Next vehicle_code in the `TR-NNN` family (tractor demo range).
+     * Service vehicles seeded as `SVC-NNN` are ignored by the prefix
+     * scan, so the counter starts after the tractor max and the SVC
+     * sequence stays untouched.
+     */
+    protected function nextVehicleCode(): string
+    {
+        $prefix = 'TR-';
+
+        $lastNo = TractorVehicle::query()
+            ->where('vehicle_code', 'like', $prefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(vehicle_code, " . (strlen($prefix) + 1) . ") AS UNSIGNED)) AS max_no")
+            ->value('max_no');
+
+        $next = max(200, ((int) ($lastNo ?? 0)) + 1);
+        return $prefix . $next;
     }
 }

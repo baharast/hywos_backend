@@ -13,6 +13,18 @@ class UpdateVehicleRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Strip any client-supplied `vehicle_code` BEFORE validation. The
+     * code is a system identifier minted at create time and immutable
+     * for the row's lifetime — drop it silently rather than failing.
+     */
+    public function prepareForValidation(): void
+    {
+        if ($this->has('vehicle_code')) {
+            $this->offsetUnset('vehicle_code');
+        }
+    }
+
     public function rules(): array
     {
         $id = $this->route('id');
@@ -27,12 +39,8 @@ class UpdateVehicleRequest extends FormRequest
             ],
             'vehicle_type' => ['sometimes', 'required', 'string', Rule::in(VehicleType::all())],
 
-            'vehicle_code' => [
-                'nullable',
-                'string',
-                'max:50',
-                Rule::unique('tractor_vehicles', 'vehicle_code')->ignore($id),
-            ],
+            // vehicle_code intentionally absent — see prepareForValidation().
+            // Identifier is system-managed and cannot be edited via PUT.
             'plate_country' => 'nullable|string|max:5',
 
             'carrier_id' => 'nullable|string|size:36|exists:companies,id',

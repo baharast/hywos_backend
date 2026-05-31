@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Trailer;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateTrailerRequest extends FormRequest
 {
@@ -13,15 +12,24 @@ class UpdateTrailerRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Strip any client-supplied `trailer_code` BEFORE validation so an
+     * out-of-band edit is dropped silently rather than failing — the
+     * code is a system identifier minted at create time and immutable
+     * for the row's lifetime.
+     */
+    public function prepareForValidation(): void
+    {
+        if ($this->has('trailer_code')) {
+            $this->offsetUnset('trailer_code');
+        }
+    }
+
     public function rules()
     {
-        $id = $this->route('id');
-
         return [
-            'trailer_code' => [
-                'sometimes', 'required', 'string', 'max:50',
-                Rule::unique('trailers', 'trailer_code')->ignore($id),
-            ],
+            // trailer_code intentionally absent — see prepareForValidation().
+            // Identifier is system-managed and cannot be edited via PUT.
             'trailer_label' => 'nullable|string|max:150',
             'plate' => 'nullable|string|max:50',
 
