@@ -474,7 +474,7 @@ class DriverWorkflowService
             'order' => $this->orderRow($order),
             'fillingTan' => $this->fillingTanFor($order),
             'reason' => $bayLine === null
-                ? 'Order has no active loading operation; bay line not yet assigned.'
+                ? 'No bay line is assigned to this order yet.'
                 : null,
         ];
     }
@@ -623,36 +623,73 @@ class DriverWorkflowService
     }
 
     /**
-     * Resolve the bay-line code/name a given LoadingOrder is using right
-     * now, via its `active_loading_operation_id`. The loading_operations
-     * row carries `bay_line_id` which points at `baylines.id`. Returns
-     * null when no active operation exists or its bay line is unset.
+     * Resolve the bay-line code/name a given LoadingOrder is using.
      *
-     * Soft FK: a select-by-id, no joins, no exceptions on missing rows.
+     * Two sources of truth, in priority order:
+     *   1. ACTIVE — when an `active_loading_operation_id` is set, the
+     *      operation row carries the canonical `bay_line_id` (the slot
+     *      Loading Control actually reserved). Reflects real-time
+     *      reservation, not planning.
+     *   2. PLANNED — falls back to `loading_orders.assigned_bay_line_id`
+     *      populated at order-create time by OrderProvisioningService
+     *      (or seeded into SAP-source rows by LoadingOrderSeeder). The
+     *      kiosk shows this so the driver knows where to go BEFORE
+     *      Loading Control reserves the bay.
+     *
+     * Returns a shape with `code`, `label`, and `source` so the FE can
+     * tell which of the two it got — useful when the planned bay
+     * differs from the eventual reservation. Returns null when neither
+     * source has data.
+     *
+     * Soft FK: select-by-id, no joins, no exceptions on missing rows.
+     *
+     * @return array{code:string,label:?string,source:string}|null
      */
     protected function bayLineRefFor(LoadingOrder $order): ?array
     {
-        if (! $order->active_loading_operation_id) {
-            return null;
+        // 1) Active operation wins.
+        if ($order->active_loading_operation_id) {
+            $op = DB::table('loading_operations')
+                ->where('id', $order->active_loading_operation_id)
+                ->first(['bay_line_id']);
+            if ($op && ! empty($op->bay_line_id)) {
+                $bayLine = DB::table('baylines')
+                    ->where('id', $op->bay_line_id)
+                    ->first(['code', 'name']);
+                if ($bayLine) {
+                    return [
+                        'code' => $bayLine->code,
+                        'label' => $bayLine->name,
+                        'source' => 'active_operation',
+                    ];
+                }
+            }
         }
 
-        $op = DB::table('loading_operations')
-            ->where('id', $order->active_loading_operation_id)
-            ->first(['bay_line_id']);
-        if (! $op || empty($op->bay_line_id)) {
-            return null;
+        // 2) Planned bayline from the order row (set at create time).
+        //    The denormalized columns are usually enough; we fall back
+        //    to looking the row up only when code/name are missing.
+        if (! empty($order->assigned_bay_line_id)) {
+            $code = $order->assigned_bay_line_code;
+            $name = $order->assigned_bay_line_name;
+            if (empty($code) || empty($name)) {
+                $bayLine = DB::table('baylines')
+                    ->where('id', $order->assigned_bay_line_id)
+                    ->first(['code', 'name']);
+                if ($bayLine) {
+                    $code = $code ?: $bayLine->code;
+                    $name = $name ?: $bayLine->name;
+                }
+            }
+            if (! empty($code)) {
+                return [
+                    'code' => $code,
+                    'label' => $name,
+                    'source' => 'planned',
+                ];
+            }
         }
 
-        $bayLine = DB::table('baylines')
-            ->where('id', $op->bay_line_id)
-            ->first(['code', 'name']);
-        if (! $bayLine) {
-            return null;
-        }
-
-        return [
-            'code' => $bayLine->code,
-            'label' => $bayLine->name,
-        ];
+        return null;
     }
 }
