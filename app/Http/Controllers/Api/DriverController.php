@@ -87,6 +87,16 @@ class DriverController extends ApiController
             });
         }
 
+        // ?assignable=true — mirrors driverAssignmentConflict() exactly so
+        // the assignment dropdown only shows drivers the order assign
+        // endpoint would actually accept. Blocked / inactive drivers are
+        // hidden from the picker. Conflict predicate stays the single
+        // source of truth — keep this filter in lock-step with it.
+        if (filter_var($request->query('assignable'), FILTER_VALIDATE_BOOLEAN)) {
+            $query->where('is_active', true)
+                ->where('block_status', 'clear');
+        }
+
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $rows = DriverResource::collection($paginator->items());
 

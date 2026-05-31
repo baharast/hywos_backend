@@ -417,6 +417,22 @@ class TrailerController extends ApiController
                     });
             });
         }
+
+        // ?assignable=true — mirrors trailerAssignmentConflict() exactly
+        // so the assignment dropdown only shows trailers the order
+        // assign endpoint would actually accept:
+        //   - status != BLOCKED
+        //   - has an ACTIVE chip_card (chip_state='assigned')
+        // technical_suitability is intentionally NOT checked here — the
+        // conflict predicate doesn't reject on that either, so we stay
+        // in lock-step with the assign-side decision.
+        if (filter_var($filters['assignable'] ?? null, FILTER_VALIDATE_BOOLEAN)) {
+            $query->where('status', '!=', TrailerStatus::BLOCKED)
+                ->whereHas('authMedia', function ($q) {
+                    $q->where('medium_type', 'chip_card')
+                        ->where('status', AuthMediumStatus::ACTIVE);
+                });
+        }
     }
 
     protected function applyInspectionStateFilter($query, string $state): void
