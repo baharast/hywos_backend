@@ -171,8 +171,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     /*
-     * BayLines — operational state for Loading Control
-     * Permissions: loading_control.view / loading_control.manage
+     * BayLines
+     *   - READ  → loading_control.view (the Loading Control operator + admin
+     *             need to see bay state in the live dashboard)
+     *   - WRITE → plant_configuration.manage (CRUD on bay lines is a
+     *             SETUP/configuration task; it belongs to the Plant Config
+     *             wizard, not to live ops). Previously this was wrongly
+     *             gated on loading_control.manage, which 403'd the admin
+     *             setup wizard when the operator role wasn't logged in.
+     *
+     * Per V1 Roles & Permissions: admin / operations_manager / it_support
+     * carry plant_configuration.manage; dispatcher / operator / analysis /
+     * auditor do not — they shouldn't be reshaping the plant from the live
+     * dashboard, only watching it.
      */
     Route::prefix('baylines')->group(function () {
         Route::get('/', function () {
@@ -182,11 +193,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('', [BayLineController::class, 'index'])->middleware('permission:loading_control.view');
         Route::get('/{id}', [BayLineController::class, 'show'])->middleware('permission:loading_control.view');
 
-        Route::post('', [BayLineController::class, 'store'])->middleware('permission:loading_control.manage');
-        Route::put('/{id}', [BayLineController::class, 'update'])->middleware('permission:loading_control.manage');
-        Route::patch('/{id}/activate', [BayLineController::class, 'activate'])->middleware('permission:loading_control.manage');
-        Route::patch('/{id}/deactivate', [BayLineController::class, 'deactivate'])->middleware('permission:loading_control.manage');
-        Route::delete('/{id}', [BayLineController::class, 'destroy'])->middleware('permission:loading_control.manage');
+        Route::post('', [BayLineController::class, 'store'])->middleware('permission:plant_configuration.manage');
+        Route::put('/{id}', [BayLineController::class, 'update'])->middleware('permission:plant_configuration.manage');
+        Route::patch('/{id}/activate', [BayLineController::class, 'activate'])->middleware('permission:plant_configuration.manage');
+        Route::patch('/{id}/deactivate', [BayLineController::class, 'deactivate'])->middleware('permission:plant_configuration.manage');
+        Route::delete('/{id}', [BayLineController::class, 'destroy'])->middleware('permission:plant_configuration.manage');
     });
 
     /*
