@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\DriverTask;
+use App\Models\BayLine;
 use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\FreightForwarder;
@@ -29,6 +30,13 @@ class LoadingOrderSeeder extends Seeder
             return; // can't seed orders without at least one customer
         }
 
+        // Bayline pool, fetched in code order so each demo order lands on
+        // a different bay. Missing entries are tolerated (the seeder ran
+        // before BayLineSeeder, or the plant has fewer than 4 bays) — the
+        // assignment columns then stay null and the FE renders no bayLine.
+        $bays = BayLine::query()->orderBy('code')->get()->keyBy('code');
+        $bay = fn (string $code): ?BayLine => $bays->get($code);
+
         $now = now();
 
         // 1) DRAFT — incomplete data (missing target_quantity)
@@ -54,6 +62,7 @@ class LoadingOrderSeeder extends Seeder
         );
 
         // 2) NEEDS_ASSIGNMENT — full data but no driver/trailer
+        $b2 = $bay('BAY-1');
         LoadingOrder::firstOrCreate(
             ['order_no' => 'LO-2026-0002'],
             [
@@ -74,10 +83,14 @@ class LoadingOrderSeeder extends Seeder
                 'requires_delivery_note' => true,
                 'requires_qm_document' => true,
                 'is_sap_owned' => true,
+                'assigned_bay_line_id' => $b2?->id,
+                'assigned_bay_line_code' => $b2?->code,
+                'assigned_bay_line_name' => $b2?->name,
             ]
         );
 
         // 3) READY — full data + driver + trailer
+        $b3 = $bay('BAY-2');
         LoadingOrder::firstOrCreate(
             ['order_no' => 'LO-2026-0003'],
             [
@@ -106,10 +119,14 @@ class LoadingOrderSeeder extends Seeder
                 'requires_delivery_note' => true,
                 'requires_qm_document' => false,
                 'is_sap_owned' => true,
+                'assigned_bay_line_id' => $b3?->id,
+                'assigned_bay_line_code' => $b3?->code,
+                'assigned_bay_line_name' => $b3?->name,
             ]
         );
 
         // 4) IN_PROGRESS — has active plant visit reference (soft FK; plant_visits table arrives in TSK-002)
+        $b4 = $bay('BAY-3');
         LoadingOrder::firstOrCreate(
             ['order_no' => 'LO-2026-0004'],
             [
@@ -140,10 +157,14 @@ class LoadingOrderSeeder extends Seeder
                 'active_plant_visit_no' => 'PV-2026-0019',
                 'current_step' => 'loading',
                 'is_locked_by_execution' => true,
+                'assigned_bay_line_id' => $b4?->id,
+                'assigned_bay_line_code' => $b4?->code,
+                'assigned_bay_line_name' => $b4?->name,
             ]
         );
 
         // 5) BLOCKED — explicit blocker with reason + timestamp
+        $b5 = $bay('BAY-4');
         LoadingOrder::firstOrCreate(
             ['order_no' => 'LO-2026-0005'],
             [
@@ -169,6 +190,9 @@ class LoadingOrderSeeder extends Seeder
                 'blocked_at' => $now->copy()->subMinutes(45),
                 'blocking_reason' => 'Customer credit review pending',
                 'blocking_reason_code' => 'CREDIT_HOLD',
+                'assigned_bay_line_id' => $b5?->id,
+                'assigned_bay_line_code' => $b5?->code,
+                'assigned_bay_line_name' => $b5?->name,
             ]
         );
     }
