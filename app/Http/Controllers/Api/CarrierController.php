@@ -144,6 +144,14 @@ class CarrierController extends ApiController
     {
         $data = $request->validated();
 
+        // System generates the carrier_code so the admin form doesn't
+        // have to. We accept a provided one (idempotent imports) but
+        // otherwise pick the next monotonic CARR-NNNN. SAP-sourced rows
+        // can still pass their own code through the API.
+        if (empty($data['carrier_code'])) {
+            $data['carrier_code'] = $this->nextCarrierCode();
+        }
+
         return DB::transaction(function () use ($data, $audit, $events) {
             $carrier = FreightForwarder::create($data);
 
@@ -540,5 +548,24 @@ class CarrierController extends ApiController
             'rows' => $rows,
             'note' => 'Binary export (CSV/XLSX) not yet implemented; returning JSON payload.',
         ], 'Carrier export prepared');
+    }
+
+    /**
+     * Pick the next carrier_code in the `CARR-NNNN` family. Uses a max+1
+     * scan over the matching prefix so gaps from deleted demo rows don't
+     * reset the counter, and starts at 1001 to mirror the seeded range
+     * (CARR-1001..CARR-1005).
+     */
+    protected function nextCarrierCode(): string
+    {
+        $prefix = 'CARR-';
+
+        $lastNo = FreightForwarder::query()
+            ->where('carrier_code', 'like', $prefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(carrier_code, " . (strlen($prefix) + 1) . ") AS UNSIGNED)) AS max_no")
+            ->value('max_no');
+
+        $next = max(1001, ((int) ($lastNo ?? 0)) + 1);
+        return $prefix . $next;
     }
 }

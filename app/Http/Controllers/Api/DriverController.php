@@ -117,6 +117,15 @@ class DriverController extends ApiController
     {
         $data = $request->validated();
 
+        // System generates the driver_code so the admin form doesn't
+        // have to. We accept a provided one (idempotent imports) but
+        // otherwise pick the next monotonic DRV-NNNN. SAP/external
+        // imports that already carry their own identifier can still
+        // pass `driver_code` explicitly through the API.
+        if (empty($data['driver_code'])) {
+            $data['driver_code'] = $this->nextDriverCode();
+        }
+
         return DB::transaction(function () use ($data, $audit, $events) {
             $driver = Driver::create($data);
 
@@ -494,5 +503,27 @@ class DriverController extends ApiController
         // Show first 2 chars then **** so the row can be identified but not used.
         $prefix = mb_substr($tan, 0, 2);
         return $prefix . str_repeat('*', max(0, mb_strlen($tan) - 2));
+    }
+
+    /**
+     * Pick the next driver_code in the `DRV-NNNN` family. Uses a max+1
+     * scan over the matching prefix so gaps from deleted demo rows don't
+     * reset the counter, and starts at 1001 to mirror the seeded range.
+     *
+     * Falls back to a millisecond-suffixed code if a parallel writer wins
+     * the race — the unique index on `drivers.driver_code` then catches
+     * a true collision at INSERT time.
+     */
+    protected function nextDriverCode(): string
+    {
+        $prefix = 'DRV-';
+
+        $lastNo = Driver::query()
+            ->where('driver_code', 'like', $prefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(driver_code, " . (strlen($prefix) + 1) . ") AS UNSIGNED)) AS max_no")
+            ->value('max_no');
+
+        $next = max(1001, ((int) ($lastNo ?? 0)) + 1);
+        return $prefix . $next;
     }
 }
