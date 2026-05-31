@@ -219,6 +219,28 @@ class DriverWorkflowController extends ApiController
     }
 
     /* ============================================================
+     * V6 §8.8b — Parking assignment (read-only)
+     *
+     * Sibling of bayLineAssignment for the `task=parking` workflow
+     * leg. The kiosk calls this after the driver picks `task=parking`
+     * at /terminal/task and lands on /terminal/done?task=parking.
+     * Read-only — no occupancy mutation here; the dashboard owns
+     * parkings.slot_status lifecycle.
+     * ============================================================ */
+
+    public function parkingAssignment(string $id)
+    {
+        $session = $this->service->findActiveSession($id);
+        if (! $session) {
+            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+        }
+
+        $payload = $this->service->parkingAssignment($session);
+
+        return $this->success($payload, 'Parking assignment retrieved');
+    }
+
+    /* ============================================================
      * V6 §8.9 — Print delivery note
      * ============================================================ */
 

@@ -109,6 +109,7 @@ Route::prefix('terminal')->group(function () {
     Route::post('/session/{id}/task', [DriverWorkflowController::class, 'task']);
     Route::post('/session/{id}/order', [DriverWorkflowController::class, 'confirmOrder']);
     Route::get('/session/{id}/bay-line-assignment', [DriverWorkflowController::class, 'bayLineAssignment']);
+    Route::get('/session/{id}/parking-assignment', [DriverWorkflowController::class, 'parkingAssignment']);
     Route::post('/session/{id}/print-delivery-note', [DriverWorkflowController::class, 'printDeliveryNote']);
     Route::post('/session/{id}/complete', [DriverWorkflowController::class, 'complete']);
 

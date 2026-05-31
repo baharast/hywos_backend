@@ -6,11 +6,13 @@ use App\Enums\AuditAction;
 use App\Enums\EventCategory;
 use App\Enums\EventSeverity;
 use App\Enums\GateTerminalSessionState;
+use App\Enums\ParkingSlotStatus;
 use App\Enums\TanPurpose;
 use App\Enums\TanUsageState;
 use App\Models\AuthMedium;
 use App\Models\Driver;
 use App\Models\LoadingOrder;
+use App\Models\Parking;
 use App\Models\TerminalSession;
 use App\Services\Audit\AuditLogger;
 use App\Services\Events\EventLogger;
@@ -477,6 +479,84 @@ class DriverWorkflowService
                 ? 'No bay line is assigned to this order yet.'
                 : null,
         ];
+    }
+
+    /* ============================================================
+     * V6 §8.8b — Parking-assignment (read-only)
+     *
+     * Mirror of bayLineAssignment for the `task=parking` workflow leg.
+     * Returns the parking slot the driver should drive to. Two slots
+     * exist on the site (PARKING-1 / PARKING-2 — see ParkingSeeder),
+     * matching the V2.1 §0.2 two-slot board the dashboard already
+     * tracks. Selection rule is the simplest correct one: first FREE
+     * slot ordered by code (deterministic; PARKING-1 wins ties so
+     * demo behaviour is repeatable).
+     *
+     * READ-ONLY: this method does NOT mutate parkings.slot_status.
+     * The physical park happens off-system; the dashboard / operator
+     * owns the reservation lifecycle (parkings/{id}/reserve etc.).
+     * If a future revision wants kiosk-side reservation, fold it into
+     * a sibling POST endpoint — do not retrofit it here.
+     * ============================================================ */
+
+    /**
+     * @return array{
+     *   slot: ?array{code: string, label: ?string, status: string},
+     *   trailer: ?array{id: ?string, label: ?string, plate: ?string},
+     *   reason: ?string
+     * }
+     */
+    public function parkingAssignment(TerminalSession $session): array
+    {
+        // Trailer echo for the kiosk's "Park trailer X in Parking Y"
+        // copy line. Free — already on the session row.
+        $trailer = ! empty($session->trailer_id) || ! empty($session->trailer_label)
+            ? [
+                'id' => $session->trailer_id,
+                'label' => $session->trailer_label,
+                'plate' => $session->trailer_plate ?? null,
+            ]
+            : null;
+
+        $slot = $this->pickFreeParkingSlot();
+
+        if ($slot === null) {
+            // Distinguish "all slots taken" from "no parkings configured" so
+            // the kiosk shows the right copy.
+            $totalConfigured = Parking::query()->count();
+            $reason = $totalConfigured === 0
+                ? 'No parking slots are configured on this site. Please ask the operator.'
+                : 'Both parking slots are occupied. Please wait for an operator.';
+
+            return [
+                'slot' => null,
+                'trailer' => $trailer,
+                'reason' => $reason,
+            ];
+        }
+
+        return [
+            'slot' => [
+                'code' => $slot->code,
+                'label' => $slot->name,
+                'status' => $slot->slot_status,
+            ],
+            'trailer' => $trailer,
+            'reason' => null,
+        ];
+    }
+
+    /**
+     * Selection rule: first FREE slot ordered by code. PARKING-1 wins
+     * over PARKING-2 when both are free. Returns null when no slot is
+     * free (or when no parkings exist at all).
+     */
+    protected function pickFreeParkingSlot(): ?Parking
+    {
+        return Parking::query()
+            ->where('slot_status', ParkingSlotStatus::FREE)
+            ->orderBy('code')
+            ->first();
     }
 
     /* ============================================================
