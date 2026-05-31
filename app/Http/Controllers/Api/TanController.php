@@ -87,10 +87,14 @@ class TanController extends ApiController
             $min = (int) str_pad('1', TanPolicy::VALUE_DIGITS, '0');
             $max = (int) str_repeat('9', TanPolicy::VALUE_DIGITS);
             $rawValue = (string) random_int($min, $max);
-            // V6 §16.1 visual format: dispatcher sees a masked "***-XXXX"
-            // after the one-time reveal (last 4 digits identify the row
-            // but cannot authenticate). display_identifier stores the same
-            // masked form — never the raw value.
+            // Admin-panel display rule (project decision, 2026-05-31): the
+            // dispatcher sees the FULL TAN value in the list + detail views,
+            // so the raw value is persisted on the row in `identifier_value`
+            // and surfaced through TanResource / AuthMediumResource. The
+            // `tan_masked` column is kept on the same row so the legacy
+            // "***-XXXX" form remains available for any caller / export that
+            // still relies on it. `identifier_hash` is also kept for the
+            // login-path lookup (TerminalAuthService still hashes inputs).
             $masked = '***-' . substr($rawValue, -4);
 
             $reference = $this->nextTanReference();
@@ -103,9 +107,12 @@ class TanController extends ApiController
                 'usage_state' => TanUsageState::UNUSED,
                 'consumption_count' => 0,
                 'tan_reference' => $reference,
+                // Persist BOTH so list/detail can render the full value while
+                // backward-compat surfaces still see the masked form.
+                'identifier_value' => $rawValue,
                 'tan_masked' => $masked,
                 'identifier_hash' => hash('sha256', $rawValue),
-                'display_identifier' => $masked,
+                'display_identifier' => $rawValue,
                 'issued_at' => now(),
                 'valid_from' => $request->input('valid_from') ?: now(),
                 'expires_at' => $request->input('expires_at'),

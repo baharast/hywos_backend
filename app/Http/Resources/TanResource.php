@@ -12,7 +12,13 @@ class TanResource extends JsonResource
 {
     public function toArray($request): array
     {
-        // SECURITY: never include identifier_value or identifier_hash.
+        // Admin-panel display rule (2026-05-31): the full TAN value is
+        // returned in `tan` for list + detail rendering. `tanMasked` is
+        // kept for backward compatibility and now also carries the full
+        // value when it is available, so older FE code that still reads
+        // `tanMasked` no longer renders "***-XXXX". `identifier_hash` is
+        // still never emitted.
+        $fullTan = $this->identifier_value;
         $statusValue = $this->deriveStatus($this->resource);
         $usageValue = $this->usage_state ?? TanUsageState::UNUSED;
 
@@ -27,7 +33,10 @@ class TanResource extends JsonResource
         return [
             'id' => $this->id,
             'tanReference' => $this->tan_reference,
-            'tanMasked' => $this->tan_masked ?? $this->display_identifier,
+            // Full value for new rows; legacy ***-XXXX fallback for older rows
+            // that were created before the plain-text persistence change.
+            'tan' => $fullTan ?? $this->display_identifier ?? $this->tan_masked,
+            'tanMasked' => $fullTan ?? $this->tan_masked ?? $this->display_identifier,
 
             'status' => [
                 'value' => $statusValue,

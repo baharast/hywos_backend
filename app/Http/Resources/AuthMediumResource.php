@@ -2,17 +2,26 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\AuthMediumType;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class AuthMediumResource extends JsonResource
 {
     public function toArray($request): array
     {
-        // SECURITY: never include identifier_value (raw TAN/chip data) or identifier_hash.
+        // Admin-panel display rule (2026-05-31): the full TAN value is
+        // exposed for list + detail rendering. `displayIdentifier` now
+        // carries the full TAN when available (legacy rows fall back to
+        // the stored masked form). The new `tan` field is the explicit
+        // source-of-truth field for the FE — only populated for TAN rows.
+        // `identifier_hash` is still never emitted.
+        $fullTan = $this->identifier_value;
+
         return [
             'id' => $this->id,
             'mediumType' => $this->medium_type,
-            'displayIdentifier' => $this->display_identifier,
+            'displayIdentifier' => $fullTan ?? $this->display_identifier,
+            'tan' => $this->medium_type === AuthMediumType::TAN ? $fullTan : null,
             'driverId' => $this->driver_id,
             'status' => $this->status,
             'isSingleUse' => (bool) $this->is_single_use,
