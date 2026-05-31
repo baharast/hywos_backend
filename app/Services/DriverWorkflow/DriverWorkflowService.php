@@ -683,6 +683,8 @@ class DriverWorkflowService
             'sessionNo' => $session->session_no,
             'completedAt' => $completedAt,
             'task' => $task,
+            'driver' => $this->driverSnapshot($session),
+            'trailer' => $this->trailerSnapshot($session),
         ];
     }
 
@@ -700,6 +702,65 @@ class DriverWorkflowService
         $stamp = now()->toIso8601String();
         $prefix = $existing ? rtrim($existing) . "\n" : '';
         return $prefix . "[{$stamp}] {$line}";
+    }
+
+    /**
+     * Driver recap for the exit-summary screen (§12.3). Reads the
+     * denormalised driver columns captured on the session at login.
+     * Returns null when the session never bound a driver.
+     *
+     * @return array{name: ?string, code: ?string}|null
+     */
+    protected function driverSnapshot(TerminalSession $session): ?array
+    {
+        if (! $session->driver_name && ! $session->driver_code) {
+            return null;
+        }
+
+        return [
+            'name' => $session->driver_name,
+            'code' => $session->driver_code,
+        ];
+    }
+
+    /**
+     * Trailer recap for the exit-summary screen (§12.3).
+     *  - label     : the `trailer_label` column (uppercased plate, or null).
+     *  - chip      : trailer chip tag — not tracked on the session yet, so null.
+     *  - situation : chip_present | chip_attached | none, recovered from the
+     *                latest `trailer_set` notes line; 'none' when the driver
+     *                never reached the trailer step.
+     *
+     * @return array{label: ?string, chip: ?string, situation: string}
+     */
+    protected function trailerSnapshot(TerminalSession $session): array
+    {
+        return [
+            'label' => $session->trailer_label,
+            'chip' => null,
+            'situation' => $this->latestTrailerSituation($session->notes),
+        ];
+    }
+
+    /**
+     * Recover the last-recorded trailer situation from the tagged `notes`
+     * lines (`[ISO] trailer_set source=… situation=… [plate=…]`, see §3).
+     * The last matching line wins; 'none' when no trailer_set line exists.
+     */
+    protected function latestTrailerSituation(?string $notes): string
+    {
+        if (! $notes) {
+            return 'none';
+        }
+
+        $situation = 'none';
+        foreach (preg_split('/\r?\n/', $notes) as $line) {
+            if (preg_match('/\btrailer_set\b.*\bsituation=(\w+)/', $line, $matches)) {
+                $situation = $matches[1];
+            }
+        }
+
+        return $situation;
     }
 
     /**
