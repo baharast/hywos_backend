@@ -29,6 +29,13 @@ use Illuminate\Support\Str;
  *   AN-2026-0006  pre_analysis  RUNNING        → no action, monitor only
  *   AN-2026-0007  main_analysis ON_HOLD        → no action, allows cancel
  *
+ *   --- Closed / cancelled rows (drive Results & Quality Decisions V1.1) ---
+ *   AN-2026-0008  pre_analysis  CLOSED, all_valid + released   → decision: released, result: passed, cert: generated
+ *   AN-2026-0009  main_analysis CLOSED, n2_high + manual approval → decision: released, result: nok, cert: allowed
+ *   AN-2026-0010  pre_analysis  CLOSED, o2_high + rejected      → decision: rejected, result: nok, cert: blocked
+ *   AN-2026-0011  main_analysis CANCELLED, waiting elements      → decision: closed, cert: blocked
+ *   AN-2026-0012  main_analysis CLOSED, co2_invalid              → decision: released, result: invalid, cert: blocked
+ *
  * Each row's 6 element results are generated with realistic values per
  * the demo H2-5.0 spec (Track B): H2 high-purity, impurities low ppm.
  * NOK / INVALID rows tag one or more elements with the matching status
@@ -121,6 +128,84 @@ class ActiveAnalysisSeeder extends Seeder
                 'element_summary' => 'On hold',
                 'hold_reason' => 'Awaiting dispatcher confirmation on trailer chip mismatch.',
             ],
+
+            // ---- Results & Quality Decisions (V1.1) coverage ----
+            // Closed: passed elements → released → certificate generated.
+            [
+                'display_no' => 'AN-2026-0008',
+                'type' => ActiveAnalysisType::PRE_ANALYSIS,
+                'trigger' => SamplingTrigger::BEFORE_LOADING,
+                'status' => ActiveAnalysisStatus::CLOSED,
+                'order_key' => 'LO-2026-0002',
+                'attempt_count' => 1,
+                'elements_mode' => 'all_valid',
+                'latest_message' => 'Pre-analysis released; loading authorised.',
+                'element_summary' => '6/6 valid',
+                'closed_at' => '-3 hours',
+                'related_result_id' => true,        // sentinel — triggers UUID stamp
+            ],
+            // Closed: NOK (N2 high) + manual functional approval. No
+            // cancellation_reason so the decision derives to RELEASED;
+            // result derives to NOK; certificate impact = ALLOWED.
+            [
+                'display_no' => 'AN-2026-0009',
+                'type' => ActiveAnalysisType::MAIN_ANALYSIS,
+                'trigger' => SamplingTrigger::AFTER_LOADING,
+                'status' => ActiveAnalysisStatus::CLOSED,
+                'order_key' => 'LO-2026-0003',
+                'attempt_count' => 1,
+                'elements_mode' => 'n2_high',
+                'latest_message' => 'Main analysis NOK; released via manual functional approval.',
+                'element_summary' => 'N2 high (manual approval)',
+                'closed_at' => '-90 minutes',
+                'related_result_id' => true,
+            ],
+            // Closed + rejected: cancellation_reason is set so decision
+            // derives to REJECTED; result = NOK; cert = BLOCKED.
+            [
+                'display_no' => 'AN-2026-0010',
+                'type' => ActiveAnalysisType::PRE_ANALYSIS,
+                'trigger' => SamplingTrigger::BEFORE_LOADING,
+                'status' => ActiveAnalysisStatus::CLOSED,
+                'order_key' => 'LO-2026-0004',
+                'attempt_count' => 3,
+                'elements_mode' => 'o2_high',
+                'latest_message' => '3rd pre-analysis NOK; loading rejected and trailer blocked.',
+                'element_summary' => 'O2 high (rejected after 3 attempts)',
+                'closed_at' => '-2 hours',
+                'cancellation_reason' => 'Loading rejected: pre-analysis NOK on attempt 3/3.',
+            ],
+            // Cancelled: trailer left site mid-flow. Decision = CLOSED
+            // (the special "all done" terminal). Cert = BLOCKED.
+            [
+                'display_no' => 'AN-2026-0011',
+                'type' => ActiveAnalysisType::MAIN_ANALYSIS,
+                'trigger' => SamplingTrigger::MAIN_30_PERCENT,
+                'status' => ActiveAnalysisStatus::CANCELLED,
+                'order_key' => 'LO-2026-0001',
+                'attempt_count' => 1,
+                'elements_mode' => 'waiting',
+                'latest_message' => 'Cancelled: trailer chip mismatch unresolved; dispatcher closed the run.',
+                'element_summary' => 'Cancelled — no result',
+                'cancelled_at' => '-25 minutes',
+                'cancellation_reason' => 'Trailer chip mismatch unresolved after operator review; analysis cancelled.',
+            ],
+            // Closed: INVALID after the technical repeat → result =
+            // INVALID; decision derives to RELEASED (no cancellation
+            // reason) but cert impact = BLOCKED.
+            [
+                'display_no' => 'AN-2026-0012',
+                'type' => ActiveAnalysisType::MAIN_ANALYSIS,
+                'trigger' => SamplingTrigger::MAIN_60_PERCENT,
+                'status' => ActiveAnalysisStatus::CLOSED,
+                'order_key' => 'LO-2026-0004',
+                'attempt_count' => 2,
+                'elements_mode' => 'co2_invalid',
+                'latest_message' => 'Technical repeat still INVALID; closed for review.',
+                'element_summary' => 'CO2 invalid (post-repeat)',
+                'closed_at' => '-45 minutes',
+                'related_result_id' => true,
+            ],
         ];
 
         foreach ($rows as $r) {
@@ -136,6 +221,12 @@ class ActiveAnalysisSeeder extends Seeder
 
     protected function upsertAnalysis(array $r, ?array $order, ?string $deviceId, ?string $specId): ActiveAnalysis
     {
+        // Closed / cancelled metadata — only set when the row asked for
+        // it. relative offsets like "-3 hours" are parsed by Carbon.
+        $closedAt = isset($r['closed_at']) ? now()->modify($r['closed_at']) : null;
+        $cancelledAt = isset($r['cancelled_at']) ? now()->modify($r['cancelled_at']) : null;
+        $relatedResultId = ! empty($r['related_result_id']) ? (string) Str::uuid() : null;
+
         return ActiveAnalysis::firstOrCreate(
             ['display_no' => $r['display_no']],
             [
@@ -164,6 +255,12 @@ class ActiveAnalysisSeeder extends Seeder
                 'element_summary' => $r['element_summary'],
                 'held_at' => isset($r['hold_reason']) ? now()->subHour() : null,
                 'hold_reason' => $r['hold_reason'] ?? null,
+
+                // Closed / cancelled outcome columns (V1.1 §4 inputs)
+                'closed_at' => $closedAt,
+                'related_result_id' => $relatedResultId,
+                'cancelled_at' => $cancelledAt,
+                'cancellation_reason' => $r['cancellation_reason'] ?? null,
             ]
         );
     }
@@ -325,6 +422,14 @@ class ActiveAnalysisSeeder extends Seeder
                 null,
                 'Analysis is on hold; resume by cancelling or following backend flow.',
                 array_merge([AnalysisUserAction::CANCEL_ANALYSIS], $always),
+            ],
+            // 7) CLOSED / CANCELLED — terminal, read-only for Results &
+            //    Quality Decisions. No required action, only view-details.
+            $r['status'] === ActiveAnalysisStatus::CLOSED,
+            $r['status'] === ActiveAnalysisStatus::CANCELLED => [
+                null,
+                null,
+                $always,
             ],
             // Default — running / waiting / queued
             default => [
