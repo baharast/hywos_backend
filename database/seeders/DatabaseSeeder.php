@@ -95,6 +95,20 @@ class DatabaseSeeder extends Seeder
             // AFTER HardwareDeviceSeeder (resolves printer ids) and
             // OperationalDocumentSeeder (writes the parent documents).
             PrinterJobDemoSeeder::class,
+            // Alarms & Events V1 §6 — 9 demo Active Alarms across the
+            // severity × status × category matrix. Soft-FKs to existing
+            // loading_orders and hardware_devices ids when present.
+            AlarmSeeder::class,
+            // Alarms & Events V1 §7.5 — 8 logbook entries covering the
+            // category × follow-up matrix, plus 1 correction row for the
+            // edit-history surface. Must run after AlarmSeeder so
+            // linked_alarm_id resolves on the entries that reference
+            // ALM-2026-0001 / ALM-2026-0008.
+            LogbookSeeder::class,
+            // Alarms & Events V1 §7.6 — 12 security events written into
+            // the existing event_logs table with event_category='security'.
+            // Soft-FKs to DRV-1001 / DRV-1005 when those drivers exist.
+            SecurityEventSeeder::class,
         ]);
     }
 }
