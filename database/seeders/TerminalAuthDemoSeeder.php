@@ -216,7 +216,7 @@ class TerminalAuthDemoSeeder extends Seeder
                 'card_code' => $r['code'],
                 'serial_number' => 'SN-' . $r['code'],
                 'masked_uid' => hash('sha256', $r['code']),
-                'card_type' => 'driver_chip',
+                'card_type' => 'driver_card',
                 'display_identifier' => $r['code'],
                 'driver_id' => $r['driver']?->id,
                 'assignment_state' => $r['assignment_state'],
