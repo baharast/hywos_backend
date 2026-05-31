@@ -6,9 +6,18 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBayLineRequest extends FormRequest
 {
+    /**
+     * Authorisation is owned by the route middleware
+     * (`permission:plant_configuration.manage` on POST /api/baylines).
+     * The previous `can('baylines.create')` check referenced a
+     * permission that was never seeded into Spatie's registry, so
+     * every request — including admin's — returned 403
+     * "This action is unauthorized.". Single source of truth = the
+     * route gate; do not re-check here.
+     */
     public function authorize(): bool
     {
-        return $this->user()?->can('baylines.create');
+        return true;
     }
 
     public function rules(): array

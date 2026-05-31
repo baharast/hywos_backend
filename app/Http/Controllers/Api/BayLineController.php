@@ -112,7 +112,13 @@ class BayLineController extends ApiController
 
     public function destroy(Request $request, $id)
     {
-        $this->authorize('delete', BayLine::class);
+        // Authorisation is owned by the route middleware
+        // (`permission:plant_configuration.manage` on DELETE
+        // /api/baylines/{id}). The previous Policy lookup
+        // (`$this->authorize('delete', BayLine::class)`) had no
+        // matching policy class so it fell through to Laravel's
+        // default deny and 403'd every caller — including admin.
+        // Single source of truth = the route gate.
 
         $bayline = BayLine::find($id);
         if (! $bayline) {

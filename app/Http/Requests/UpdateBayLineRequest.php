@@ -6,9 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateBayLineRequest extends FormRequest
 {
+    /**
+     * Authorisation is owned by the route middleware
+     * (`permission:plant_configuration.manage` on PUT /api/baylines/{id}).
+     * The previous `can('baylines.update')` check referenced an
+     * unseeded permission name, so every request returned 403. Single
+     * source of truth = the route gate.
+     */
     public function authorize(): bool
     {
-        return $this->user()?->can('baylines.update');
+        return true;
     }
 
     public function rules(): array
