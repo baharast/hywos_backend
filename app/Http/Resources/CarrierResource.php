@@ -25,6 +25,12 @@ class CarrierResource extends JsonResource
 
         return [
             'id' => $this->id,
+            // `name` is an ADDITIVE snake_case alias of carrierName so the
+            // generic lookup contract `{ id, name }` (used by the trailers
+            // list filter and any other page that picks a carrier from a
+            // dropdown) works without each FE having to remap carrierName.
+            // The existing camelCase `carrierName` stays for backward compat.
+            'name' => $this->carrier_name,
             'carrierCode' => $this->carrier_code,
             'carrierName' => $this->carrier_name,
             'legalName' => $this->legal_name,

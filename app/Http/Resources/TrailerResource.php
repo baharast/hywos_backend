@@ -81,6 +81,78 @@ class TrailerResource extends JsonResource
 
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),
+
+            // -----------------------------------------------------------------
+            // V2 additions for the redesigned list page (2026-05-31).
+            // ADDITIVE + NULLABLE. snake_case on the wire per spec.
+            //
+            // These complement (not replace) the camelCase fields above —
+            // existing FE callers keep working unchanged. New FE callers can
+            // use either family.
+            //
+            // adr_state            : enum forward-contract. The column is
+            //                        TBC; we always return null until the
+            //                        trailers schema gains an `adr_state`.
+            // active_order_*       : populated by TrailerController::
+            //                        enrichTrailers() via synthetic
+            //                        __active_order_* attributes; null when
+            //                        the trailer has no open loading order.
+            // last_loaded_at       : max(completed_at) from loading_operations
+            //                        joined by trailer_id (also from
+            //                        enrichTrailers()).
+            // parking_location     : human label of currentParking — name
+            //                        column on the parkings row.
+            // current_context_kind : derived enum mirroring deriveContextKind
+            //                        on the controller; runs in the resource
+            //                        so it stays in sync without a join.
+            // -----------------------------------------------------------------
+            'adr_state' => null,
+            'active_order_id' => $this->getAttribute('__active_order_id'),
+            'active_order_code' => $this->getAttribute('__active_order_code'),
+            'last_loaded_at' => $this->resolveLastLoadedAt(),
+            'parking_location' => $this->resolveParkingLocation(),
+            'current_context_kind' => $this->resolveCurrentContextKind(),
         ];
+    }
+
+    /**
+     * The controller stamps __last_loaded_at as either an ISO string or a
+     * Carbon-castable raw datetime depending on driver. Normalise to ISO
+     * 8601 so the wire shape is always stable.
+     */
+    protected function resolveLastLoadedAt(): ?string
+    {
+        $raw = $this->getAttribute('__last_loaded_at');
+        if ($raw === null) return null;
+        try {
+            return \Illuminate\Support\Carbon::parse($raw)->toIso8601String();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function resolveParkingLocation(): ?string
+    {
+        if (! $this->relationLoaded('currentParking')) return null;
+        $parking = $this->currentParking;
+        return $parking?->name;
+    }
+
+    /**
+     * Mirror of TrailerController::deriveContextKind so any caller
+     * (collection, single resource, export) gets the same value.
+     */
+    protected function resolveCurrentContextKind(): ?string
+    {
+        if (! empty($this->getAttribute('__active_order_id'))) {
+            return 'loading';
+        }
+        if (! empty($this->current_parking_id)) {
+            return 'parking';
+        }
+        if ($this->status === TrailerStatus::BLOCKED) {
+            return 'maintenance';
+        }
+        return null;
     }
 }
