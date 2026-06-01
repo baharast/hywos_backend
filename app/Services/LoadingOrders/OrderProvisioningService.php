@@ -77,16 +77,23 @@ class OrderProvisioningService
                 ]);
             }
 
-            [$hash, $masked] = $this->generateTanCredential();
+            [$rawValue, $hash, $masked] = $this->generateTanCredential();
 
             return AuthMedium::create([
                 'id' => (string) Str::uuid(),
                 'medium_type' => AuthMediumType::TAN,
                 'driver_id' => $driver->id,
                 'order_id' => $order->id,
-                'identifier_value' => null,
+                // Project decision (2026-05-31): persist BOTH the raw
+                // value AND the masked form so the driver-facing kiosk
+                // + the dispatcher panel can show the actual 7-digit
+                // code through TanResource / fillingTan / tan blocks
+                // without each surface having to special-case the
+                // reveal. identifier_hash stays for the login lookup
+                // path which still hashes inputs before matching.
+                'identifier_value' => $rawValue,
                 'identifier_hash' => $hash,
-                'display_identifier' => $masked,
+                'display_identifier' => $rawValue,
                 'tan_masked' => $masked,
                 'tan_reference' => $this->nextTanReference('TAN'),
                 'tan_purpose' => TanPurpose::GATE_ENTRY,
@@ -153,16 +160,21 @@ class OrderProvisioningService
                 ]);
             }
 
-            [$hash, $masked] = $this->generateTanCredential();
+            [$rawValue, $hash, $masked] = $this->generateTanCredential();
 
             return AuthMedium::create([
                 'id' => (string) Str::uuid(),
                 'medium_type' => AuthMediumType::TAN,
                 'driver_id' => $driver->id,
                 'order_id' => $order->id,
-                'identifier_value' => null,
+                // Project decision (2026-05-31): persist BOTH the raw
+                // value AND the masked form — driver needs to type the
+                // actual 7-digit code at the bayline panel, so the
+                // kiosk surfaces the full value via display_identifier.
+                // See generateTanCredential() docblock for the rationale.
+                'identifier_value' => $rawValue,
                 'identifier_hash' => $hash,
-                'display_identifier' => $masked,
+                'display_identifier' => $rawValue,
                 'tan_masked' => $masked,
                 'tan_reference' => $this->nextTanReference('FT'),
                 'tan_purpose' => TanPurpose::FILLING,
@@ -242,21 +254,26 @@ class OrderProvisioningService
     }
 
     /**
-     * V6 §16.1 TAN credential generator. Returns the (identifier_hash,
-     * tan_masked) pair shared by both gate-entry and filling paths.
+     * V6 §16.1 TAN credential generator. Returns the
+     * (raw, hash, masked) triple shared by both gate-entry and filling
+     * paths.
      *
      * Generates a 7-digit value via CSPRNG (random_int min/max derived
      * from TanPolicy::VALUE_DIGITS), then:
      *   - hashes it with SHA-256 → identifier_hash (persisted)
-     *   - masks the last 4 digits as "***-XXXX" → tan_masked + display
+     *   - masks the last 4 digits as "***-XXXX" → tan_masked
+     *   - returns the FULL raw value so the caller can persist it in
+     *     identifier_value + display_identifier
      *
-     * The raw value is NOT returned (and not stored) — auto-issued TANs
-     * skip the one-time-reveal step. A driver who needs the actual
-     * code receives it through the kiosk during the workflow (we send
-     * back the masked form there; the raw value path is reserved for
-     * the manual TanController::generate flow per `oneTimeFullValue`).
+     * Project decision (2026-05-31, mirrors the manual TanController
+     * full-value reveal): auto-issued TANs persist the raw value so
+     * the kiosk + admin panel both display the actual code instead of
+     * the masked form. The driver needs to read 7 digits at the
+     * bayline; showing them "***-3768" is useless. identifier_hash
+     * stays alongside for the login-path lookup (TerminalAuthService
+     * still hashes inputs before matching).
      *
-     * @return array{0:string,1:string} [hash, masked]
+     * @return array{0:string,1:string,2:string} [raw, hash, masked]
      */
     protected function generateTanCredential(): array
     {
@@ -265,7 +282,7 @@ class OrderProvisioningService
         $rawValue = (string) random_int($min, $max);
         $hash = hash('sha256', $rawValue);
         $masked = '***-' . substr($rawValue, -4);
-        return [$hash, $masked];
+        return [$rawValue, $hash, $masked];
     }
 
     /**
