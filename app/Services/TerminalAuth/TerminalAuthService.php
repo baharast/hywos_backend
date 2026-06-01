@@ -135,13 +135,25 @@ class TerminalAuthService
             // Identification succeeded — open a session.
             $session = $this->openSession($terminal, $driver, $language, LoginMethod::TAN, $driverCheck);
 
-            // Mark TAN consumed only when the driver is actually allowed
-            // onto operational flow. Training-required still consumes —
-            // the TAN identified the driver successfully (§5.1 "first
-            // successful terminal/backend validation").
-            $tan->status = AuthMediumStatus::USED;
-            $tan->usage_state = TanUsageState::CONSUMED;
-            $tan->consumed_at = now();
+            // Lifetime decision (2026-05-31): the TAN is NOT finalised on
+            // first login any more. A driver typically logs into the
+            // kiosk multiple times during a single plant visit (e.g.
+            // filling, then returning to confirm parking or print exit).
+            // Consuming on first login locked them out of every
+            // subsequent kiosk interaction and forced the dispatcher to
+            // re-issue mid-visit.
+            //
+            // We instead track usage (used_at + consumption_count) and
+            // bind the TAN to the current session so the cross-visit
+            // guard still holds, but leave `consumed_at` NULL so
+            // evaluateTanLifecycle() continues to accept it.
+            //
+            // The TAN is FINALISED later by
+            // DriverWorkflowService::complete() when the driver picks
+            // task=exit / task=print_exit at the kiosk (= the real
+            // "leaving the plant" signal). Finalisation there stamps
+            // consumed_at + flips status/usage_state, after which any
+            // later authentication attempt is rejected as `tan_used`.
             $tan->consumption_count = (int) $tan->consumption_count + 1;
             $tan->used_at = now();
             $tan->related_terminal_session_id = $session->id;

@@ -634,9 +634,25 @@ class DriverWorkflowService
      * ============================================================ */
 
     /**
+     * Tasks that signal the driver is LEAVING the plant — the cue to
+     * finalise their gate-entry TAN. `filling`, `pickup`, `parking`
+     * leave the TAN alive so the driver can return to the kiosk later
+     * in the same visit.
+     */
+    public const TASKS_ENDING_VISIT = ['exit', 'print_exit'];
+
+    /**
      * Finalise the visit. Flips session_state → idle and clears
      * current_screen so the gate monitor stops surfacing the row on the
      * active touchpoint card.
+     *
+     * Side effect (2026-05-31): when the task is one of TASKS_ENDING_VISIT,
+     * finalise the gate-entry TAN bound to the driver via this session.
+     * The TAN was kept alive across multiple kiosk re-logins during the
+     * visit (TerminalAuthService no longer consumes on first login) so
+     * the driver could come back for follow-up tasks. THIS step is
+     * where it gets stamped as consumed — re-using a finalised TAN
+     * fails the V1.3 §5.1 single-use check, as intended.
      *
      * @return array{sessionNo: string, completedAt: string, task: string}
      */
@@ -677,6 +693,10 @@ class DriverWorkflowService
                 EventCategory::OPERATIONS,
                 EventSeverity::INFO
             );
+
+            if (in_array($task, self::TASKS_ENDING_VISIT, true)) {
+                $this->finaliseGateEntryTanForSession($session);
+            }
         });
 
         return [
@@ -686,6 +706,62 @@ class DriverWorkflowService
             'driver' => $this->driverSnapshot($session),
             'trailer' => $this->trailerSnapshot($session),
         ];
+    }
+
+    /**
+     * Stamp the gate-entry TAN linked to this session as consumed —
+     * the driver is leaving the plant. Best-effort: a missing TAN
+     * link (e.g. driver entered with a chip card, never used a TAN)
+     * is a no-op. Filling TANs are NOT touched here; they have their
+     * own consumption path at the bayline panel.
+     *
+     * Match strategy:
+     *   1. Prefer the row pointing at related_terminal_session_id = $session->id —
+     *      that's the TAN the driver actually presented at login.
+     *   2. Fall back to the active gate-entry TAN for the driver if the
+     *      session-link is missing (defensive — older rows might not
+     *      have it populated).
+     */
+    protected function finaliseGateEntryTanForSession(TerminalSession $session): void
+    {
+        if (! $session->driver_id) {
+            return;
+        }
+
+        $tan = AuthMedium::query()
+            ->where('medium_type', \App\Enums\AuthMediumType::TAN)
+            ->where('tan_purpose', TanPurpose::GATE_ENTRY)
+            ->where('status', \App\Enums\AuthMediumStatus::ACTIVE)
+            ->where('driver_id', $session->driver_id)
+            ->where(function ($q) use ($session) {
+                $q->where('related_terminal_session_id', $session->id)
+                    ->orWhereNull('related_terminal_session_id');
+            })
+            ->orderByDesc('issued_at')
+            ->first();
+
+        if ($tan === null) {
+            return;
+        }
+
+        $tan->status = \App\Enums\AuthMediumStatus::USED;
+        $tan->usage_state = TanUsageState::CONSUMED;
+        $tan->consumed_at = now();
+        $tan->save();
+
+        $this->events->record(
+            'tan.consumed_at_exit',
+            $tan,
+            "TAN {$tan->tan_reference} consumed when driver {$session->driver_code} exited the plant.",
+            [
+                'tan_id' => $tan->id,
+                'tan_reference' => $tan->tan_reference,
+                'driver_id' => $session->driver_id,
+                'terminal_session_id' => $session->id,
+            ],
+            EventCategory::SECURITY,
+            EventSeverity::INFO
+        );
     }
 
     /* ============================================================
