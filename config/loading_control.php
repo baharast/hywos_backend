@@ -14,14 +14,14 @@ return [
     |
     | This is for FE demos / kiosk previews only — flip it off the moment
     | a real PLC gateway / maintenance / interlock source lands. Default
-    | is `true` outside production so `php artisan migrate:fresh --seed`
-    | yields a card UI that looks alive without any extra wiring.
+    | is `true` everywhere (including production) because the MVP / Railway
+    | deployment is itself a kiosk demo until the real PLC integration
+    | ships. The synthesiser is gated by this single flag so flipping it
+    | off later is a one-line change.
     |
-    | Override per environment via STATION_DEMO_TELEMETRY=true|false in .env.
+    | Override per environment via STATION_DEMO_TELEMETRY=true|false in
+    | .env — set it to `false` once real upstream telemetry lands.
     */
 
-    'demo_telemetry' => env(
-        'STATION_DEMO_TELEMETRY',
-        env('APP_ENV', 'production') !== 'production'
-    ),
+    'demo_telemetry' => env('STATION_DEMO_TELEMETRY', true),
 ];

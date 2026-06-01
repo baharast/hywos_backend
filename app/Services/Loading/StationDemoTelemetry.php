@@ -45,50 +45,62 @@ class StationDemoTelemetry
 
     /* ---------- numeric telemetry ---------- */
 
-    /** Returns a current-pressure value in bar that is plausibly within bay capability. */
+    /**
+     * Current PLC line pressure in bar. Active bays sit close to capability
+     * (an in-flight H2 fill operates at 85–98% of the bay's rated pressure);
+     * free / preparing bays are vented.
+     */
     public static function livePressure(BayLine $bay, ?LoadingOperation $active, ?float $capabilityBar): ?float
     {
         if (! self::enabled()) {
             return null;
         }
         if (! $active) {
-            // Free bays show no PLC pressure (line vented).
             return 0.0;
         }
         $capability = $capabilityBar ?? 200.0;
-        // Ride between 60% and 95% of capability, biased per bay.
-        $jitter = (self::seed($bay) % 35) / 100.0; // 0.00 .. 0.34
-        $pct = 0.60 + $jitter;
+        // 85% .. 98% of capability, deterministic per bay.
+        $jitter = (self::seed($bay) % 14) / 100.0; // 0.00 .. 0.13
+        $pct = 0.85 + $jitter;
         return round($capability * $pct, 1);
     }
 
+    /**
+     * Current temperature in °C. Hydrogen fills at high pressure produce
+     * sharp pre-cooling at the dispenser (real-world H2 stations cool the
+     * gas to roughly -20 °C to -40 °C). Idle bays sit at ambient.
+     */
     public static function temperature(BayLine $bay, ?LoadingOperation $active): ?float
     {
         if (! self::enabled()) {
             return null;
         }
-        // 18 .. 28 °C range, deterministic per bay.
-        $base = 18.0 + ((self::seed($bay) % 100) / 10.0); // 18.0 .. 27.9
         if ($active) {
-            // Active loading runs a couple of degrees warmer.
-            $base += 1.5;
+            // Active fill — cold pre-cooling, -10 °C to -40 °C per bay.
+            $cold = -10.0 - ((self::seed($bay) % 30)); // -10 .. -39
+            return round($cold, 0);
         }
-        return round($base, 1);
+        // Ambient idle — 18 °C to 22 °C per bay.
+        $ambient = 18.0 + ((self::seed($bay) % 50) / 10.0); // 18.0 .. 22.9
+        return round($ambient, 0);
     }
 
-    public static function targetPressure(BayLine $bay, ?LoadingOperation $active, ?float $capabilityBar): ?float
+    /**
+     * Target pressure (bar) for the current loading — H2 fills are run at
+     * the bay's rated capability, so we expose that as the target. `null`
+     * when no loading is active.
+     */
+    public static function targetPressure(?LoadingOperation $active, ?float $capabilityBar): ?float
     {
         if (! self::enabled() || ! $active) {
             return null;
         }
-        $capability = $capabilityBar ?? 200.0;
-        // Target lands at 90% of capability — typical for an H2 fill.
-        return round($capability * 0.90, 0);
+        return $capabilityBar !== null ? round($capabilityBar, 0) : null;
     }
 
     /* ---------- booleans / labels ---------- */
 
-    public static function analysisRequired(BayLine $bay, ?LoadingOperation $active): ?bool
+    public static function analysisRequired(BayLine $bay): ?bool
     {
         if (! self::enabled()) {
             return null;
@@ -97,7 +109,7 @@ class StationDemoTelemetry
         return (self::seed($bay) % 2) === 0;
     }
 
-    public static function processStep(?LoadingOperation $active, ?array $loadingState): ?string
+    public static function processStep(?array $loadingState): ?string
     {
         // Resource already passes loadingState; we mirror the label so the FE
         // doesn't have to fall back. Demo-only behaviour — when the real
@@ -119,21 +131,33 @@ class StationDemoTelemetry
             return null;
         }
 
-        // Stable base — every healthy bay reports these three interlocks OK.
+        // Four operational permission gates — match the FE bay-card spec
+        // wording. Every healthy bay reports them all OK.
         $base = [
-            ['label' => 'Emergency stop', 'state' => 'ok'],
-            ['label' => 'Earth bond',     'state' => 'ok'],
-            ['label' => 'Door interlock', 'state' => 'ok'],
+            ['label' => 'Driver Certified',   'state' => 'ok'],
+            ['label' => 'Trailer Approved',   'state' => 'ok'],
+            ['label' => 'Pressure Match',     'state' => 'ok'],
+            ['label' => 'Certificates Valid', 'state' => 'ok'],
         ];
 
-        // Faulted / blocked bays surface one downgraded interlock so the
-        // card has a visible reason for the danger chip.
+        // Faulted / blocked / waiting / maintenance bays surface one
+        // downgraded gate so the card has a visible reason for the chip.
         if ($bayStatus === BayLineStatus::FAULT_BLOCKED) {
-            $base[2]['state'] = 'danger';
+            $base[1]['state'] = 'danger';      // Trailer Approved → danger
         } elseif ($bayStatus === BayLineStatus::MAINTENANCE_OFFLINE) {
-            $base[2]['state'] = 'pending';
+            // All gates "pending" while the bay is offline for service.
+            foreach (array_keys($base) as $i) {
+                $base[$i]['state'] = 'pending';
+            }
         } elseif ($bayStatus === BayLineStatus::WAITING_ANALYSIS) {
-            $base[1]['state'] = 'warning';
+            $base[2]['state'] = 'warning';     // Pressure Match → warning
+        } else {
+            // Healthy bay — add a fifth "Temp Deviation" gate occasionally
+            // (every ~3rd bay deterministically) so a couple of cards show
+            // an extra row, matching the reference design.
+            if ((self::seed($bay) % 3) === 0) {
+                $base[] = ['label' => 'Temp Deviation', 'state' => 'warning'];
+            }
         }
 
         return $base;
