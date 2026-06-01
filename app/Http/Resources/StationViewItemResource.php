@@ -106,7 +106,61 @@ class StationViewItemResource extends JsonResource
 
             'lastUpdatedAt' => $lastUpdatedAt?->toIso8601String(),
             'isStale' => $this->isStale($lastUpdatedAt),
+
+            // ── V3.2 station-card extensions (2026-06-01) ──────────────────
+            // Additive only — no existing field is touched. Wire keys are
+            // snake_case per the V3.2 brief (existing fields stay camelCase
+            // for backward compatibility). Every new field is nullable so
+            // the response stays valid before PLC / maintenance / interlocks
+            // integrations land.
+            //
+            // Sources today:
+            //   capability_bar : parsed from `bay_lines.pressure_class`
+            //                    (best-effort numeric extraction)
+            //   customer_id    : `loading_operations.customer_id`
+            //   customer_name  : `loading_operations.customer_name`
+            //   plc_id         : `bay_lines.related_device_id` (PLC) →
+            //                    fall back to `related_panel_id`
+            //
+            // Always-null until upstream lands:
+            //   live_pressure  : PLC telemetry (no column / gateway yet)
+            //   temperature    : PLC telemetry (no column / gateway yet)
+            //   analysis_required : bay capability flag (no column yet —
+            //                    `loading_operations.analysis_status` is
+            //                    a state, not a per-bay/product requirement)
+            //   target_pressure: per-loading setpoint (no column yet)
+            //   safety         : PLC interlock summary array (no source yet)
+            //   maintenance    : maintenance-record summary (no table yet)
+            //   process_step   : FE falls back to loadingState.label
+            'live_pressure' => null,
+            'temperature' => null,
+            'capability_bar' => $this->parseCapabilityBar($bay->pressure_class),
+            'analysis_required' => null,
+            'target_pressure' => null,
+            'customer_id' => $active?->customer_id,
+            'customer_name' => $active?->customer_name,
+            'safety' => null,
+            'maintenance' => null,
+            'plc_id' => $bay->related_device_id ?? $bay->related_panel_id,
+            'process_step' => null,
         ];
+    }
+
+    /**
+     * Best-effort numeric extraction from the free-text `pressure_class`
+     * column (e.g. "150 bar" → 150.0, "200bar" → 200.0, "Class A" → null).
+     * Until a typed capability column lands, this lets the FE show a value
+     * for bays whose pressure_class already carries the number.
+     */
+    protected function parseCapabilityBar(?string $pressureClass): ?float
+    {
+        if (! $pressureClass) {
+            return null;
+        }
+        if (preg_match('/(\d+(?:\.\d+)?)/', $pressureClass, $m)) {
+            return (float) $m[1];
+        }
+        return null;
     }
 
     /**
