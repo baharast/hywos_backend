@@ -143,9 +143,9 @@ class StationViewItemResource extends JsonResource
             ),
             'temperature' => StationDemoTelemetry::temperature($bay, $active),
             'capability_bar' => $this->parseCapabilityBar($bay->pressure_class),
-            'analysis_required' => StationDemoTelemetry::analysisRequired($bay, $active),
+            'analysis_required' => StationDemoTelemetry::analysisRequired($bay),
             'target_pressure' => StationDemoTelemetry::targetPressure(
-                $bay, $active, $this->parseCapabilityBar($bay->pressure_class)
+                $active, $this->parseCapabilityBar($bay->pressure_class)
             ),
             'customer_id' => $active?->customer_id,
             'customer_name' => $active?->customer_name,
@@ -153,7 +153,6 @@ class StationViewItemResource extends JsonResource
             'maintenance' => StationDemoTelemetry::maintenance($bay, $bayStatus),
             'plc_id' => $bay->related_device_id ?? $bay->related_panel_id,
             'process_step' => StationDemoTelemetry::processStep(
-                $active,
                 $loadingWire
                     ? ['value' => $loadingWire, 'label' => LoadingStatus::label($loadingWire)]
                     : null

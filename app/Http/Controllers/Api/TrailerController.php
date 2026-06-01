@@ -17,6 +17,7 @@ use App\Http\Resources\TrailerResource;
 use App\Models\AuditLog;
 use App\Models\EventLog;
 use App\Models\LoadingOperation;
+use App\Models\LoadingOrder;
 use App\Models\Trailer;
 use App\Services\ApiResponse;
 use App\Services\Audit\AuditLogger;
@@ -30,7 +31,7 @@ class TrailerController extends ApiController
     {
         $perPage = (int) $request->query('per_page', 25);
 
-        $query = Trailer::query()->with(['carrier', 'customer', 'authMedia']);
+        $query = Trailer::query()->with(['carrier', 'customer', 'authMedia', 'currentParking']);
         $this->applyFilters($query, $request->all());
 
         $sort = (string) $request->query('sort', '-updated_at');
@@ -43,7 +44,19 @@ class TrailerController extends ApiController
         }
         $paginator = $query->orderBy($column, $direction)->paginate($perPage);
 
-        $rows = TrailerResource::collection($paginator->items());
+        // Pre-enrich the paginated rows with active-order + last-loaded
+        // metadata. Two extra queries total instead of one per row.
+        $this->enrichTrailers($paginator->items());
+
+        // `current_context_kind` filter runs in PHP because it's a
+        // derived field. Done AFTER pagination so we don't desync
+        // meta.total — see method doc for the trade-off.
+        $items = $this->applyDerivedContextKindFilter(
+            $paginator->items(),
+            (string) $request->query('current_context_kind', '')
+        );
+
+        $rows = TrailerResource::collection($items);
 
         $summary = $this->summary();
         $lastUpdated = Trailer::query()->max('updated_at');
@@ -358,6 +371,129 @@ class TrailerController extends ApiController
         ], 'Trailer export prepared');
     }
 
+    /**
+     * Pre-compute two maps for the paginated trailer list:
+     *   - active_order_id / _code         from loading_orders where
+     *                                     assigned_trailer_id = trailer.id
+     *                                     AND status NOT IN (completed, cancelled).
+     *                                     Tied earliest planned_window_start wins.
+     *   - last_loaded_at                  max(completed_at) from
+     *                                     loading_operations where
+     *                                     trailer_id = trailer.id
+     *                                     AND completed_at IS NOT NULL.
+     *
+     * Both run as a SINGLE query each over the paginated id slice, then
+     * attach the results back onto the model instances as synthetic
+     * attributes (__active_order_*, __last_loaded_at). The resource
+     * reads from there — no N+1, no model method indirection.
+     *
+     * Empty trailer list short-circuits to a no-op.
+     *
+     * @param  array<int,Trailer>  $trailers
+     */
+    protected function enrichTrailers(array $trailers): void
+    {
+        if (empty($trailers)) {
+            return;
+        }
+
+        $ids = array_map(fn ($t) => $t->id, $trailers);
+
+        // 1) Active orders. We pick the canonical "current" order per
+        //    trailer with a window function fallback — simpler: order
+        //    by (priority of status, planned_window_start ASC) and
+        //    keep the first occurrence per trailer.
+        $orders = LoadingOrder::query()
+            ->whereIn('assigned_trailer_id', $ids)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->orderByRaw("CASE status
+                WHEN 'in_progress' THEN 1
+                WHEN 'ready' THEN 2
+                WHEN 'needs_assignment' THEN 3
+                WHEN 'draft' THEN 4
+                WHEN 'blocked' THEN 5
+                ELSE 9
+            END")
+            ->orderByRaw('COALESCE(planned_window_start, created_at) ASC')
+            ->get(['id', 'order_no', 'assigned_trailer_id']);
+
+        $orderByTrailerId = [];
+        foreach ($orders as $o) {
+            $tid = $o->assigned_trailer_id;
+            if (! isset($orderByTrailerId[$tid])) {
+                $orderByTrailerId[$tid] = $o;
+            }
+        }
+
+        // 2) Last loaded — max(completed_at) per trailer.
+        $lastLoaded = LoadingOperation::query()
+            ->whereIn('trailer_id', $ids)
+            ->whereNotNull('completed_at')
+            ->selectRaw('trailer_id, MAX(completed_at) AS last_completed_at')
+            ->groupBy('trailer_id')
+            ->get()
+            ->keyBy('trailer_id');
+
+        foreach ($trailers as $t) {
+            $order = $orderByTrailerId[$t->id] ?? null;
+            $t->setAttribute('__active_order_id', $order?->id);
+            $t->setAttribute('__active_order_code', $order?->order_no);
+            $t->setAttribute(
+                '__last_loaded_at',
+                isset($lastLoaded[$t->id])
+                    ? $lastLoaded[$t->id]->last_completed_at
+                    : null
+            );
+        }
+    }
+
+    /**
+     * Compute the `current_context_kind` enum from the trailer's state
+     * (mirrors the same derivation the resource performs). Used both by
+     * the resource AND by the post-pagination filter.
+     */
+    protected function deriveContextKind(Trailer $t): ?string
+    {
+        // Active order beats everything — the trailer is "loading".
+        if (! empty($t->getAttribute('__active_order_id'))) {
+            return 'loading';
+        }
+        if (! empty($t->current_parking_id)) {
+            return 'parking';
+        }
+        if ($t->status === TrailerStatus::BLOCKED) {
+            return 'maintenance';
+        }
+        // Clarification module not yet wired — never returns 'clarification'
+        // until LogbookEntry / ClarificationCase exposure lands here.
+        return null;
+    }
+
+    /**
+     * Filter the paginated rows by `current_context_kind`.
+     *
+     * Trade-off: this runs in PHP AFTER pagination because the context
+     * kind is derived from join data + trailer status — pushing it to
+     * SQL would mean replicating the whole orderByRaw + IFNULL ladder.
+     * Side effect: `meta.total` does not shrink when the filter is
+     * active (it reflects the pre-derived-filter set). FE should treat
+     * the filter as a client-side narrowing of the page contents.
+     *
+     * @param  array<int,Trailer>  $rows
+     * @return array<int,Trailer>
+     */
+    protected function applyDerivedContextKindFilter(array $rows, string $kind): array
+    {
+        $allowed = ['loading', 'parking', 'clarification', 'maintenance'];
+        if (! in_array($kind, $allowed, true)) {
+            return $rows;
+        }
+        return array_values(array_filter(
+            $rows,
+            fn (Trailer $t) => $this->deriveContextKind($t) === $kind
+        ));
+    }
+
     protected function applyFilters($query, array $filters): void
     {
         if (! empty($filters['search'])) {
@@ -416,6 +552,27 @@ class TrailerController extends ApiController
                             ->where('status', AuthMediumStatus::ACTIVE);
                     });
             });
+        }
+
+        // ?needs_attention=1 — matches summary.needsAttention exactly
+        // (chip/inspection/suitability issue) but also excludes blocked
+        // and inactive trailers, so the FE list keeps the operational
+        // intent intact. The legacy `attention=true` filter above is
+        // kept as-is for backward compatibility; `needs_attention=1`
+        // is the new snake_case API and additionally narrows away
+        // blocked / inactive rows.
+        if (filter_var($filters['needs_attention'] ?? null, FILTER_VALIDATE_BOOLEAN)) {
+            $query->where('is_active', true)
+                ->where('status', '!=', TrailerStatus::BLOCKED)
+                ->where(function ($q) {
+                    $q->where('technical_suitability', '!=', 'approved')
+                        ->orWhereNull('inspection_expiry_date')
+                        ->orWhereDate('inspection_expiry_date', '<=', now()->addDays(30))
+                        ->orWhereDoesntHave('authMedia', function ($q2) {
+                            $q2->where('medium_type', 'chip_card')
+                                ->where('status', AuthMediumStatus::ACTIVE);
+                        });
+                });
         }
 
         // ?assignable=true — mirrors trailerAssignmentConflict() exactly
