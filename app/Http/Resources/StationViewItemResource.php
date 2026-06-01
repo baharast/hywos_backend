@@ -7,6 +7,7 @@ use App\Enums\BayLineStatus;
 use App\Enums\LoadingStatus;
 use App\Models\BayLine;
 use App\Models\LoadingOperation;
+use App\Services\Loading\StationDemoTelemetry;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -132,17 +133,31 @@ class StationViewItemResource extends JsonResource
             //   safety         : PLC interlock summary array (no source yet)
             //   maintenance    : maintenance-record summary (no table yet)
             //   process_step   : FE falls back to loadingState.label
-            'live_pressure' => null,
-            'temperature' => null,
+            // The right-hand side of each `??` is the demo synthesiser. It
+            // returns `null` unless `config('loading_control.demo_telemetry')`
+            // is true, so production behaviour is unchanged: only fields with
+            // real DB sources carry values. See StationDemoTelemetry for the
+            // deterministic generation rules.
+            'live_pressure' => StationDemoTelemetry::livePressure(
+                $bay, $active, $this->parseCapabilityBar($bay->pressure_class)
+            ),
+            'temperature' => StationDemoTelemetry::temperature($bay, $active),
             'capability_bar' => $this->parseCapabilityBar($bay->pressure_class),
-            'analysis_required' => null,
-            'target_pressure' => null,
+            'analysis_required' => StationDemoTelemetry::analysisRequired($bay, $active),
+            'target_pressure' => StationDemoTelemetry::targetPressure(
+                $bay, $active, $this->parseCapabilityBar($bay->pressure_class)
+            ),
             'customer_id' => $active?->customer_id,
             'customer_name' => $active?->customer_name,
-            'safety' => null,
-            'maintenance' => null,
+            'safety' => StationDemoTelemetry::safety($bay, $bayStatus),
+            'maintenance' => StationDemoTelemetry::maintenance($bay, $bayStatus),
             'plc_id' => $bay->related_device_id ?? $bay->related_panel_id,
-            'process_step' => null,
+            'process_step' => StationDemoTelemetry::processStep(
+                $active,
+                $loadingWire
+                    ? ['value' => $loadingWire, 'label' => LoadingStatus::label($loadingWire)]
+                    : null
+            ),
         ];
     }
 
