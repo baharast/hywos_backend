@@ -35,6 +35,13 @@ class CreateLoadingOrderRequest extends FormRequest
 
             'assigned_driver_id' => 'nullable|string|size:36|exists:drivers,id',
             'assigned_trailer_id' => 'nullable|string|size:36|exists:trailers,id',
+            // When provided, the controller validates the bayline is
+            // active + free (or already this order's slot) before
+            // accepting; auto-pick via OrderProvisioningService runs
+            // only when the field is omitted. denormalized
+            // assigned_bay_line_code / assigned_bay_line_name are
+            // server-set from the bayline row, never accepted on input.
+            'assigned_bay_line_id' => 'nullable|string|size:36|exists:baylines,id',
 
             'external_reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:5000',

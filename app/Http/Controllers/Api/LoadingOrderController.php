@@ -155,6 +155,20 @@ class LoadingOrderController extends ApiController
             $data['assigned_trailer_label'] = $trailer->trailer_label ?? $trailer->trailer_code;
             $data['assigned_trailer_plate'] = $trailer->plate;
         }
+        // Explicit bayline selection on create — when the dispatcher
+        // chose a slot manually, skip the auto-pick that would otherwise
+        // run in the OrderProvisioningService callback below. Validation
+        // guard rejects blocked / out-of-service slots and slots already
+        // bound to another order; the denormalised columns are set from
+        // the bayline row, not the request payload.
+        if (! empty($data['assigned_bay_line_id'])) {
+            $bayLine = \App\Models\BayLine::find($data['assigned_bay_line_id']);
+            if ($conflict = $this->bayLineAssignmentConflict($bayLine, null)) {
+                return $conflict;
+            }
+            $data['assigned_bay_line_code'] = $bayLine->code;
+            $data['assigned_bay_line_name'] = $bayLine->name;
+        }
 
         // Manual source by default (SAP imports land via a future endpoint).
         $data['source'] = 'manual';
@@ -185,6 +199,9 @@ class LoadingOrderController extends ApiController
             );
 
             // Auto-provision a bay line on every order (best-effort).
+            // No-op when the dispatcher already chose a slot manually
+            // above — provisionBayLineFor() short-circuits when
+            // assigned_bay_line_id is already set on the order row.
             $provisioning->provisionBayLineFor($order);
 
             // Auto-provision a single-use TAN when a driver was set at
@@ -227,6 +244,28 @@ class LoadingOrderController extends ApiController
                     423,
                     ['lockedFields' => array_values($touched)]
                 );
+            }
+        }
+
+        // Bayline reassignment guard. `null` is allowed (clears the
+        // slot); a non-null id must resolve to an active bayline that's
+        // free OR already this order's current slot. Denormalised
+        // assigned_bay_line_code / assigned_bay_line_name are server-set
+        // from the looked-up row even if the FE accidentally sends them.
+        if (array_key_exists('assigned_bay_line_id', $payload)) {
+            if ($payload['assigned_bay_line_id'] === null) {
+                $payload['assigned_bay_line_code'] = null;
+                $payload['assigned_bay_line_name'] = null;
+            } elseif ($payload['assigned_bay_line_id'] !== $order->assigned_bay_line_id) {
+                $bayLine = \App\Models\BayLine::find($payload['assigned_bay_line_id']);
+                if ($conflict = $this->bayLineAssignmentConflict($bayLine, $order)) {
+                    return $conflict;
+                }
+                $payload['assigned_bay_line_code'] = $bayLine->code;
+                $payload['assigned_bay_line_name'] = $bayLine->name;
+            } else {
+                // Same id resent — no-op but keep denormalised cols fresh.
+                unset($payload['assigned_bay_line_id']);
             }
         }
 
@@ -720,6 +759,68 @@ class LoadingOrderController extends ApiController
                 'DRIVER_BLOCKED',
                 409,
                 ['driver_id' => $driver->id]
+            );
+        }
+        return null;
+    }
+
+    /**
+     * Returns a JsonResponse with 409 when the bayline can't accept this
+     * order. Otherwise returns null.
+     *
+     * Accepts:
+     *   - active bayline (is_active=true)
+     *   - status_code = 'free', OR
+     *   - already this order's slot ($order may be null on create — then
+     *     only 'free' qualifies)
+     *
+     * Rejects:
+     *   - 404 BAY_LINE_NOT_FOUND      bayline id resolves to nothing
+     *   - 409 BAY_LINE_INACTIVE       row exists but is_active=false
+     *   - 409 BAY_LINE_BLOCKED        status_code = blocked / out_of_service
+     *   - 409 BAY_LINE_OCCUPIED       status_code is taken by ANOTHER order
+     */
+    protected function bayLineAssignmentConflict(?\App\Models\BayLine $bayLine, ?LoadingOrder $order)
+    {
+        if (! $bayLine) {
+            return $this->error('Bay line not found', 'BAY_LINE_NOT_FOUND', 404);
+        }
+        if ($bayLine->is_active === false) {
+            return $this->error(
+                'Cannot assign an inactive bay line.',
+                'BAY_LINE_INACTIVE',
+                409,
+                ['bay_line_id' => $bayLine->id]
+            );
+        }
+        if (in_array($bayLine->status_code, ['blocked', 'out_of_service'], true)) {
+            return $this->error(
+                "Bay line is {$bayLine->status_code}; cannot be assigned.",
+                'BAY_LINE_BLOCKED',
+                409,
+                ['bay_line_id' => $bayLine->id, 'status_code' => $bayLine->status_code]
+            );
+        }
+        // 'free' is always OK. Other statuses (reserved, occupied, etc.)
+        // are OK only when the slot is already bound to THIS order — so
+        // the dispatcher can re-save the same row without churn.
+        if ($bayLine->status_code !== 'free'
+            && $order !== null
+            && $order->assigned_bay_line_id !== $bayLine->id) {
+            return $this->error(
+                "Bay line is currently {$bayLine->status_code}; pick a different slot.",
+                'BAY_LINE_OCCUPIED',
+                409,
+                ['bay_line_id' => $bayLine->id, 'status_code' => $bayLine->status_code]
+            );
+        }
+        // On CREATE ($order=null) we strictly require 'free'.
+        if ($order === null && $bayLine->status_code !== 'free') {
+            return $this->error(
+                "Bay line is currently {$bayLine->status_code}; only free slots can be assigned at order create time.",
+                'BAY_LINE_OCCUPIED',
+                409,
+                ['bay_line_id' => $bayLine->id, 'status_code' => $bayLine->status_code]
             );
         }
         return null;

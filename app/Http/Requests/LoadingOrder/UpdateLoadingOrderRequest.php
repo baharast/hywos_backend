@@ -41,6 +41,13 @@ class UpdateLoadingOrderRequest extends FormRequest
             'requires_delivery_note' => 'sometimes|boolean',
             'requires_qm_document' => 'sometimes|boolean',
 
+            // Bayline reassignment via PUT — same validation as create,
+            // controller-side guard still applies. Not in
+            // FORBIDDEN_UPDATE_FIELDS because the dispatcher needs to
+            // reroute mid-flow when an operator changes the plan.
+            // Pass `null` to clear the assignment.
+            'assigned_bay_line_id' => 'sometimes|nullable|string|size:36|exists:baylines,id',
+
             'external_reference' => 'sometimes|nullable|string|max:100',
             'notes' => 'sometimes|nullable|string|max:5000',
         ];
