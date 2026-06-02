@@ -86,9 +86,9 @@ class CustomerController extends ApiController
     {
         $data = $request->validated();
 
-        // System generates the customer code (CUST-NNNN) so the admin
-        // form doesn't have to. Provided values still pass through so
-        // SAP / external imports stay idempotent.
+        // code is always system-minted: StoreCustomerRequest strips any
+        // client-supplied value, so the next monotonic CUST-NNNN is
+        // generated here. The empty() check is a defensive backstop.
         if (empty($data['code'])) {
             $data['code'] = $this->nextCustomerCode();
         }

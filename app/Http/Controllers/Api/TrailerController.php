@@ -68,9 +68,9 @@ class TrailerController extends ApiController
     {
         $data = $request->validated();
 
-        // System generates trailer_code (TR-NNNN) so the admin form
-        // doesn't have to. Provided values (idempotent imports) are
-        // accepted as-is; otherwise pick the next monotonic suffix.
+        // trailer_code is always system-minted: StoreTrailerRequest strips
+        // any client-supplied value, so the next monotonic TR-NNNN is
+        // generated here. The empty() check is a defensive backstop.
         if (empty($data['trailer_code'])) {
             $data['trailer_code'] = $this->nextTrailerCode();
         }
