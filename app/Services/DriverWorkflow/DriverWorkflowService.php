@@ -272,9 +272,13 @@ class DriverWorkflowService
             'productQuality' => $o->product_quality,
             'targetKg' => $o->target_quantity !== null ? (float) $o->target_quantity : null,
             'unit' => $o->unit ?? 'kg',
-            'bayLine' => $o->active_loading_operation_id
-                ? $this->bayLineRefFor($o)
-                : null,
+            // bayLineRefFor() already resolves ACTIVE (active_loading_operation_id)
+            // first, then falls back to the PLANNED assigned_bay_line_id — and
+            // returns null only when neither source has data. Call it
+            // unconditionally; gating on active_loading_operation_id here hid the
+            // planned bay during task=filling (before Loading Control reserves a
+            // slot), which is exactly when the driver needs to know where to go.
+            'bayLine' => $this->bayLineRefFor($o),
             'plannedTime' => $o->planned_window_start?->toIso8601String(),
             'recommended' => $recommendedId !== null && $o->id === $recommendedId,
         ];
