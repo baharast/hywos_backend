@@ -30,16 +30,10 @@ class SecurityEventCategory
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::AUTHENTICATION => 'Authentication',
-            self::AUTHORIZATION => 'Authorization',
-            self::ACCOUNT_LIFECYCLE => 'Account lifecycle',
-            self::ROLE_PERMISSION => 'Role / permission',
-            self::CHIP_TAN_ACCESS => 'Chip / TAN access',
-            self::SESSION => 'Session',
-            self::API_INTEGRATION => 'API / integration',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('alarms.security_category.' . $v);
+        return $translated !== 'alarms.security_category.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 
     /**

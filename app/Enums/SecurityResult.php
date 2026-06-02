@@ -28,16 +28,8 @@ class SecurityResult
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::SUCCESS => 'Success',
-            self::FAILED => 'Failed',
-            self::DENIED => 'Denied',
-            self::LOCKED => 'Locked',
-            self::EXPIRED => 'Expired',
-            self::BLOCKED => 'Blocked',
-            self::UNKNOWN => 'Unknown',
-            default => ucfirst($v),
-        };
+        $translated = __('alarms.security_result.' . $v);
+        return $translated !== 'alarms.security_result.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string

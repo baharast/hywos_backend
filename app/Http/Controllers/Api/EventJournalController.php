@@ -37,29 +37,29 @@ class EventJournalController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Event journal retrieved'
+            __('alarms.messages.journal_retrieved')
         );
     }
 
     public function show(string $id)
     {
         if (! ctype_digit($id)) {
-            return $this->error('Event not found', 'EVENT_NOT_FOUND', 404);
+            return $this->error(__('alarms.messages.event_not_found'), 'EVENT_NOT_FOUND', 404);
         }
         $row = EventLog::query()->find((int) $id);
         if (! $row) {
-            return $this->error('Event not found', 'EVENT_NOT_FOUND', 404);
+            return $this->error(__('alarms.messages.event_not_found'), 'EVENT_NOT_FOUND', 404);
         }
         // Block direct access to security events from this controller —
         // they live behind a separate permission boundary in the
         // Security Events subview.
         if ($row->event_category === \App\Enums\EventCategory::SECURITY) {
-            return $this->error('Event not found', 'EVENT_NOT_FOUND', 404);
+            return $this->error(__('alarms.messages.event_not_found'), 'EVENT_NOT_FOUND', 404);
         }
 
         $resource = (new EventJournalResource($row))
             ->additional(['details' => $row->details]);
 
-        return $this->success($resource, 'Event detail retrieved');
+        return $this->success($resource, __('alarms.messages.event_detail'));
     }
 }

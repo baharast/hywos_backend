@@ -34,16 +34,10 @@ class AlarmStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ACTIVE => 'Active',
-            self::ACKNOWLEDGED => 'Acknowledged',
-            self::ASSIGNED => 'Assigned',
-            self::IN_PROGRESS => 'In progress',
-            self::RESOLVED_PENDING_CLOSE => 'Resolved (pending close)',
-            self::CLOSED => 'Closed',
-            self::SUPPRESSED_MAINTENANCE => 'Suppressed / maintenance',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('alarms.status.' . $v);
+        return $translated !== 'alarms.status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

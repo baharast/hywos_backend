@@ -44,20 +44,10 @@ class EventJournalCategory
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::GATE_ACCESS => 'Gate / Access',
-            self::DRIVER_TERMINAL => 'Driver Terminal',
-            self::FILLING_STATION => 'Filling Station',
-            self::LOADING => 'Loading',
-            self::ANALYSIS => 'Analysis',
-            self::DOCUMENT_PRINT => 'Document / Print',
-            self::DEVICE_COMMUNICATION => 'Device / Communication',
-            self::INTERFACE_SAP => 'Interface / SAP',
-            self::SECURITY => 'Security',
-            self::SYSTEM => 'System',
-            self::AUDIT_REFERENCE => 'Audit Reference',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('alarms.journal_category.' . $v);
+        return $translated !== 'alarms.journal_category.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

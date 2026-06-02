@@ -39,7 +39,7 @@ class ActiveAlarmController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Active alarms retrieved'
+            __('alarms.messages.alarms_retrieved')
         );
     }
 
@@ -47,7 +47,7 @@ class ActiveAlarmController extends ApiController
     {
         $alarm = Alarm::query()->find($id);
         if (! $alarm) {
-            return $this->error('Alarm not found', 'ALARM_NOT_FOUND', 404);
+            return $this->error(__('alarms.messages.alarm_not_found'), 'ALARM_NOT_FOUND', 404);
         }
 
         $auditRows = AuditLog::query()
@@ -72,7 +72,7 @@ class ActiveAlarmController extends ApiController
                 'auditRows' => $auditRows,
             ]);
 
-        return $this->success($resource, 'Alarm detail retrieved');
+        return $this->success($resource, __('alarms.messages.alarm_detail'));
     }
 
     public function acknowledge(string $id)
@@ -86,7 +86,7 @@ class ActiveAlarmController extends ApiController
             return $this->error($e->getMessage(), 'ALARM_INVALID_STATE', 409);
         }
 
-        return $this->success(new ActiveAlarmResource($alarm), 'Alarm acknowledged');
+        return $this->success(new ActiveAlarmResource($alarm), __('alarms.messages.alarm_acknowledged'));
     }
 
     public function assign(AssignAlarmRequest $request, string $id)
@@ -100,7 +100,7 @@ class ActiveAlarmController extends ApiController
             return $this->error($e->getMessage(), 'ALARM_INVALID_STATE', 409);
         }
 
-        return $this->success(new ActiveAlarmResource($alarm), 'Alarm assigned');
+        return $this->success(new ActiveAlarmResource($alarm), __('alarms.messages.alarm_assigned'));
     }
 
     public function markInProgress(string $id)
@@ -114,7 +114,7 @@ class ActiveAlarmController extends ApiController
             return $this->error($e->getMessage(), 'ALARM_INVALID_STATE', 409);
         }
 
-        return $this->success(new ActiveAlarmResource($alarm), 'Alarm marked in progress');
+        return $this->success(new ActiveAlarmResource($alarm), __('alarms.messages.alarm_in_progress'));
     }
 
     public function resolve(ResolveAlarmRequest $request, string $id)
@@ -132,7 +132,7 @@ class ActiveAlarmController extends ApiController
             return $this->error($e->getMessage(), $code, $status);
         }
 
-        return $this->success(new ActiveAlarmResource($alarm), 'Alarm resolved (pending close)');
+        return $this->success(new ActiveAlarmResource($alarm), __('alarms.messages.alarm_resolved'));
     }
 
     public function close(CloseAlarmRequest $request, string $id)
@@ -153,14 +153,14 @@ class ActiveAlarmController extends ApiController
             return $this->error($msg, 'ALARM_INVALID_STATE', 409);
         }
 
-        return $this->success(new ActiveAlarmResource($alarm), 'Alarm closed');
+        return $this->success(new ActiveAlarmResource($alarm), __('alarms.messages.alarm_closed'));
     }
 
     protected function findOr404(string $id)
     {
         $alarm = Alarm::query()->find($id);
         if (! $alarm) {
-            return $this->error('Alarm not found', 'ALARM_NOT_FOUND', 404);
+            return $this->error(__('alarms.messages.alarm_not_found'), 'ALARM_NOT_FOUND', 404);
         }
         return $alarm;
     }

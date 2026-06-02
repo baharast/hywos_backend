@@ -18,14 +18,8 @@ class AlarmSeverity
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CRITICAL => 'Critical',
-            self::HIGH => 'High',
-            self::MEDIUM => 'Medium',
-            self::LOW => 'Low',
-            self::INFO => 'Info',
-            default => ucfirst($v),
-        };
+        $translated = __('alarms.severity.' . $v);
+        return $translated !== 'alarms.severity.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string

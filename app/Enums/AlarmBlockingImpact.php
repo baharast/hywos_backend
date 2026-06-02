@@ -27,15 +27,10 @@ class AlarmBlockingImpact
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::BLOCKS_LOADING => 'Blocks loading',
-            self::BLOCKS_GATE_ENTRY => 'Blocks gate entry',
-            self::BLOCKS_EXIT => 'Blocks exit',
-            self::BLOCKS_DOCUMENTS => 'Blocks documents',
-            self::ANALYSIS_APPROVAL_BLOCKED => 'Analysis approval blocked',
-            self::WARNING_ONLY => 'Warning only',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('alarms.blocking_impact.' . $v);
+        return $translated !== 'alarms.blocking_impact.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

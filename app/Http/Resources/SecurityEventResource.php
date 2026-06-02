@@ -35,7 +35,7 @@ class SecurityEventResource extends JsonResource
             'eventType' => $this->event_type,
             'severity' => [
                 'value' => $severity,
-                'label' => ucfirst($severity),
+                'label' => EventSeverity::label($severity),
             ],
 
             // DERIVED classifications.
@@ -70,7 +70,7 @@ class SecurityEventResource extends JsonResource
             'details' => $this->additional['details'] ?? null,
 
             // §7.6 boundary note rendered as a neutral chip in detail.
-            'restrictedNote' => 'Restricted security data. Do not export to unauthorized recipients.',
+            'restrictedNote' => __('alarms.messages.restricted_note'),
         ];
     }
 

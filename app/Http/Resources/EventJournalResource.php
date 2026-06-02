@@ -36,7 +36,7 @@ class EventJournalResource extends JsonResource
 
             'severity' => [
                 'value' => $severity,
-                'label' => ucfirst($severity),
+                'label' => EventSeverity::label($severity),
             ],
 
             'actor' => [

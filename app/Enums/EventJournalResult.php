@@ -42,20 +42,8 @@ class EventJournalResult
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::INFO => 'Info',
-            self::WARNING => 'Warning',
-            self::ERROR => 'Error',
-            self::SUCCESS => 'Success',
-            self::DENIED => 'Denied',
-            self::FAILED => 'Failed',
-            self::COMPLETED => 'Completed',
-            self::TIMEOUT => 'Timeout',
-            self::BLOCKED => 'Blocked',
-            self::STARTED => 'Started',
-            self::STOPPED => 'Stopped',
-            default => ucfirst($v),
-        };
+        $translated = __('alarms.journal_result.' . $v);
+        return $translated !== 'alarms.journal_result.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string

@@ -32,17 +32,9 @@ class AlarmSourceType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::STATION_PLC => 'Station PLC',
-            self::ANALYSIS_PLC => 'Analysis PLC',
-            self::CENTRAL_PLC => 'Central PLC',
-            self::GATE_SMART_PANEL => 'Gate smart panel',
-            self::COMPRESSOR_CONTROLLER => 'Compressor controller',
-            self::ELECTROLYZER_CONTROLLER => 'Electrolyzer controller',
-            self::PRINTER => 'Printer',
-            self::SAP_CONNECTOR => 'SAP connector',
-            self::OTHER => 'Other',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('alarms.source_type.' . $v);
+        return $translated !== 'alarms.source_type.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 }

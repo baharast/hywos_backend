@@ -28,16 +28,10 @@ class AlarmCategory
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::SAFETY => 'Safety',
-            self::LOADING_PROCESS => 'Loading / Process',
-            self::QUALITY_ANALYSIS => 'Quality / Analysis',
-            self::GATE_ACCESS => 'Gate / Access',
-            self::DEVICE_COMMUNICATION => 'Device / Communication',
-            self::DOCUMENT_PRINTER => 'Document / Printer',
-            self::INTERFACE_SAP => 'Interface / SAP',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('alarms.category.' . $v);
+        return $translated !== 'alarms.category.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

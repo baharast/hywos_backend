@@ -53,20 +53,20 @@ class SecurityEventController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Security events retrieved'
+            __('alarms.messages.security_retrieved')
         );
     }
 
     public function show(string $id)
     {
         if (! ctype_digit($id)) {
-            return $this->error('Security event not found', 'SECURITY_EVENT_NOT_FOUND', 404);
+            return $this->error(__('alarms.messages.security_not_found'), 'SECURITY_EVENT_NOT_FOUND', 404);
         }
         $row = EventLog::query()
             ->where('event_category', EventCategory::SECURITY)
             ->find((int) $id);
         if (! $row) {
-            return $this->error('Security event not found', 'SECURITY_EVENT_NOT_FOUND', 404);
+            return $this->error(__('alarms.messages.security_not_found'), 'SECURITY_EVENT_NOT_FOUND', 404);
         }
 
         $sanitizedDetails = $this->sanitizeDetails($row->details);
@@ -74,7 +74,7 @@ class SecurityEventController extends ApiController
         $resource = (new SecurityEventResource($row))
             ->additional(['details' => $sanitizedDetails]);
 
-        return $this->success($resource, 'Security event detail retrieved');
+        return $this->success($resource, __('alarms.messages.security_detail'));
     }
 
     /**

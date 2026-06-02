@@ -24,14 +24,10 @@ class AlarmOwnerRole
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::OPERATOR => 'Operator',
-            self::IT_SUPPORT => 'IT / Support',
-            self::ANALYSIS_SPECIALIST => 'Analysis specialist',
-            self::DISPATCHER => 'Dispatcher',
-            self::ADMIN => 'Admin',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('alarms.owner_role.' . $v);
+        return $translated !== 'alarms.owner_role.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 
     /** Default owner suggested for an alarm category. */
