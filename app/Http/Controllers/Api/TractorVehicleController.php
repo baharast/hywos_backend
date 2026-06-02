@@ -130,9 +130,9 @@ class TractorVehicleController extends ApiController
     {
         $data = $request->validated();
 
-        // System generates vehicle_code (TR-NNN) so the admin form
-        // doesn't have to. Provided values pass through unchanged so
-        // SAP / external imports stay idempotent.
+        // vehicle_code is always system-minted: StoreVehicleRequest strips
+        // any client-supplied value, so the next monotonic TR-NNN is
+        // generated here. The empty() check is a defensive backstop.
         if (empty($data['vehicle_code'])) {
             $data['vehicle_code'] = $this->nextVehicleCode();
         }

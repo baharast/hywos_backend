@@ -144,10 +144,9 @@ class CarrierController extends ApiController
     {
         $data = $request->validated();
 
-        // System generates the carrier_code so the admin form doesn't
-        // have to. We accept a provided one (idempotent imports) but
-        // otherwise pick the next monotonic CARR-NNNN. SAP-sourced rows
-        // can still pass their own code through the API.
+        // carrier_code is always system-minted: StoreCarrierRequest strips
+        // any client-supplied value, so the next monotonic CARR-NNNN is
+        // generated here. The empty() check is a defensive backstop.
         if (empty($data['carrier_code'])) {
             $data['carrier_code'] = $this->nextCarrierCode();
         }

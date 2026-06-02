@@ -127,11 +127,9 @@ class DriverController extends ApiController
     {
         $data = $request->validated();
 
-        // System generates the driver_code so the admin form doesn't
-        // have to. We accept a provided one (idempotent imports) but
-        // otherwise pick the next monotonic DRV-NNNN. SAP/external
-        // imports that already carry their own identifier can still
-        // pass `driver_code` explicitly through the API.
+        // driver_code is always system-minted: StoreDriverRequest strips
+        // any client-supplied value, so the next monotonic DRV-NNNN is
+        // generated here. The empty() check is a defensive backstop.
         if (empty($data['driver_code'])) {
             $data['driver_code'] = $this->nextDriverCode();
         }
