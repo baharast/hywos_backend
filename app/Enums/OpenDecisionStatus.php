@@ -27,13 +27,10 @@ class OpenDecisionStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::REPEAT_REQUESTED => 'Repeat requested',
-            self::PENDING_REVIEW => 'Pending review',
-            self::ESCALATION_REQUIRED => 'Escalation required',
-            self::WAITING_FOR_DECISION => 'Waiting for decision',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.open_decision_status.' . $v);
+        return $translated !== 'analysis.open_decision_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

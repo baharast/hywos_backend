@@ -24,14 +24,8 @@ class ClosedDecisionStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::APPROVED => 'Approved',
-            self::RELEASED => 'Released',
-            self::BLOCKED => 'Blocked',
-            self::REJECTED => 'Rejected',
-            self::CLOSED => 'Closed',
-            default => ucfirst($v),
-        };
+        $translated = __('analysis.closed_decision_status.' . $v);
+        return $translated !== 'analysis.closed_decision_status.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string

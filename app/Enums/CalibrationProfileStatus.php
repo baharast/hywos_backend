@@ -27,13 +27,8 @@ class CalibrationProfileStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::DRAFT => 'Draft',
-            self::ACTIVE => 'Active',
-            self::INACTIVE => 'Inactive',
-            self::RETIRED => 'Retired',
-            default => ucfirst($v),
-        };
+        $translated = __('analysis.calibration_profile_status.' . $v);
+        return $translated !== 'analysis.calibration_profile_status.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string
@@ -81,14 +76,10 @@ class CalibrationProfileStatus
 
     public static function calibrationStatusLabel(string $v): string
     {
-        return match ($v) {
-            self::CALIBRATION_STATUS_VALID => 'Valid',
-            self::CALIBRATION_STATUS_DUE_SOON => 'Due soon',
-            self::CALIBRATION_STATUS_OVERDUE => 'Overdue',
-            self::CALIBRATION_STATUS_FAILED => 'Failed',
-            self::CALIBRATION_STATUS_NOT_CONFIGURED => 'Not configured',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.device_calibration.' . $v);
+        return $translated !== 'analysis.device_calibration.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function calibrationStatusTone(string $v): string

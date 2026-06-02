@@ -49,19 +49,10 @@ class AnalysisUserAction
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::VIEW_DETAILS => 'View details',
-            self::PUT_ON_HOLD => 'Put on hold',
-            self::REQUEST_REPEAT_ANALYSIS => 'Request repeat analysis / retest',
-            self::CANCEL_ANALYSIS => 'Cancel analysis',
-            self::RELEASE_LOADING => 'Release loading',
-            self::REJECT_LOADING_BLOCK_TRAILER => 'Reject loading / block trailer',
-            self::OPEN_FAULT_CASE_MANUAL_CHECK => 'Open fault case / manual check',
-            self::REPEAT_MEASUREMENT => 'Repeat measurement',
-            self::MANUAL_FUNCTIONAL_APPROVAL => 'Manual functional approval',
-            self::OPEN_RELATED_RESULT_RECORD => 'Open related result record',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.user_action.' . $v);
+        return $translated !== 'analysis.user_action.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     /**

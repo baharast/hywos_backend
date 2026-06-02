@@ -28,12 +28,9 @@ class AnalysisTypeApplicable
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::PRE_ANALYSIS => 'Pre-analysis',
-            self::MAIN_ANALYSIS => 'Main analysis',
-            self::FINAL_ANALYSIS => 'Final analysis',
-            self::RETEST => 'Retest',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.type.' . $v);
+        return $translated !== 'analysis.type.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 }

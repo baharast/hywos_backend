@@ -28,14 +28,10 @@ class AnalysisDeviceCalibrationStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::VALID => 'Valid',
-            self::DUE_SOON => 'Due soon',
-            self::OVERDUE => 'Overdue',
-            self::FAILED => 'Failed',
-            self::NOT_CONFIGURED => 'Not configured',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.device_calibration.' . $v);
+        return $translated !== 'analysis.device_calibration.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

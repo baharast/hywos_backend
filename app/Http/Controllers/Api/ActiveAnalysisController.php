@@ -80,7 +80,7 @@ class ActiveAnalysisController extends ApiController
             $paginator,
             $this->summary(),
             ActiveAnalysis::query()->max('updated_at'),
-            'Active analyses retrieved'
+            __('analysis.messages.analyses_retrieved')
         );
     }
 
@@ -88,9 +88,9 @@ class ActiveAnalysisController extends ApiController
     {
         $a = ActiveAnalysis::with(['attempts', 'elementResults'])->find($id);
         if (! $a) {
-            return $this->error('Analysis not found', 'ANALYSIS_NOT_FOUND', 404);
+            return $this->error(__('analysis.messages.analysis_not_found'), 'ANALYSIS_NOT_FOUND', 404);
         }
-        return $this->success(new ActiveAnalysisDetailResource($a), 'Analysis retrieved');
+        return $this->success(new ActiveAnalysisDetailResource($a), __('analysis.messages.analysis_retrieved'));
     }
 
     /* ============================================================
@@ -103,7 +103,7 @@ class ActiveAnalysisController extends ApiController
         if (! $a) return $this->notFound();
 
         $r = $this->service->putOnHold($a, $request->validated()['reason']);
-        return $this->respondAction($r, 'Analysis on hold');
+        return $this->respondAction($r, __('analysis.messages.analysis_on_hold'));
     }
 
     public function repeat(RequestRepeatAnalysisRequest $request, string $id)
@@ -112,7 +112,7 @@ class ActiveAnalysisController extends ApiController
         if (! $a) return $this->notFound();
 
         $r = $this->service->requestRepeat($a, $request->validated()['reason']);
-        return $this->respondAction($r, 'Repeat / retest requested');
+        return $this->respondAction($r, __('analysis.messages.analysis_repeated'));
     }
 
     public function cancel(CancelAnalysisRequest $request, string $id)
@@ -121,7 +121,7 @@ class ActiveAnalysisController extends ApiController
         if (! $a) return $this->notFound();
 
         $r = $this->service->cancel($a, $request->validated()['reason']);
-        return $this->respondAction($r, 'Analysis cancelled');
+        return $this->respondAction($r, __('analysis.messages.analysis_cancelled'));
     }
 
     public function releaseLoading(ReleaseLoadingRequest $request, string $id)
@@ -130,7 +130,7 @@ class ActiveAnalysisController extends ApiController
         if (! $a) return $this->notFound();
 
         $r = $this->service->releaseLoading($a, $request->validated()['reason'] ?? null);
-        return $this->respondAction($r, 'Loading released');
+        return $this->respondAction($r, __('analysis.messages.analysis_released'));
     }
 
     public function rejectLoading(RejectLoadingRequest $request, string $id)
@@ -139,7 +139,7 @@ class ActiveAnalysisController extends ApiController
         if (! $a) return $this->notFound();
 
         $r = $this->service->rejectLoading($a, $request->validated()['reason']);
-        return $this->respondAction($r, 'Loading rejected / trailer blocked');
+        return $this->respondAction($r, __('analysis.messages.analysis_rejected'));
     }
 
     public function openFaultCase(OpenFaultCaseRequest $request, string $id)
@@ -154,7 +154,7 @@ class ActiveAnalysisController extends ApiController
             $data['affected_device_bmk'] ?? null,
             $data['affected_element'] ?? null
         );
-        return $this->respondAction($r, 'Fault case opened');
+        return $this->respondAction($r, __('analysis.messages.analysis_fault_case'));
     }
 
     public function repeatMeasurement(RepeatMeasurementRequest $request, string $id)
@@ -163,7 +163,7 @@ class ActiveAnalysisController extends ApiController
         if (! $a) return $this->notFound();
 
         $r = $this->service->repeatMeasurement($a, $request->validated()['reason']);
-        return $this->respondAction($r, 'Measurement repeat queued');
+        return $this->respondAction($r, __('analysis.messages.analysis_measurement_repeated'));
     }
 
     public function manualApproval(ManualFunctionalApprovalRequest $request, string $id)
@@ -177,7 +177,7 @@ class ActiveAnalysisController extends ApiController
             $data['reason'],
             $data['justification_category'] ?? null
         );
-        return $this->respondAction($r, 'Analysis manually approved');
+        return $this->respondAction($r, __('analysis.messages.analysis_approved'));
     }
 
     /* ============================================================
@@ -191,7 +191,7 @@ class ActiveAnalysisController extends ApiController
 
     protected function notFound()
     {
-        return $this->error('Analysis not found', 'ANALYSIS_NOT_FOUND', 404);
+        return $this->error(__('analysis.messages.analysis_not_found'), 'ANALYSIS_NOT_FOUND', 404);
     }
 
     protected function respondAction(array $r, string $okMessage)
@@ -211,10 +211,10 @@ class ActiveAnalysisController extends ApiController
     protected function codeMessage(string $code): string
     {
         return match ($code) {
-            'INVALID_STATE_TRANSITION' => 'This action is not allowed from the current analysis state.',
-            'ANALYSIS_MAX_ATTEMPTS_REACHED' => 'Maximum allowed attempts reached; open a fault case instead.',
-            'ANALYSIS_TECHNICAL_REPEAT_USED' => 'The single technical repeat has already been used; open a fault case.',
-            default => 'Action not allowed.',
+            'INVALID_STATE_TRANSITION' => __('analysis.messages.action_not_allowed'),
+            'ANALYSIS_MAX_ATTEMPTS_REACHED' => __('analysis.messages.max_attempts_reached'),
+            'ANALYSIS_TECHNICAL_REPEAT_USED' => __('analysis.messages.technical_repeat_used'),
+            default => __('analysis.messages.action_not_allowed'),
         };
     }
 

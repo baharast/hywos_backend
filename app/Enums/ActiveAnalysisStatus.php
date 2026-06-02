@@ -68,22 +68,10 @@ class ActiveAnalysisStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::QUEUED => 'Queued',
-            self::PREPARING => 'Preparing',
-            self::PURGING => 'Purging',
-            self::RUNNING => 'Running',
-            self::WAITING_RESULT => 'Waiting result',
-            self::RESULT_RECEIVED => 'Result received',
-            self::WAITING_DECISION => 'Waiting decision',
-            self::INVALID => 'Invalid',
-            self::NOK => 'NOK',
-            self::FAILED => 'Failed',
-            self::ON_HOLD => 'On hold',
-            self::CANCELLED => 'Cancelled',
-            self::CLOSED => 'Closed',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.active_status.' . $v);
+        return $translated !== 'analysis.active_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

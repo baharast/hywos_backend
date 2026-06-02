@@ -30,14 +30,7 @@ class AnalysisDeviceRunState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::READY => 'Ready',
-            self::PREPARING => 'Preparing',
-            self::MEASURING => 'Measuring',
-            self::RESULT_TRANSFER => 'Transferring result',
-            self::IDLE => 'Idle',
-            self::FAULT => 'Fault',
-            default => ucfirst($v),
-        };
+        $translated = __('analysis.device_run_state.' . $v);
+        return $translated !== 'analysis.device_run_state.' . $v ? $translated : ucfirst($v);
     }
 }

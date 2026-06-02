@@ -35,15 +35,8 @@ class AnalysisDeviceHealthStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::HEALTHY => 'Healthy',
-            self::WARNING => 'Warning',
-            self::ALARM => 'Alarm',
-            self::FAULT => 'Fault',
-            self::OFFLINE => 'Offline / Stale',
-            self::MAINTENANCE => 'Maintenance / Inhibited',
-            default => ucfirst($v),
-        };
+        $translated = __('analysis.device_health.' . $v);
+        return $translated !== 'analysis.device_health.' . $v ? $translated : ucfirst($v);
     }
 
     /**

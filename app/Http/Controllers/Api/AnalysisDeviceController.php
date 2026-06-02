@@ -65,7 +65,7 @@ class AnalysisDeviceController extends ApiController
                 'lastUpdatedAt' => $lastUpdatedAt?->toIso8601String(),
             ],
             'cards' => AnalysisDeviceCardResource::collection($cards),
-        ], 'Analysis devices retrieved');
+        ], __('analysis.messages.devices_retrieved'));
     }
 
     /**
@@ -75,7 +75,7 @@ class AnalysisDeviceController extends ApiController
     {
         $device = AnalysisDevice::find($id);
         if (! $device) {
-            return $this->error('Analysis device not found', 'ANALYSIS_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('analysis.messages.device_not_found'), 'ANALYSIS_DEVICE_NOT_FOUND', 404);
         }
 
         $card = $this->service->buildCardForDevice($device);
@@ -105,7 +105,7 @@ class AnalysisDeviceController extends ApiController
             'recentEvents' => $events,
         ];
 
-        return $this->success(new AnalysisDeviceDetailResource($detail), 'Analysis device retrieved');
+        return $this->success(new AnalysisDeviceDetailResource($detail), __('analysis.messages.device_retrieved'));
     }
 
     /**
@@ -115,11 +115,11 @@ class AnalysisDeviceController extends ApiController
     {
         $device = AnalysisDevice::find($id);
         if (! $device) {
-            return $this->error('Analysis device not found', 'ANALYSIS_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('analysis.messages.device_not_found'), 'ANALYSIS_DEVICE_NOT_FOUND', 404);
         }
         if ($device->device_type !== AnalysisDeviceType::GAS_WARNING_CONTROLLER) {
             return $this->error(
-                'This device type does not expose channels',
+                __('analysis.messages.device_no_channels'),
                 'ANALYSIS_DEVICE_NO_CHANNELS',
                 404,
                 ['deviceType' => $device->device_type]
@@ -130,7 +130,7 @@ class AnalysisDeviceController extends ApiController
 
         return $this->success(
             AnalysisDeviceChannelResource::collection($channels),
-            'Analysis device channels retrieved'
+            __('analysis.messages.device_channels')
         );
     }
 
@@ -141,7 +141,7 @@ class AnalysisDeviceController extends ApiController
     {
         $device = AnalysisDevice::find($id);
         if (! $device) {
-            return $this->error('Analysis device not found', 'ANALYSIS_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('analysis.messages.device_not_found'), 'ANALYSIS_DEVICE_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 20);
@@ -157,7 +157,7 @@ class AnalysisDeviceController extends ApiController
             $paginator,
             null,
             $device->updated_at,
-            'Analysis device events retrieved'
+            __('analysis.messages.device_events')
         );
     }
 
@@ -207,7 +207,7 @@ class AnalysisDeviceController extends ApiController
                     'code' => $channel->channel_code,
                     'deviceType' => [
                         'value' => 'gas_warning_channel',
-                        'label' => 'Gas warning channel',
+                        'label' => __('analysis.messages.gas_warning_channel'),
                     ],
                     'healthStatus' => [
                         'value' => $this->channelHealthFor($channel->severity),
@@ -246,7 +246,7 @@ class AnalysisDeviceController extends ApiController
         return $this->success([
             'rows' => $rows,
             'total' => count($rows),
-        ], 'Analysis devices status table retrieved');
+        ], __('analysis.messages.devices_status_table'));
     }
 
     /**

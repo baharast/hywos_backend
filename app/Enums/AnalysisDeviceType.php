@@ -25,12 +25,8 @@ class AnalysisDeviceType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ANALYSER => 'OrthoSmart Analyser',
-            self::GAS_WARNING_CONTROLLER => 'GWA-REGARD3900 (Gas Warning)',
-            self::SAMPLE_SWITCHING_MODULE => 'CGS-SAM1000DP2 (Sample Switching)',
-            default => $v,
-        };
+        $translated = __('analysis.device_type.' . $v);
+        return $translated !== 'analysis.device_type.' . $v ? $translated : $v;
     }
 
     /**

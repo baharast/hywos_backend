@@ -27,12 +27,10 @@ class CalibrationLockoutBehavior
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::WARN_ONLY => 'Warn only',
-            self::BLOCK_ANALYSIS_START => 'Block analysis start',
-            self::BLOCK_RELEASE_CERTIFICATE => 'Block release / certificate',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.calibration_lockout.' . $v);
+        return $translated !== 'analysis.calibration_lockout.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

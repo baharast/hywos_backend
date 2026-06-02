@@ -37,6 +37,9 @@ class AnalysisStatus
 
     public static function label(string $status): string
     {
-        return ucfirst(str_replace('_', ' ', $status));
+        $translated = __('analysis.status.' . $status);
+        return $translated !== 'analysis.status.' . $status
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $status));
     }
 }

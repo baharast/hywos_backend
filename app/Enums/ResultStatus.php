@@ -27,13 +27,8 @@ class ResultStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::PASSED => 'Passed',
-            self::NOK => 'NOK / Failed',
-            self::INVALID => 'Invalid',
-            self::INCOMPLETE => 'Incomplete',
-            default => ucfirst($v),
-        };
+        $translated = __('analysis.result_status.' . $v);
+        return $translated !== 'analysis.result_status.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string

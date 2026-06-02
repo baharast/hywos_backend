@@ -30,14 +30,7 @@ class SamplingTrigger
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::BEFORE_LOADING => 'Before loading',
-            self::MAIN_30_PERCENT => 'Main 30%',
-            self::MAIN_60_PERCENT => 'Main 60%',
-            self::MAIN_90_PERCENT => 'Main 90%',
-            self::AFTER_LOADING => 'After loading',
-            self::NOT_APPLICABLE => 'N/A',
-            default => $v,
-        };
+        $translated = __('analysis.sampling_trigger.' . $v);
+        return $translated !== 'analysis.sampling_trigger.' . $v ? $translated : $v;
     }
 }

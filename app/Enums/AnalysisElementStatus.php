@@ -32,16 +32,10 @@ class AnalysisElementStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::WAITING => 'Waiting',
-            self::RECEIVED => 'Received',
-            self::VALID => 'Valid',
-            self::NOK => 'NOK (failed limit)',
-            self::MISSING => 'Missing',
-            self::INVALID => 'Invalid',
-            self::NOT_TRANSFERRED => 'Not transferred',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.element_status.' . $v);
+        return $translated !== 'analysis.element_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -21,12 +21,10 @@ class CalibrationRunResult
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::PASS => 'Pass',
-            self::FAIL => 'Fail',
-            self::NOT_RECORDED => 'Not recorded',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.calibration_run_result.' . $v);
+        return $translated !== 'analysis.calibration_run_result.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

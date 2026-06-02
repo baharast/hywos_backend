@@ -70,7 +70,7 @@ class QualityDecisionController extends ApiController
             $paginator,
             $this->summary($includeOpen),
             $lastUpdated,
-            'Results retrieved'
+            __('analysis.messages.results_retrieved')
         );
     }
 
@@ -81,7 +81,7 @@ class QualityDecisionController extends ApiController
             ->find($id);
 
         if (! $analysis) {
-            return $this->error('Result not found', 'RESULT_NOT_FOUND', 404);
+            return $this->error(__('analysis.messages.result_not_found'), 'RESULT_NOT_FOUND', 404);
         }
 
         // Reconstruct a decision-record audit slice. The resource composes
@@ -106,7 +106,7 @@ class QualityDecisionController extends ApiController
         $resource = (new QualityDecisionDetailResource($analysis))
             ->additional(['auditRows' => $auditRows]);
 
-        return $this->success($resource, 'Result retrieved');
+        return $this->success($resource, __('analysis.messages.result_retrieved'));
     }
 
     /* ============================================================
