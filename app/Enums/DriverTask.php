@@ -42,15 +42,10 @@ class DriverTask
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::TRAILER_FILLING => 'Trailer Filling',
-            self::PARK_TRAILER => 'Park Trailer',
-            self::PICKUP_LOADED_TRAILER => 'Pick Up Loaded Trailer',
-            self::PICKUP_EMPTY_TRAILER_THEN_LOAD => 'Pick Up Empty Trailer Then Load',
-            self::DOCUMENTS_EXIT => 'Documents & Exit',
-            self::EXIT_ONLY => 'Exit Only',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('driver.task.' . $v);
+        return $translated !== 'driver.task.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     /**

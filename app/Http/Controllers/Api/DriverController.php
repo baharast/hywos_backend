@@ -120,7 +120,7 @@ class DriverController extends ApiController
 
         $lastUpdated = Driver::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Drivers retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('driver.messages.retrieved'));
     }
 
     public function store(StoreDriverRequest $request, AuditLogger $audit, EventLogger $events)
@@ -155,7 +155,7 @@ class DriverController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->created(new DriverResource($driver->fresh()->load(['employerCompany', 'operatorCompany', 'authMedia'])), 'Driver created');
+            return $this->created(new DriverResource($driver->fresh()->load(['employerCompany', 'operatorCompany', 'authMedia'])), __('driver.messages.created'));
         });
     }
 
@@ -163,17 +163,17 @@ class DriverController extends ApiController
     {
         $driver = Driver::with(['employerCompany', 'operatorCompany', 'authMedia'])->find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
-        return $this->success(new DriverResource($driver), 'Driver retrieved');
+        return $this->success(new DriverResource($driver), __('driver.messages.show'));
     }
 
     public function update(UpdateDriverRequest $request, $id, AuditLogger $audit, EventLogger $events)
     {
         $driver = Driver::find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -203,7 +203,7 @@ class DriverController extends ApiController
 
             return $this->success(
                 new DriverResource($driver->fresh()->load(['employerCompany', 'operatorCompany', 'authMedia'])),
-                'Driver updated'
+                __('driver.messages.updated')
             );
         });
     }
@@ -212,10 +212,10 @@ class DriverController extends ApiController
     {
         $driver = Driver::find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
         if ($driver->block_status === 'blocked') {
-            return $this->error('Driver already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('driver.messages.already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -252,7 +252,7 @@ class DriverController extends ApiController
 
             return $this->success(
                 new DriverResource($driver->fresh()->load(['employerCompany', 'operatorCompany', 'authMedia'])),
-                'Driver blocked'
+                __('driver.messages.blocked')
             );
         });
     }
@@ -261,10 +261,10 @@ class DriverController extends ApiController
     {
         $driver = Driver::find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
         if ($driver->block_status !== 'blocked') {
-            return $this->error('Driver is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('driver.messages.not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -300,7 +300,7 @@ class DriverController extends ApiController
 
             return $this->success(
                 new DriverResource($driver->fresh()->load(['employerCompany', 'operatorCompany', 'authMedia'])),
-                'Driver unblocked'
+                __('driver.messages.unblocked')
             );
         });
     }
@@ -309,12 +309,12 @@ class DriverController extends ApiController
     {
         $driver = Driver::find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         $media = $driver->authMedia()->orderByDesc('created_at')->get();
 
-        return $this->success(AuthMediumResource::collection($media), 'Auth media retrieved');
+        return $this->success(AuthMediumResource::collection($media), __('driver.messages.auth_media'));
     }
 
     /**
@@ -334,13 +334,13 @@ class DriverController extends ApiController
     {
         $driver = Driver::find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         $bodyDriverId = (string) $request->input('driver_id');
         if ($bodyDriverId !== (string) $id) {
             return $this->error(
-                'driver_id in body does not match URL',
+                __('driver.messages.id_mismatch'),
                 'DRIVER_ID_MISMATCH',
                 422,
                 ['expected' => (string) $id, 'received' => $bodyDriverId]
@@ -393,7 +393,7 @@ class DriverController extends ApiController
             return $this->created([
                 'tan' => new AuthMediumResource($medium),
                 'oneTimeCode' => $rawTan,
-            ], 'TAN created');
+            ], __('driver.messages.tan_created'));
         });
     }
 
@@ -401,12 +401,12 @@ class DriverController extends ApiController
     {
         $driver = Driver::find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Plant visits module not yet implemented'],
-            'Plant visits retrieved (placeholder)'
+            __('driver.messages.plant_visits')
         );
     }
 
@@ -414,7 +414,7 @@ class DriverController extends ApiController
     {
         $driver = Driver::find($id);
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('driver.messages.not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -443,7 +443,7 @@ class DriverController extends ApiController
                 'audits_count' => $audits->count(),
                 'events_count' => $events->count(),
             ],
-        ], 'Driver events & audit retrieved');
+        ], __('driver.messages.events_audit'));
     }
 
     public function export(Request $request)
@@ -489,7 +489,7 @@ class DriverController extends ApiController
             'visibleColumns' => $visibleColumns,
             'rows' => $rows,
             'note' => 'Binary export (CSV/XLSX) not yet implemented; returning JSON payload.',
-        ], 'Driver export prepared');
+        ], __('driver.messages.export_prepared'));
     }
 
     /**

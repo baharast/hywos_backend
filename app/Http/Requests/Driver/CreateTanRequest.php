@@ -34,7 +34,7 @@ class CreateTanRequest extends FormRequest
     public function messages()
     {
         return [
-            'expires_at.after' => 'expires_at must be a future date/time.',
+            'expires_at.after' => __('driver.validation.expires_at_after'),
         ];
     }
 }

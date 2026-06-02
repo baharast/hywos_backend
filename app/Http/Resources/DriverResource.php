@@ -36,13 +36,7 @@ class DriverResource extends JsonResource
             IdentificationStatus::EXPIRED => 'warning',
             default => 'warning',
         };
-        $identLabel = match ($identification) {
-            IdentificationStatus::CHIP_ASSIGNED => 'Chip assigned',
-            IdentificationStatus::TAN_AVAILABLE => 'TAN available',
-            IdentificationStatus::BLOCKED => 'Blocked',
-            IdentificationStatus::EXPIRED => 'Expired',
-            default => 'Missing',
-        };
+        $identLabel = IdentificationStatus::label($identification ?? IdentificationStatus::MISSING);
 
         $employerName = $this->whenLoaded('employerCompany')
             ? optional($this->employerCompany)->name
@@ -70,12 +64,12 @@ class DriverResource extends JsonResource
 
             'status' => [
                 'value' => $status,
-                'label' => ucfirst($status),
+                'label' => DriverStatus::label($status ?? DriverStatus::UNKNOWN),
                 'tone' => $statusTone,
             ],
             'trainingStatus' => [
                 'value' => $training,
-                'label' => ucfirst(str_replace('_', ' ', $training)),
+                'label' => TrainingStatus::label($training),
                 'tone' => $trainingTone,
             ],
             'trainingValidUntil' => $this->training_valid_until?->toDateString(),
