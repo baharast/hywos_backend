@@ -8,7 +8,7 @@ class StoreCustomerRequest extends FormRequest
 {
     public function authorize()
     {
-        return $this->user() ? $this->user()->can('customers.create') : true;
+        return $this->user() ? $this->user()->can('customers.update') : true;
     }
 
     /**
