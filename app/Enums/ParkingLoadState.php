@@ -25,12 +25,10 @@ class ParkingLoadState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::EMPTY => 'Empty',
-            self::LOADED => 'Loaded',
-            self::UNKNOWN => 'Unknown',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('plant_visits.parking_load_state.' . $v);
+        return $translated !== 'plant_visits.parking_load_state.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -36,15 +36,10 @@ class PlantVisitStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::NORMAL => 'Normal',
-            self::WAITING => 'Waiting',
-            self::CLARIFICATION => 'Clarification',
-            self::BLOCKED => 'Blocked',
-            self::READY_FOR_EXIT => 'Ready for Exit',
-            self::CLOSED => 'Closed',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('plant_visits.visit_status.' . $v);
+        return $translated !== 'plant_visits.visit_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

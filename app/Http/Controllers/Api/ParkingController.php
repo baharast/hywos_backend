@@ -70,7 +70,7 @@ class ParkingController extends ApiController
         $items = ParkingResource::collection($paginator->items());
         $lastUpdated = Parking::query()->max('updated_at');
 
-        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, 'Parkings retrieved');
+        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, __('plant_visits.messages.parkings_retrieved'));
     }
 
     public function store(StoreParkingRequest $request)
@@ -78,53 +78,53 @@ class ParkingController extends ApiController
         $data = $request->validated();
         $parking = Parking::create($data);
 
-        return $this->created(new ParkingResource($parking), 'Parking created');
+        return $this->created(new ParkingResource($parking), __('plant_visits.messages.parking_created'));
     }
 
     public function show($id)
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
 
-        return $this->success(new ParkingResource($parking), 'Parking retrieved');
+        return $this->success(new ParkingResource($parking), __('plant_visits.messages.parking_retrieved'));
     }
 
     public function update(UpdateParkingRequest $request, $id)
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
 
         $parking->update($request->validated());
 
-        return $this->success(new ParkingResource($parking), 'Parking updated');
+        return $this->success(new ParkingResource($parking), __('plant_visits.messages.parking_updated'));
     }
 
     public function activate(Request $request, $id)
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
 
         $parking->update(['is_active' => true]);
 
-        return $this->success(new ParkingResource($parking), 'Parking activated');
+        return $this->success(new ParkingResource($parking), __('plant_visits.messages.parking_activated'));
     }
 
     public function deactivate(Request $request, $id)
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
 
         $parking->update(['is_active' => false]);
 
-        return $this->success(new ParkingResource($parking), 'Parking deactivated');
+        return $this->success(new ParkingResource($parking), __('plant_visits.messages.parking_deactivated'));
     }
 
     public function destroy(Request $request, $id)
@@ -134,12 +134,12 @@ class ParkingController extends ApiController
         // remain. Auth is intentionally disabled in this MVP phase.
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
 
         $parking->update(['is_active' => false]);
 
-        return $this->success(null, 'Parking deactivated');
+        return $this->success(null, __('plant_visits.messages.parking_deactivated'));
     }
 
     /* ============================================================
@@ -155,10 +155,10 @@ class ParkingController extends ApiController
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
         if ($parking->slot_status !== ParkingSlotStatus::FREE) {
-            return $this->error('Slot is not free', 'SLOT_NOT_FREE', 409);
+            return $this->error(__('plant_visits.messages.slot_not_free'), 'SLOT_NOT_FREE', 409);
         }
 
         $data = $request->validated();
@@ -197,7 +197,7 @@ class ParkingController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new ParkingResource($fresh), 'Parking slot reserved');
+            return $this->success(new ParkingResource($fresh), __('plant_visits.messages.slot_reserved'));
         });
     }
 
@@ -205,10 +205,10 @@ class ParkingController extends ApiController
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
         if (in_array($parking->slot_status, [ParkingSlotStatus::BLOCKED, ParkingSlotStatus::OUT_OF_SERVICE], true)) {
-            return $this->error('Slot is blocked or out of service', 'SLOT_BLOCKED', 409);
+            return $this->error(__('plant_visits.messages.slot_blocked_or_oos'), 'SLOT_BLOCKED', 409);
         }
 
         $data = $request->validated();
@@ -256,7 +256,7 @@ class ParkingController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new ParkingResource($fresh), 'Parking slot occupied');
+            return $this->success(new ParkingResource($fresh), __('plant_visits.messages.slot_occupied'));
         });
     }
 
@@ -264,7 +264,7 @@ class ParkingController extends ApiController
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -313,7 +313,7 @@ class ParkingController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new ParkingResource($fresh), 'Parking slot cleared');
+            return $this->success(new ParkingResource($fresh), __('plant_visits.messages.slot_cleared'));
         });
     }
 
@@ -321,10 +321,10 @@ class ParkingController extends ApiController
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
         if ($parking->slot_status === ParkingSlotStatus::BLOCKED) {
-            return $this->error('Slot is already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('plant_visits.messages.slot_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $data = $request->validated();
@@ -362,7 +362,7 @@ class ParkingController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new ParkingResource($fresh), 'Parking slot blocked');
+            return $this->success(new ParkingResource($fresh), __('plant_visits.messages.slot_blocked'));
         });
     }
 
@@ -370,10 +370,10 @@ class ParkingController extends ApiController
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
         if ($parking->slot_status !== ParkingSlotStatus::BLOCKED) {
-            return $this->error('Slot is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('plant_visits.messages.slot_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $data = $request->validated();
@@ -412,7 +412,7 @@ class ParkingController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new ParkingResource($fresh), 'Parking slot unblocked');
+            return $this->success(new ParkingResource($fresh), __('plant_visits.messages.slot_unblocked'));
         });
     }
 
@@ -420,7 +420,7 @@ class ParkingController extends ApiController
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -472,7 +472,7 @@ class ParkingController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new ParkingResource($fresh), 'Parking slot out of service');
+            return $this->success(new ParkingResource($fresh), __('plant_visits.messages.slot_out_of_service'));
         });
     }
 
@@ -480,10 +480,10 @@ class ParkingController extends ApiController
     {
         $parking = Parking::find($id);
         if (! $parking) {
-            return $this->error('Parking not found', 'PARKING_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.parking_not_found'), 'PARKING_NOT_FOUND', 404);
         }
         if (! in_array($parking->slot_status, [ParkingSlotStatus::OUT_OF_SERVICE, ParkingSlotStatus::BLOCKED], true)) {
-            return $this->error('Slot is not out of service', 'NOT_OUT_OF_SERVICE', 409);
+            return $this->error(__('plant_visits.messages.slot_not_oos'), 'NOT_OUT_OF_SERVICE', 409);
         }
 
         $data = $request->validated();
@@ -518,7 +518,7 @@ class ParkingController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new ParkingResource($fresh), 'Parking slot restored');
+            return $this->success(new ParkingResource($fresh), __('plant_visits.messages.slot_restored'));
         });
     }
 

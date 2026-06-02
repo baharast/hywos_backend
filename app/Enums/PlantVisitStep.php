@@ -41,18 +41,10 @@ class PlantVisitStep
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::REGISTERED => 'Registered',
-            self::TRAILER_IDENTIFICATION => 'Trailer Identification',
-            self::TRACTOR_PLATE => 'Tractor Plate',
-            self::TASK_SELECTION => 'Task Selection',
-            self::PARKING => 'Parking',
-            self::PICKUP => 'Pickup',
-            self::LOADING => 'Loading',
-            self::WAITING_FOR_ANALYSIS => 'Waiting for Analysis',
-            self::DOCUMENTS => 'Documents',
-            self::EXIT_VALIDATION => 'Exit Validation',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('plant_visits.visit_step.' . $v);
+        return $translated !== 'plant_visits.visit_step.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
+
 }

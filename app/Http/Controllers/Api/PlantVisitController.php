@@ -131,7 +131,7 @@ class PlantVisitController extends ApiController
         $summary = $this->summary();
         $lastUpdated = PlantVisit::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Plant visits retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('plant_visits.messages.visits_retrieved'));
     }
 
     protected function summary(): array
@@ -158,10 +158,10 @@ class PlantVisitController extends ApiController
     {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
-        return $this->success(new PlantVisitResource($visit), 'Plant visit retrieved');
+        return $this->success(new PlantVisitResource($visit), __('plant_visits.messages.visit_retrieved'));
     }
 
     /* =========================================================
@@ -257,7 +257,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::INFO
             );
 
-            return ApiResponse::success(new PlantVisitResource($visit->fresh()), 'Plant visit created', 201);
+            return ApiResponse::success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_created'), 201);
         });
     }
 
@@ -273,7 +273,7 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         $newStep = $request->validated()['current_step'];
@@ -316,7 +316,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit step advanced');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_step_advanced'));
         });
     }
 
@@ -331,7 +331,7 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         $newLocation = $request->validated()['current_location'];
@@ -359,7 +359,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit location changed');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_location_changed'));
         });
     }
 
@@ -374,7 +374,7 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         $reason = $request->validated()['waiting_reason'];
@@ -404,7 +404,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit set to waiting');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_waiting'));
         });
     }
 
@@ -419,7 +419,7 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         $reason = $request->input('reason');
@@ -449,7 +449,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit resumed');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_resumed'));
         });
     }
 
@@ -464,10 +464,10 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
         if ($visit->visit_status === PlantVisitStatus::BLOCKED) {
-            return $this->error('Plant visit is already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('plant_visits.messages.visit_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $reason = $request->validated()['reason'];
@@ -498,7 +498,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit blocked');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_blocked'));
         });
     }
 
@@ -513,10 +513,10 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
         if ($visit->visit_status !== PlantVisitStatus::BLOCKED) {
-            return $this->error('Plant visit is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('plant_visits.messages.visit_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -547,7 +547,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit unblocked');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_unblocked'));
         });
     }
 
@@ -562,7 +562,7 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -624,7 +624,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit clarification raised');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_clarification'));
         });
     }
 
@@ -639,7 +639,7 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         return DB::transaction(function () use ($visit, $audit, $events) {
@@ -666,7 +666,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit ready for exit');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_ready_for_exit'));
         });
     }
 
@@ -681,16 +681,16 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
         if ($visit->visit_status === PlantVisitStatus::CLOSED) {
-            return $this->error('Plant visit is already closed', 'ALREADY_CLOSED', 409);
+            return $this->error(__('plant_visits.messages.visit_already_closed'), 'ALREADY_CLOSED', 409);
         }
         // V1.6 §11.5 — clean close is not allowed while blocked or in
         // clarification; operator must resolve or use force-close.
         if (in_array($visit->visit_status, [PlantVisitStatus::BLOCKED, PlantVisitStatus::CLARIFICATION], true)) {
             return $this->error(
-                'Cannot close a visit while blocked or in clarification. Resolve the blocker or use force-close.',
+                __('plant_visits.messages.visit_close_blocked'),
                 'CLOSE_NOT_ALLOWED',
                 409,
                 ['status' => $visit->visit_status]
@@ -728,7 +728,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit closed');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_closed'));
         });
     }
 
@@ -743,7 +743,7 @@ class PlantVisitController extends ApiController
     ) {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         $reason = $request->validated()['reason'];
@@ -777,7 +777,7 @@ class PlantVisitController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new PlantVisitResource($visit->fresh()), 'Plant visit force-closed');
+            return $this->success(new PlantVisitResource($visit->fresh()), __('plant_visits.messages.visit_force_closed'));
         });
     }
 
@@ -788,7 +788,7 @@ class PlantVisitController extends ApiController
     {
         $visit = PlantVisit::find($id);
         if (! $visit) {
-            return $this->error('Plant visit not found', 'PLANT_VISIT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.visit_not_found'), 'PLANT_VISIT_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -816,6 +816,6 @@ class PlantVisitController extends ApiController
                 'audits_count' => $audits->count(),
                 'events_count' => $events->count(),
             ],
-        ], 'Plant visit events & audit retrieved');
+        ], __('plant_visits.messages.visit_events_audit'));
     }
 }

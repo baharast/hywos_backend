@@ -41,11 +41,11 @@ class PlantConfigurationController extends ApiController
     {
         $config = $this->service->current();
         if (! $config) {
-            return $this->success(null, 'No plant configuration exists yet');
+            return $this->success(null, __('plant_visits.messages.no_config'));
         }
         $config->loadCount(['plantAreas', 'gates', 'terminalsPanels', 'bayLines', 'parkings']);
 
-        return $this->success(new PlantConfigurationResource($config), 'Plant configuration retrieved');
+        return $this->success(new PlantConfigurationResource($config), __('plant_visits.messages.config_retrieved'));
     }
 
     /**
@@ -60,7 +60,7 @@ class PlantConfigurationController extends ApiController
             return $this->error($e->getMessage(), 'CONFIGURATION_ALREADY_ACTIVE', 409);
         }
 
-        return $this->created(new PlantConfigurationResource($config), 'Plant configuration draft started');
+        return $this->created(new PlantConfigurationResource($config), __('plant_visits.messages.config_draft_started'));
     }
 
     /**
@@ -71,7 +71,7 @@ class PlantConfigurationController extends ApiController
     {
         $config = $this->service->current();
         if (! $config) {
-            return $this->error('No draft to update', 'NO_DRAFT', 404);
+            return $this->error(__('plant_visits.messages.no_draft'), 'NO_DRAFT', 404);
         }
 
         try {
@@ -80,7 +80,7 @@ class PlantConfigurationController extends ApiController
             return $this->error($e->getMessage(), 'CONFIGURATION_LOCKED', 423);
         }
 
-        return $this->success(new PlantConfigurationResource($config), 'Draft updated');
+        return $this->success(new PlantConfigurationResource($config), __('plant_visits.messages.draft_updated'));
     }
 
     /**
@@ -91,7 +91,7 @@ class PlantConfigurationController extends ApiController
     {
         $config = $this->service->current();
         if (! $config) {
-            return $this->error('No configuration to validate', 'NO_CONFIGURATION', 404);
+            return $this->error(__('plant_visits.messages.no_config_to_validate'), 'NO_CONFIGURATION', 404);
         }
 
         $summary = $this->service->validate($config);
@@ -99,7 +99,7 @@ class PlantConfigurationController extends ApiController
         return $this->success([
             'configuration' => new PlantConfigurationResource($config->fresh()),
             'validation' => $summary,
-        ], 'Validation completed');
+        ], __('plant_visits.messages.validation_completed'));
     }
 
     /**
@@ -110,7 +110,7 @@ class PlantConfigurationController extends ApiController
     {
         $config = $this->service->current();
         if (! $config) {
-            return $this->error('No configuration to review', 'NO_CONFIGURATION', 404);
+            return $this->error(__('plant_visits.messages.no_config_to_review'), 'NO_CONFIGURATION', 404);
         }
 
         $siteId = $config->site_id;
@@ -134,7 +134,7 @@ class PlantConfigurationController extends ApiController
             'bayLines' => \App\Models\BayLine::where('site_id', $siteId)->get(),
             'parkingAreas' => \App\Models\Parking::where('site_id', $siteId)->get(),
             'validation' => $summary,
-        ], 'Review summary retrieved');
+        ], __('plant_visits.messages.review_retrieved'));
     }
 
     /**
@@ -145,7 +145,7 @@ class PlantConfigurationController extends ApiController
     {
         $config = $this->service->current();
         if (! $config) {
-            return $this->error('No configuration to activate', 'NO_CONFIGURATION', 404);
+            return $this->error(__('plant_visits.messages.no_config_to_activate'), 'NO_CONFIGURATION', 404);
         }
 
         try {
@@ -159,7 +159,7 @@ class PlantConfigurationController extends ApiController
             return $this->error($e->getMessage(), $code, 409);
         }
 
-        return $this->success(new PlantConfigurationResource($config), 'Plant configuration activated');
+        return $this->success(new PlantConfigurationResource($config), __('plant_visits.messages.config_activated'));
     }
 
     /**
@@ -169,10 +169,10 @@ class PlantConfigurationController extends ApiController
     {
         $object = $this->service->resolveObject($type, $id);
         if (! $object) {
-            return $this->error('Configuration object not found', 'OBJECT_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.config_object_not_found'), 'OBJECT_NOT_FOUND', 404);
         }
 
-        return $this->success($this->shapeObject($type, $object), 'Configuration object retrieved');
+        return $this->success($this->shapeObject($type, $object), __('plant_visits.messages.config_object_retrieved'));
     }
 
     /**
@@ -194,7 +194,7 @@ class PlantConfigurationController extends ApiController
         $audit->recordCreated($area, AuditAction::PLANT_CONFIG_OBJECT_CREATED);
         $events->record('plant_config.area_created', $area, "Plant area {$area->code} created", null, EventCategory::SYSTEM);
 
-        return $this->created(new PlantAreaResource($area), 'Plant area created');
+        return $this->created(new PlantAreaResource($area), __('plant_visits.messages.area_created'));
     }
 
     /**
@@ -216,7 +216,7 @@ class PlantConfigurationController extends ApiController
         $audit->recordCreated($gate, AuditAction::PLANT_CONFIG_OBJECT_CREATED);
         $events->record('plant_config.gate_created', $gate, "Gate {$gate->code} ({$gate->gate_type}) created", null, EventCategory::SYSTEM);
 
-        return $this->created(new GateResource($gate), 'Gate created');
+        return $this->created(new GateResource($gate), __('plant_visits.messages.gate_created'));
     }
 
     /**
@@ -238,7 +238,7 @@ class PlantConfigurationController extends ApiController
         $audit->recordCreated($terminal, AuditAction::PLANT_CONFIG_OBJECT_CREATED);
         $events->record('plant_config.terminal_created', $terminal, "Terminal {$terminal->code} ({$terminal->terminal_type}) created", null, EventCategory::SYSTEM);
 
-        return $this->created(new TerminalPanelResource($terminal), 'Terminal/panel created');
+        return $this->created(new TerminalPanelResource($terminal), __('plant_visits.messages.terminal_created'));
     }
 
     /**
@@ -248,7 +248,7 @@ class PlantConfigurationController extends ApiController
     {
         $config = $this->service->current();
         if (! $config) {
-            return $this->error('No configuration to change', 'NO_CONFIGURATION', 404);
+            return $this->error(__('plant_visits.messages.no_config_to_change'), 'NO_CONFIGURATION', 404);
         }
 
         try {
@@ -265,7 +265,7 @@ class PlantConfigurationController extends ApiController
             return $this->error($e->getMessage(), 'CHANGE_REQUEST_REJECTED', 409);
         }
 
-        return $this->created(new PlantConfigurationChangeRequestResource($cr), 'Change request submitted');
+        return $this->created(new PlantConfigurationChangeRequestResource($cr), __('plant_visits.messages.change_request_submitted'));
     }
 
     /**
@@ -275,9 +275,9 @@ class PlantConfigurationController extends ApiController
     {
         $cr = PlantConfigurationChangeRequest::find($id);
         if (! $cr) {
-            return $this->error('Change request not found', 'CHANGE_REQUEST_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.change_request_not_found'), 'CHANGE_REQUEST_NOT_FOUND', 404);
         }
-        return $this->success(new PlantConfigurationChangeRequestResource($cr), 'Change request retrieved');
+        return $this->success(new PlantConfigurationChangeRequestResource($cr), __('plant_visits.messages.change_request_retrieved'));
     }
 
     /**
@@ -287,7 +287,7 @@ class PlantConfigurationController extends ApiController
     {
         $cr = PlantConfigurationChangeRequest::find($id);
         if (! $cr) {
-            return $this->error('Change request not found', 'CHANGE_REQUEST_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.change_request_not_found'), 'CHANGE_REQUEST_NOT_FOUND', 404);
         }
 
         try {
@@ -296,7 +296,7 @@ class PlantConfigurationController extends ApiController
             return $this->error($e->getMessage(), 'CHANGE_REQUEST_INVALID_STATE', 409);
         }
 
-        return $this->success(new PlantConfigurationChangeRequestResource($cr), 'Change request approved');
+        return $this->success(new PlantConfigurationChangeRequestResource($cr), __('plant_visits.messages.change_request_approved'));
     }
 
     /**
@@ -306,7 +306,7 @@ class PlantConfigurationController extends ApiController
     {
         $cr = PlantConfigurationChangeRequest::find($id);
         if (! $cr) {
-            return $this->error('Change request not found', 'CHANGE_REQUEST_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.change_request_not_found'), 'CHANGE_REQUEST_NOT_FOUND', 404);
         }
 
         try {
@@ -315,7 +315,7 @@ class PlantConfigurationController extends ApiController
             return $this->error($e->getMessage(), 'CHANGE_REQUEST_INVALID_STATE', 409);
         }
 
-        return $this->success(new PlantConfigurationChangeRequestResource($cr), 'Change request applied');
+        return $this->success(new PlantConfigurationChangeRequestResource($cr), __('plant_visits.messages.change_request_applied'));
     }
 
     /**
@@ -325,12 +325,12 @@ class PlantConfigurationController extends ApiController
     {
         $cr = PlantConfigurationChangeRequest::find($id);
         if (! $cr) {
-            return $this->error('Change request not found', 'CHANGE_REQUEST_NOT_FOUND', 404);
+            return $this->error(__('plant_visits.messages.change_request_not_found'), 'CHANGE_REQUEST_NOT_FOUND', 404);
         }
 
         $note = (string) $request->input('note', '');
         if ($note === '') {
-            return $this->error('Rejection note is required', 'NOTE_REQUIRED', 422);
+            return $this->error(__('plant_visits.messages.rejection_note_required'), 'NOTE_REQUIRED', 422);
         }
 
         try {
@@ -339,7 +339,7 @@ class PlantConfigurationController extends ApiController
             return $this->error($e->getMessage(), 'CHANGE_REQUEST_INVALID_STATE', 409);
         }
 
-        return $this->success(new PlantConfigurationChangeRequestResource($cr), 'Change request rejected');
+        return $this->success(new PlantConfigurationChangeRequestResource($cr), __('plant_visits.messages.change_request_rejected'));
     }
 
     protected function shapeObject(string $type, $object)

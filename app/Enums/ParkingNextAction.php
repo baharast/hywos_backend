@@ -33,15 +33,9 @@ class ParkingNextAction
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::NONE => 'No action',
-            self::WAIT_FOR_ARRIVAL => 'Wait for arrival',
-            self::WAIT_FOR_PICKUP => 'Wait for pickup',
-            self::OPEN_VISIT => 'Open visit',
-            self::OPEN_ORDER => 'Open order',
-            self::OPEN_DOCUMENTS => 'Open documents',
-            self::OPEN_CLARIFICATION => 'Open clarification',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('plant_visits.parking_next_action.' . $v);
+        return $translated !== 'plant_visits.parking_next_action.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 }

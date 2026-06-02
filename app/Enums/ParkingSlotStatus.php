@@ -29,14 +29,10 @@ class ParkingSlotStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::FREE => 'Free',
-            self::RESERVED => 'Reserved',
-            self::OCCUPIED => 'Occupied',
-            self::BLOCKED => 'Blocked',
-            self::OUT_OF_SERVICE => 'Out of service',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('plant_visits.parking_slot_status.' . $v);
+        return $translated !== 'plant_visits.parking_slot_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

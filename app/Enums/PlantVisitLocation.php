@@ -43,19 +43,9 @@ class PlantVisitLocation
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ENTRY_GATE => 'Entry Gate',
-            self::CONTROL_ROOM_DRIVER_TERMINAL => 'Control Room / Driver Terminal',
-            self::BAY_LINE_1 => 'Bay Line 1',
-            self::BAY_LINE_2 => 'Bay Line 2',
-            self::BAY_LINE_3 => 'Bay Line 3',
-            self::BAY_LINE_4 => 'Bay Line 4',
-            self::BAY_LINE_5 => 'Bay Line 5',
-            self::BAY_LINE_6 => 'Bay Line 6',
-            self::PARKING_1 => 'Parking 1',
-            self::PARKING_2 => 'Parking 2',
-            self::EXIT_GATE => 'Exit Gate',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('plant_visits.location.' . $v);
+        return $translated !== 'plant_visits.location.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 }
