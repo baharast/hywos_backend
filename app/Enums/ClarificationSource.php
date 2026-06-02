@@ -39,16 +39,9 @@ class ClarificationSource
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ORDER_MATCHING => 'Order Matching',
-            self::GATE_TERMINAL => 'Gate / Terminal',
-            self::PARKING => 'Parking',
-            self::LOADING_CONTROL => 'Loading Control',
-            self::ANALYSIS_QUALITY => 'Analysis / Quality',
-            self::DOCUMENTS => 'Documents / Print',
-            self::DEVICE_INTERFACE => 'Device / Interface',
-            self::EXIT => 'Exit',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('clarification.source.' . $v);
+        return $translated !== 'clarification.source.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 }

@@ -63,14 +63,10 @@ class ClarificationStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::OPEN => 'Open',
-            self::IN_PROGRESS => 'In Progress',
-            self::WAITING_FOR_OWNER => 'Waiting for Owner',
-            self::RESOLVED => 'Resolved',
-            self::CLOSED => 'Closed',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('clarification.status.' . $v);
+        return $translated !== 'clarification.status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

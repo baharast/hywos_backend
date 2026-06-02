@@ -38,19 +38,10 @@ class ClarificationEntityType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::PLANT_VISIT => 'Plant Visit',
-            self::LOADING_ORDER => 'Loading Order',
-            self::PARKING_SLOT => 'Parking Slot',
-            self::BAY_LINE => 'Bay Line',
-            self::DRIVER => 'Driver',
-            self::TRAILER => 'Trailer',
-            self::TRACTOR_VEHICLE => 'Tractor Vehicle',
-            self::CHIP_CARD => 'Chip Card',
-            self::TAN => 'TAN',
-            self::SAP_SYNC_RECORD => 'SAP Sync Record',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('clarification.entity_type.' . $v);
+        return $translated !== 'clarification.entity_type.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     /**

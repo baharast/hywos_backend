@@ -16,13 +16,8 @@ class ClarificationSeverity
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::LOW => 'Low',
-            self::NORMAL => 'Normal',
-            self::HIGH => 'High',
-            self::CRITICAL => 'Critical',
-            default => ucfirst($v),
-        };
+        $translated = __('clarification.severity.' . $v);
+        return $translated !== 'clarification.severity.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string

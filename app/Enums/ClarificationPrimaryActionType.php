@@ -48,17 +48,9 @@ class ClarificationPrimaryActionType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::RESOLVE_TRAILER_IDENTIFICATION => 'Resolve Trailer Identification',
-            self::FIX_ORDER_ASSIGNMENT => 'Fix Order / Assignment',
-            self::RESOLVE_PARKING_CONFIRMATION => 'Resolve Parking Confirmation',
-            self::ROUTE_TO_OWNER => 'Route to Owner',
-            self::ROUTE_TO_ANALYSIS => 'Route to Analysis & Quality',
-            self::ROUTE_TO_DOCUMENTS => 'Route to Documents',
-            self::RESOLVE_EXIT_BLOCKER => 'Resolve Exit Blocker',
-            self::RESOLVE_CASE => 'Resolve Case',
-            self::NONE => 'No action available',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('clarification.primary_action.' . $v);
+        return $translated !== 'clarification.primary_action.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 }

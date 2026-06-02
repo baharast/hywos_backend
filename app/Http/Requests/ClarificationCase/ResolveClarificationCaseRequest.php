@@ -29,8 +29,8 @@ class ResolveClarificationCaseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'resolution_note.required' => 'A resolution note is required to resolve a clarification case.',
-            'resolution_note.min' => 'Resolution note must be at least 3 characters.',
+            'resolution_note.required' => __('clarification.validation.resolution_note_required'),
+            'resolution_note.min' => __('clarification.validation.resolution_note_min'),
         ];
     }
 }

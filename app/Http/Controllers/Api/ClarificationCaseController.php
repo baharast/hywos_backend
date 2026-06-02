@@ -45,17 +45,17 @@ class ClarificationCaseController extends ApiController
 
         $lastUpdated = ClarificationCase::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $this->summary(), $lastUpdated, 'Clarification cases retrieved');
+        return ApiResponse::list($rows, $paginator, $this->summary(), $lastUpdated, __('clarification.messages.cases_retrieved'));
     }
 
     public function show($id)
     {
         $case = ClarificationCase::find($id);
         if (! $case) {
-            return $this->error('Clarification case not found', 'CLARIFICATION_NOT_FOUND', 404);
+            return $this->error(__('clarification.messages.case_not_found'), 'CLARIFICATION_NOT_FOUND', 404);
         }
 
-        return $this->success(new ClarificationCaseResource($case), 'Clarification case retrieved');
+        return $this->success(new ClarificationCaseResource($case), __('clarification.messages.case_retrieved'));
     }
 
     public function store(CreateClarificationCaseRequest $request, AuditLogger $audit, EventLogger $events)
@@ -97,7 +97,7 @@ class ClarificationCaseController extends ApiController
                 $eventSeverity
             );
 
-            return ApiResponse::success(new ClarificationCaseResource($case->fresh()), 'Clarification case created', 201);
+            return ApiResponse::success(new ClarificationCaseResource($case->fresh()), __('clarification.messages.case_created'), 201);
         });
     }
 
@@ -134,7 +134,7 @@ class ClarificationCaseController extends ApiController
     ) {
         $case = ClarificationCase::find($id);
         if (! $case) {
-            return $this->error('Clarification case not found', 'CLARIFICATION_NOT_FOUND', 404);
+            return $this->error(__('clarification.messages.case_not_found'), 'CLARIFICATION_NOT_FOUND', 404);
         }
 
         if ($case->status !== ClarificationStatus::OPEN) {
@@ -176,7 +176,7 @@ class ClarificationCaseController extends ApiController
 
             return $this->success(
                 new ClarificationCaseResource($fresh),
-                'Clarification case acknowledged'
+                __('clarification.messages.case_acknowledged')
             );
         });
     }
@@ -197,7 +197,7 @@ class ClarificationCaseController extends ApiController
     ) {
         $case = ClarificationCase::find($id);
         if (! $case) {
-            return $this->error('Clarification case not found', 'CLARIFICATION_NOT_FOUND', 404);
+            return $this->error(__('clarification.messages.case_not_found'), 'CLARIFICATION_NOT_FOUND', 404);
         }
 
         if (! in_array($case->status, [
@@ -248,7 +248,7 @@ class ClarificationCaseController extends ApiController
 
             return $this->success(
                 new ClarificationCaseResource($fresh),
-                'Clarification case assigned'
+                __('clarification.messages.case_assigned')
             );
         });
     }
@@ -273,7 +273,7 @@ class ClarificationCaseController extends ApiController
     ) {
         $case = ClarificationCase::find($id);
         if (! $case) {
-            return $this->error('Clarification case not found', 'CLARIFICATION_NOT_FOUND', 404);
+            return $this->error(__('clarification.messages.case_not_found'), 'CLARIFICATION_NOT_FOUND', 404);
         }
 
         if (! in_array($case->status, [
@@ -326,7 +326,7 @@ class ClarificationCaseController extends ApiController
 
             return $this->success(
                 new ClarificationCaseResource($fresh),
-                'Clarification case moved to waiting for owner'
+                __('clarification.messages.case_waiting_for_owner')
             );
         });
     }
@@ -347,7 +347,7 @@ class ClarificationCaseController extends ApiController
     ) {
         $case = ClarificationCase::find($id);
         if (! $case) {
-            return $this->error('Clarification case not found', 'CLARIFICATION_NOT_FOUND', 404);
+            return $this->error(__('clarification.messages.case_not_found'), 'CLARIFICATION_NOT_FOUND', 404);
         }
 
         if (! in_array($case->status, [
@@ -400,7 +400,7 @@ class ClarificationCaseController extends ApiController
 
             return $this->success(
                 new ClarificationCaseResource($fresh),
-                'Clarification case resolved'
+                __('clarification.messages.case_resolved')
             );
         });
     }
@@ -419,7 +419,7 @@ class ClarificationCaseController extends ApiController
     ) {
         $case = ClarificationCase::find($id);
         if (! $case) {
-            return $this->error('Clarification case not found', 'CLARIFICATION_NOT_FOUND', 404);
+            return $this->error(__('clarification.messages.case_not_found'), 'CLARIFICATION_NOT_FOUND', 404);
         }
 
         if ($case->status !== ClarificationStatus::RESOLVED) {
@@ -461,7 +461,7 @@ class ClarificationCaseController extends ApiController
 
             return $this->success(
                 new ClarificationCaseResource($fresh),
-                'Clarification case closed'
+                __('clarification.messages.case_closed')
             );
         });
     }
