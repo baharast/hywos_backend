@@ -6,7 +6,6 @@ use App\Enums\AuditAction;
 use App\Enums\EventCategory;
 use App\Enums\EventSeverity;
 use App\Enums\LoadingOrderStatus;
-use App\Enums\TrailerStatus;
 use App\Exceptions\SapFieldProtectionException;
 use App\Http\Requests\LoadingOrder\AssignDriverRequest;
 use App\Http\Requests\LoadingOrder\AssignTrailerRequest;
@@ -828,32 +827,44 @@ class LoadingOrderController extends ApiController
 
     /**
      * Returns a JsonResponse with 409 when the trailer is missing / blocked /
-     * has no usable chip. Otherwise returns null.
+     * inactive / has no usable credential. Otherwise returns null.
+     *
+     * Eligibility now accepts EITHER a chip OR a TAN (operator decision,
+     * 2026-06-02) — the single source of truth is Trailer::assignment_block_reason,
+     * which also backs the ?assignable=true list filter and the resource's
+     * `assignment` block, so list, create and assign never disagree.
      */
     protected function trailerAssignmentConflict(?Trailer $trailer)
     {
         if (! $trailer) {
             return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
         }
-        if ($trailer->status === TrailerStatus::BLOCKED) {
-            return $this->error(
-                'Cannot assign a blocked trailer.',
-                'TRAILER_BLOCKED',
-                409,
-                ['trailer_id' => $trailer->id]
-            );
+
+        $reason = $trailer->assignment_block_reason;
+        if ($reason === null) {
+            return null;
         }
-        // chip_state derived accessor returns one of: assigned, missing, blocked, mismatch, not_required
-        $chip = $trailer->chip_state;
-        if (in_array($chip, ['missing', 'blocked', 'mismatch'], true)) {
-            return $this->error(
-                'Trailer does not have a usable chip.',
-                'TRAILER_CHIP_MISSING',
-                409,
-                ['trailer_id' => $trailer->id, 'chipState' => $chip]
-            );
-        }
-        return null;
+
+        $details = [
+            'trailer_id' => $trailer->id,
+            'hasChip' => $trailer->has_active_chip,
+            'hasTan' => $trailer->has_active_tan,
+        ];
+
+        return match ($reason) {
+            'TRAILER_BLOCKED' => $this->error(
+                'Cannot assign a blocked trailer.', 'TRAILER_BLOCKED', 409, $details
+            ),
+            'TRAILER_INACTIVE' => $this->error(
+                'Cannot assign an inactive or archived trailer.', 'TRAILER_INACTIVE', 409, $details
+            ),
+            'TRAILER_NO_CREDENTIAL' => $this->error(
+                'Trailer has no usable chip or TAN.', 'TRAILER_NO_CREDENTIAL', 409, $details
+            ),
+            default => $this->error(
+                'Trailer cannot be assigned.', 'TRAILER_NOT_ASSIGNABLE', 409, $details
+            ),
+        };
     }
 
     protected function applyFilters($query, array $filters): void

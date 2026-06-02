@@ -575,20 +575,19 @@ class TrailerController extends ApiController
                 });
         }
 
-        // ?assignable=true — mirrors trailerAssignmentConflict() exactly
-        // so the assignment dropdown only shows trailers the order
-        // assign endpoint would actually accept:
-        //   - status != BLOCKED
-        //   - has an ACTIVE chip_card (chip_state='assigned')
-        // technical_suitability is intentionally NOT checked here — the
-        // conflict predicate doesn't reject on that either, so we stay
-        // in lock-step with the assign-side decision.
+        // ?assignable=true — narrows to trailers the order assign endpoint
+        // would actually accept. Delegates to Trailer::scopeAssignable so
+        // it stays in lock-step with trailerAssignmentConflict() and the
+        // resource's `assignment` block: ACTIVE + is_active + at least one
+        // active chip OR TAN. technical_suitability is intentionally NOT
+        // checked — the conflict predicate doesn't reject on that either.
+        //
+        // NOTE: the redesigned picker (Loading Orders V2.2 §9.2) now lists
+        // EVERY trailer and disables ineligible rows from the resource's
+        // `assignment.assignable` flag instead of passing this filter; it
+        // remains for callers that still want a server-side narrowing.
         if (filter_var($filters['assignable'] ?? null, FILTER_VALIDATE_BOOLEAN)) {
-            $query->where('status', '!=', TrailerStatus::BLOCKED)
-                ->whereHas('authMedia', function ($q) {
-                    $q->where('medium_type', 'chip_card')
-                        ->where('status', AuthMediumStatus::ACTIVE);
-                });
+            $query->assignable();
         }
     }
 

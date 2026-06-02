@@ -461,8 +461,16 @@ POST /api/loading-orders/{id}/assign-trailer
   assignment happened and what the previous value was.
 - Re-assigning replaces the previous value and emits one audit row covering
   the swap.
-- Rejects with `409 DRIVER_BLOCKED` / `TRAILER_BLOCKED` /
-  `TRAILER_CHIP_MISSING` when the target is not in a usable state.
+- Rejects with `409 DRIVER_BLOCKED` when the driver is not usable.
+- **Trailer eligibility (2026-06-02): a trailer is assignable when it is
+  `active`, `is_active=true`, and carries at least one active credential — a
+  chip OR a TAN.** Rejects with `409` and one of `TRAILER_BLOCKED`,
+  `TRAILER_INACTIVE`, or `TRAILER_NO_CREDENTIAL` (details include `hasChip` /
+  `hasTan`). The same predicate runs on **create** when `assigned_trailer_id`
+  is supplied. The Assign Trailer picker (UX spec §9.2) should disable
+  ineligible rows from the trailer resource's `assignment.assignable` flag
+  (see `09-trailers.md` §2.7) rather than relying on this 409. The previous
+  chip-only `TRAILER_CHIP_MISSING` code is retired.
 - Rejects with `423 ORDER_LOCKED_BY_EXECUTION` when an active visit exists.
 - **`assign-driver` also rotates the gate-entry TAN**: any previous
   active TAN with `tan_purpose='gate_entry'` for this order is
@@ -568,9 +576,14 @@ Field path uses dotted notation for nested objects.
 | `ALREADY_BLOCKED` / `NOT_BLOCKED` | 409 | block/unblock idempotency violation |
 | `ALREADY_CANCELLED` | 409 | cancel re-submission |
 | `DRIVER_BLOCKED` | 409 | assign-driver targets a blocked driver |
-| `TRAILER_BLOCKED` | 409 | assign-trailer targets a blocked trailer |
-| `TRAILER_CHIP_MISSING` | 409 | assign-trailer targets a trailer without a usable chip |
+| `TRAILER_BLOCKED` | 409 | assign/create targets a blocked trailer |
+| `TRAILER_INACTIVE` | 409 | assign/create targets an inactive or archived trailer |
+| `TRAILER_NO_CREDENTIAL` | 409 | assign/create targets a trailer with neither an active chip nor an active TAN; `details.hasChip` / `details.hasTan` show why |
 | `CUSTOMER_BLOCKED` | 409 | create targets a blocked customer |
+
+> `TRAILER_NOT_ASSIGNABLE` is a defensive catch-all for an unmapped reason and
+> should not occur in practice. The chip-only `TRAILER_CHIP_MISSING` code
+> (pre-2026-06-02) is **retired** — eligibility now accepts chip OR TAN.
 | (validation envelope) | 422 | Laravel default — required field missing, enum mismatch, decimal out of range |
 
 ---
@@ -796,3 +809,9 @@ curl -s -X POST "http://localhost/api/loading-orders/<uuid>/cancel" \
 - **v1.1 (2026-05-27)** — controller landed. All 11 REST endpoints + the
   per-order `events-audit` timeline are now implemented. Resource shape and
   error codes match this document. SAP import endpoint remains pending.
+- **v1.2 (2026-06-02)** — trailer-assignment eligibility now accepts **chip OR
+  TAN** (was chip-only). `assign-trailer` and create reject with
+  `TRAILER_BLOCKED` / `TRAILER_INACTIVE` / `TRAILER_NO_CREDENTIAL` (retiring
+  `TRAILER_CHIP_MISSING`). The Assign Trailer picker lists every trailer and
+  disables ineligible rows from the trailer resource's new `assignment` block
+  (`09-trailers.md` §2.7). See §7.1.

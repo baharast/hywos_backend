@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Enums\InspectionState;
 use App\Enums\TechnicalSuitabilityState;
 use App\Enums\TrailerChipState;
+use App\Enums\TrailerCredentialKind;
 use App\Enums\TrailerStatus;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,6 +20,15 @@ class TrailerResource extends JsonResource
 
         $carrierName = $this->relationLoaded('carrier') ? optional($this->carrier)->name : null;
         $customerName = $this->relationLoaded('customer') ? optional($this->customer)->name : null;
+
+        // Trailer-assignment eligibility for the order picker (2026-06-02).
+        // hasChip/hasTan are raw credential presence (independent of block
+        // status) so a blocked-but-chipped trailer still shows its "Chip"
+        // badge while rendering disabled with reason=TRAILER_BLOCKED.
+        $hasChip = $this->has_active_chip;
+        $hasTan = $this->has_active_tan;
+        $assignmentReason = $this->assignment_block_reason;
+        $credentialKind = TrailerCredentialKind::resolve($hasChip, $hasTan);
 
         return [
             'id' => $this->id,
@@ -112,7 +122,45 @@ class TrailerResource extends JsonResource
             'last_loaded_at' => $this->resolveLastLoadedAt(),
             'parking_location' => $this->resolveParkingLocation(),
             'current_context_kind' => $this->resolveCurrentContextKind(),
+
+            // -----------------------------------------------------------------
+            // Order trailer-assignment picker (2026-06-02).
+            //
+            // The picker (Loading Orders V2.2 §9.2) lists EVERY trailer and
+            // disables the ones it can't assign. `assignable` is the disable
+            // flag; `reason`/`reasonLabel` say why (null when assignable);
+            // `credential` is a {value,label,tone} badge marking whether the
+            // trailer carries a Chip, a TAN, both, or none. Mirrors the
+            // ?assignable=true SQL filter and the assign-endpoint guard — all
+            // three derive from Trailer::assignment_block_reason.
+            // -----------------------------------------------------------------
+            'assignment' => [
+                'assignable' => $assignmentReason === null,
+                'reason' => $assignmentReason,
+                'reasonLabel' => $this->assignmentReasonLabel($assignmentReason),
+                'credential' => [
+                    'value' => $credentialKind,
+                    'label' => TrailerCredentialKind::label($credentialKind),
+                    'tone' => TrailerCredentialKind::tone($credentialKind),
+                    'hasChip' => $hasChip,
+                    'hasTan' => $hasTan,
+                ],
+            ],
         ];
+    }
+
+    /**
+     * Human label for an assignment block reason code. null reason (i.e.
+     * the trailer IS assignable) maps to null.
+     */
+    protected function assignmentReasonLabel(?string $reason): ?string
+    {
+        return match ($reason) {
+            'TRAILER_BLOCKED' => 'Trailer is blocked',
+            'TRAILER_INACTIVE' => 'Trailer is inactive or archived',
+            'TRAILER_NO_CREDENTIAL' => 'No chip or TAN assigned',
+            default => null,
+        };
     }
 
     /**
