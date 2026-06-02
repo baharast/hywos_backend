@@ -36,16 +36,10 @@ class LoadingOrderStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::DRAFT => 'Draft',
-            self::NEEDS_ASSIGNMENT => 'Needs Assignment',
-            self::READY => 'Ready',
-            self::IN_PROGRESS => 'In Progress',
-            self::COMPLETED => 'Completed',
-            self::BLOCKED => 'Blocked',
-            self::CANCELLED => 'Cancelled',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('loading.order_status.' . $v);
+        return $translated !== 'loading.order_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

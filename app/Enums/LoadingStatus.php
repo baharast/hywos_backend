@@ -135,19 +135,12 @@ class LoadingStatus
     public static function label(string $value): string
     {
         $wire = self::mapToWire($value);
-        return match ($wire) {
-            self::ASSIGNED_READY_FOR_BAY => 'Assigned · Ready for Bay',
-            self::WAITING_PRE_ANALYSIS => 'Waiting for Pre-analysis',
-            self::READY_FOR_LOADING => 'Ready for Loading',
-            self::LOADING => 'Loading',
-            self::PAUSED_WAITING => 'Paused / Waiting',
-            self::COMPLETED => 'Completed',
-            self::WAITING_MAIN_ANALYSIS => 'Waiting for Main Analysis',
-            self::QUALITY_BLOCKED => 'Quality Blocked',
-            self::DOCUMENTS_PENDING => 'Documents Pending',
-            self::CLARIFICATION_REQUIRED => 'Clarification Required',
-            self::FAULT_DEVICE_ISSUE => 'Fault / Device Issue',
-            default => ucfirst(str_replace('_', ' ', $value)),
-        };
+        if ($wire === null) {
+            return ucfirst(str_replace('_', ' ', $value));
+        }
+        $translated = __('loading.loading_status.' . $wire);
+        return $translated !== 'loading.loading_status.' . $wire
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $wire));
     }
 }

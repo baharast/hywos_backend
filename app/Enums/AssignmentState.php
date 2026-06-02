@@ -22,12 +22,10 @@ class AssignmentState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ASSIGNED => 'Assigned',
-            self::NOT_ASSIGNED => 'Not assigned',
-            self::NOT_REQUIRED => 'Not required',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('loading.assignment_state.' . $v);
+        return $translated !== 'loading.assignment_state.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -98,14 +98,14 @@ class SelectedLoadingDetailsResource extends JsonResource
                 'criticalAlarmCount' => (int) $this->critical_alarm_count,
                 'alarmCount' => (int) $this->alarm_count,
                 'faultReason' => $loadingWire === LoadingStatus::FAULT_DEVICE_ISSUE
-                    ? ($this->release_reason ?? 'Station / device fault.')
+                    ? ($this->release_reason ?? __('loading.fault_reason_fallback'))
                     : null,
             ],
 
             'analysisSummary' => [
                 'state' => $this->analysis_status,
-                'decisionOwner' => 'Analysis & Quality',
-                'note' => 'Read-only view. Decisions are made in Analysis & Quality.',
+                'decisionOwner' => __('loading.analysis_summary.decision_owner'),
+                'note' => __('loading.analysis_summary.note'),
             ],
 
             'documentsReadiness' => $this->deriveDocumentsReadiness($loadingWire),
@@ -127,20 +127,20 @@ class SelectedLoadingDetailsResource extends JsonResource
     protected function deriveIssueBadge(?string $loadingWire): ?array
     {
         $issue = match ($loadingWire) {
-            LoadingStatus::CLARIFICATION_REQUIRED => ['value' => 'clarification', 'label' => 'Clarification', 'tone' => 'orange'],
-            LoadingStatus::QUALITY_BLOCKED => ['value' => 'quality_blocked', 'label' => 'Quality Blocked', 'tone' => 'danger'],
-            LoadingStatus::FAULT_DEVICE_ISSUE => ['value' => 'fault', 'label' => 'Fault', 'tone' => 'danger'],
+            LoadingStatus::CLARIFICATION_REQUIRED => ['value' => 'clarification', 'label' => __('loading.issue_badge.clarification'), 'tone' => 'orange'],
+            LoadingStatus::QUALITY_BLOCKED => ['value' => 'quality_blocked', 'label' => __('loading.issue_badge.quality_blocked'), 'tone' => 'danger'],
+            LoadingStatus::FAULT_DEVICE_ISSUE => ['value' => 'fault', 'label' => __('loading.issue_badge.fault'), 'tone' => 'danger'],
             LoadingStatus::WAITING_PRE_ANALYSIS,
             LoadingStatus::WAITING_MAIN_ANALYSIS,
-            LoadingStatus::PAUSED_WAITING => ['value' => 'waiting', 'label' => 'Waiting', 'tone' => 'warning'],
+            LoadingStatus::PAUSED_WAITING => ['value' => 'waiting', 'label' => __('loading.issue_badge.waiting'), 'tone' => 'warning'],
             default => null,
         };
 
         if (! $issue && (bool) $this->has_clarification) {
-            return ['value' => 'clarification', 'label' => 'Clarification', 'tone' => 'orange'];
+            return ['value' => 'clarification', 'label' => __('loading.issue_badge.clarification'), 'tone' => 'orange'];
         }
         if (! $issue && (int) $this->critical_alarm_count > 0) {
-            return ['value' => 'critical_alarm', 'label' => 'Critical Alarm', 'tone' => 'danger'];
+            return ['value' => 'critical_alarm', 'label' => __('loading.issue_badge.critical_alarm'), 'tone' => 'danger'];
         }
         return $issue;
     }
@@ -151,21 +151,12 @@ class SelectedLoadingDetailsResource extends JsonResource
     protected function deriveWhatIsHappeningNow(?string $loadingWire, ?string $stationName): string
     {
         $where = $stationName ?: 'the bay';
+        $key = $loadingWire ?? 'default';
+        $translated = __('loading.what_happening.' . $key, ['where' => $where]);
 
-        return match ($loadingWire) {
-            LoadingStatus::ASSIGNED_READY_FOR_BAY => "Loading is assigned to {$where}; awaiting pre-analysis trigger.",
-            LoadingStatus::WAITING_PRE_ANALYSIS => "Waiting for pre-analysis result before release at {$where}.",
-            LoadingStatus::READY_FOR_LOADING => "Released for loading at {$where}; awaiting start at the panel.",
-            LoadingStatus::LOADING => "Loading is in progress at {$where}.",
-            LoadingStatus::PAUSED_WAITING => "Loading at {$where} is paused — operator review required.",
-            LoadingStatus::COMPLETED => "Physical loading complete at {$where}.",
-            LoadingStatus::WAITING_MAIN_ANALYSIS => "Waiting for main-analysis result after loading at {$where}.",
-            LoadingStatus::QUALITY_BLOCKED => "Quality decision blocks documents/exit for the loading at {$where}.",
-            LoadingStatus::DOCUMENTS_PENDING => "Loading complete at {$where} — documents not yet ready.",
-            LoadingStatus::CLARIFICATION_REQUIRED => "Loading at {$where} is held — clarification case open.",
-            LoadingStatus::FAULT_DEVICE_ISSUE => "Station / device fault affecting the loading at {$where}.",
-            default => "Loading at {$where} is in an unknown state — investigate.",
-        };
+        return $translated !== 'loading.what_happening.' . $key
+            ? $translated
+            : __('loading.what_happening.default', ['where' => $where]);
     }
 
     /**
@@ -184,10 +175,10 @@ class SelectedLoadingDetailsResource extends JsonResource
         return [
             'isReady' => $loadingWire === LoadingStatus::COMPLETED,
             'note' => $loadingWire === LoadingStatus::DOCUMENTS_PENDING
-                ? 'Documents pending — see Documents & Reports.'
+                ? __('loading.documents.pending')
                 : ($loadingWire === LoadingStatus::QUALITY_BLOCKED
-                    ? 'Documents blocked by quality decision.'
-                    : 'Documents available.'),
+                    ? __('loading.documents.blocked')
+                    : __('loading.documents.available')),
         ];
     }
 
@@ -235,14 +226,7 @@ class SelectedLoadingDetailsResource extends JsonResource
 
         return [
             'value' => $value,
-            'label' => match ($value) {
-                'open_clarification' => 'Open Clarification Case',
-                'open_analysis' => 'Open Analysis & Quality',
-                'open_device' => 'Open Device Detail',
-                'open_documents' => 'Open Documents & Reports',
-                'open_visit' => 'Open Plant Visit',
-                default => 'No action',
-            },
+            'label' => __('loading.action_path.' . $value),
         ];
     }
 
@@ -257,14 +241,14 @@ class SelectedLoadingDetailsResource extends JsonResource
         if ($this->order_id) {
             $links[] = [
                 'kind' => 'loading_order',
-                'label' => 'Loading Order',
+                'label' => __('loading.reference_link.loading_order'),
                 'path' => "/operations/loading-orders/{$this->order_id}",
             ];
         }
         if ($this->plant_visit_id) {
             $links[] = [
                 'kind' => 'plant_visit',
-                'label' => 'Plant Visit',
+                'label' => __('loading.reference_link.plant_visit'),
                 'path' => "/operations/active-plant-visits/{$this->plant_visit_id}",
             ];
         }
@@ -272,12 +256,12 @@ class SelectedLoadingDetailsResource extends JsonResource
         // Event / audit are always available (per-loading sub-routes).
         $links[] = [
             'kind' => 'event_journal',
-            'label' => 'Event Journal',
+            'label' => __('loading.reference_link.event_journal'),
             'path' => "/api/loading-control/loadings/{$this->id}/events",
         ];
         $links[] = [
             'kind' => 'audit_trail',
-            'label' => 'Audit Trail',
+            'label' => __('loading.reference_link.audit_trail'),
             'path' => "/api/loading-control/loadings/{$this->id}/audit",
         ];
 

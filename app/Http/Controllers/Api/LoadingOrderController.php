@@ -88,17 +88,17 @@ class LoadingOrderController extends ApiController
         $summary = $this->summary();
         $lastUpdated = LoadingOrder::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Loading orders retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('loading.messages.orders_retrieved'));
     }
 
     public function show($id)
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
 
-        return $this->success(new LoadingOrderResource($order), 'Loading order retrieved');
+        return $this->success(new LoadingOrderResource($order), __('loading.messages.order_retrieved'));
     }
 
     public function store(
@@ -120,11 +120,11 @@ class LoadingOrderController extends ApiController
         // Reject create when targeting a blocked / inactive customer.
         $customer = Customer::find($data['customer_id']);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
         if ($customer->status === 'blocked' || $customer->is_active === false) {
             return $this->error(
-                'Cannot create loading order for a blocked or inactive customer.',
+                __('loading.messages.customer_blocked'),
                 'CUSTOMER_BLOCKED',
                 409,
                 ['customer_id' => $customer->id, 'status' => $customer->status]
@@ -211,7 +211,7 @@ class LoadingOrderController extends ApiController
                 $provisioning->provisionTanFor($order->fresh());
             }
 
-            return ApiResponse::success(new LoadingOrderResource($order->fresh()), 'Loading order created', 201);
+            return ApiResponse::success(new LoadingOrderResource($order->fresh()), __('loading.messages.order_created'), 201);
         });
     }
 
@@ -224,7 +224,7 @@ class LoadingOrderController extends ApiController
     ) {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
 
         $payload = $request->validated();
@@ -238,7 +238,7 @@ class LoadingOrderController extends ApiController
             $touched = array_intersect(self::EXECUTION_LOCKED_FIELDS, array_keys($payload));
             if (! empty($touched)) {
                 return $this->error(
-                    'This loading order is locked by an active execution. The listed fields cannot be changed.',
+                    __('loading.messages.order_locked_fields'),
                     'ORDER_LOCKED_BY_EXECUTION',
                     423,
                     ['lockedFields' => array_values($touched)]
@@ -318,7 +318,7 @@ class LoadingOrderController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Loading order updated');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.order_updated'));
         });
     }
 
@@ -331,7 +331,7 @@ class LoadingOrderController extends ApiController
     ) {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
         if ($lock = $this->executionLockCheck($order, ['assigned_driver_id'])) {
             return $lock;
@@ -374,7 +374,7 @@ class LoadingOrderController extends ApiController
             // driver and rotates when the driver changed.
             $provisioning->provisionTanFor($order->fresh(), $driver);
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Driver assigned');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.driver_assigned'));
         });
     }
 
@@ -382,7 +382,7 @@ class LoadingOrderController extends ApiController
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
         if ($lock = $this->executionLockCheck($order, ['assigned_driver_id'])) {
             return $lock;
@@ -418,7 +418,7 @@ class LoadingOrderController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Driver unassigned');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.driver_unassigned'));
         });
     }
 
@@ -426,7 +426,7 @@ class LoadingOrderController extends ApiController
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
         if ($lock = $this->executionLockCheck($order, ['assigned_trailer_id'])) {
             return $lock;
@@ -464,7 +464,7 @@ class LoadingOrderController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Trailer assigned');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.trailer_assigned'));
         });
     }
 
@@ -472,7 +472,7 @@ class LoadingOrderController extends ApiController
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
         if ($lock = $this->executionLockCheck($order, ['assigned_trailer_id'])) {
             return $lock;
@@ -508,7 +508,7 @@ class LoadingOrderController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Trailer unassigned');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.trailer_unassigned'));
         });
     }
 
@@ -516,13 +516,13 @@ class LoadingOrderController extends ApiController
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
         if (! is_null($order->blocked_at)) {
-            return $this->error('Loading order is already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('loading.messages.order_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
         if (! is_null($order->cancelled_at)) {
-            return $this->error('Cancelled orders cannot be blocked', 'ALREADY_CANCELLED', 409);
+            return $this->error(__('loading.messages.order_already_cancelled'), 'ALREADY_CANCELLED', 409);
         }
 
         $reason = $request->input('reason');
@@ -556,7 +556,7 @@ class LoadingOrderController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Loading order blocked');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.order_blocked'));
         });
     }
 
@@ -564,10 +564,10 @@ class LoadingOrderController extends ApiController
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
         if (is_null($order->blocked_at)) {
-            return $this->error('Loading order is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('loading.messages.order_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -601,7 +601,7 @@ class LoadingOrderController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Loading order unblocked');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.order_unblocked'));
         });
     }
 
@@ -609,10 +609,10 @@ class LoadingOrderController extends ApiController
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
         if (! is_null($order->cancelled_at)) {
-            return $this->error('Loading order is already cancelled', 'ALREADY_CANCELLED', 409);
+            return $this->error(__('loading.messages.order_already_cancelled'), 'ALREADY_CANCELLED', 409);
         }
         // Cancel is forbidden once execution has started (active visit / operation).
         if ($order->is_locked_by_execution
@@ -620,7 +620,7 @@ class LoadingOrderController extends ApiController
             || $order->active_loading_operation_id
         ) {
             return $this->error(
-                'Cannot cancel an order with an active plant visit or loading operation.',
+                __('loading.messages.cancel_locked'),
                 'ORDER_LOCKED_BY_EXECUTION',
                 423,
                 ['activePlantVisitId' => $order->active_plant_visit_id,
@@ -659,7 +659,7 @@ class LoadingOrderController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new LoadingOrderResource($order->fresh()), 'Loading order cancelled');
+            return $this->success(new LoadingOrderResource($order->fresh()), __('loading.messages.order_cancelled'));
         });
     }
 
@@ -667,7 +667,7 @@ class LoadingOrderController extends ApiController
     {
         $order = LoadingOrder::find($id);
         if (! $order) {
-            return $this->error('Loading order not found', 'LOADING_ORDER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.order_not_found'), 'LOADING_ORDER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 50);
@@ -695,7 +695,7 @@ class LoadingOrderController extends ApiController
                 'audits_count' => $audits->count(),
                 'events_count' => $events->count(),
             ],
-        ], 'Loading order events & audit retrieved');
+        ], __('loading.messages.events_audit_retrieved'));
     }
 
     // ---------- helpers ----------
@@ -728,7 +728,7 @@ class LoadingOrderController extends ApiController
             return null;
         }
         return $this->error(
-            'This loading order is locked by an active execution.',
+            __('loading.messages.order_locked'),
             'ORDER_LOCKED_BY_EXECUTION',
             423,
             ['lockedFields' => array_values($hits)]
@@ -742,11 +742,11 @@ class LoadingOrderController extends ApiController
     protected function driverAssignmentConflict(?Driver $driver)
     {
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.driver_not_found'), 'DRIVER_NOT_FOUND', 404);
         }
         if ($driver->block_status === 'blocked') {
             return $this->error(
-                'Cannot assign a blocked driver.',
+                __('loading.messages.driver_blocked'),
                 'DRIVER_BLOCKED',
                 409,
                 ['driver_id' => $driver->id]
@@ -754,7 +754,7 @@ class LoadingOrderController extends ApiController
         }
         if ($driver->is_active === false) {
             return $this->error(
-                'Cannot assign an inactive driver.',
+                __('loading.messages.driver_inactive'),
                 'DRIVER_BLOCKED',
                 409,
                 ['driver_id' => $driver->id]
@@ -782,11 +782,11 @@ class LoadingOrderController extends ApiController
     protected function bayLineAssignmentConflict(?\App\Models\BayLine $bayLine, ?LoadingOrder $order)
     {
         if (! $bayLine) {
-            return $this->error('Bay line not found', 'BAY_LINE_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.bay_not_found'), 'BAY_LINE_NOT_FOUND', 404);
         }
         if ($bayLine->is_active === false) {
             return $this->error(
-                'Cannot assign an inactive bay line.',
+                __('loading.messages.bay_inactive'),
                 'BAY_LINE_INACTIVE',
                 409,
                 ['bay_line_id' => $bayLine->id]
@@ -837,7 +837,7 @@ class LoadingOrderController extends ApiController
     protected function trailerAssignmentConflict(?Trailer $trailer)
     {
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
         $reason = $trailer->assignment_block_reason;
@@ -853,16 +853,16 @@ class LoadingOrderController extends ApiController
 
         return match ($reason) {
             'TRAILER_BLOCKED' => $this->error(
-                'Cannot assign a blocked trailer.', 'TRAILER_BLOCKED', 409, $details
+                __('loading.messages.trailer_blocked'), 'TRAILER_BLOCKED', 409, $details
             ),
             'TRAILER_INACTIVE' => $this->error(
-                'Cannot assign an inactive or archived trailer.', 'TRAILER_INACTIVE', 409, $details
+                __('loading.messages.trailer_inactive'), 'TRAILER_INACTIVE', 409, $details
             ),
             'TRAILER_NO_CREDENTIAL' => $this->error(
-                'Trailer has no usable chip or TAN.', 'TRAILER_NO_CREDENTIAL', 409, $details
+                __('loading.messages.trailer_no_credential'), 'TRAILER_NO_CREDENTIAL', 409, $details
             ),
             default => $this->error(
-                'Trailer cannot be assigned.', 'TRAILER_NOT_ASSIGNABLE', 409, $details
+                __('loading.messages.trailer_not_assignable'), 'TRAILER_NOT_ASSIGNABLE', 409, $details
             ),
         };
     }

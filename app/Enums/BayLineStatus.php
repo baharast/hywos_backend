@@ -42,16 +42,10 @@ class BayLineStatus
 
     public static function label(string $value): string
     {
-        return match ($value) {
-            self::AVAILABLE => 'Available',
-            self::RESERVED => 'Reserved',
-            self::LOADING => 'Loading',
-            self::WAITING_ANALYSIS => 'Waiting for Analysis',
-            self::COMPLETED_WAITING_DOCUMENTS => 'Completed · Waiting Documents',
-            self::FAULT_BLOCKED => 'Fault / Blocked',
-            self::MAINTENANCE_OFFLINE => 'Maintenance / Offline',
-            default => ucfirst(str_replace('_', ' ', $value)),
-        };
+        $translated = __('loading.bay_status.' . $value);
+        return $translated !== 'loading.bay_status.' . $value
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $value));
     }
 
     public static function tone(string $value): string

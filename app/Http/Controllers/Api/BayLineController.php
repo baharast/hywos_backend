@@ -53,7 +53,7 @@ class BayLineController extends ApiController
         $items = BayLineResource::collection($paginator->items());
         $lastUpdated = BayLine::query()->max('updated_at');
 
-        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, 'BayLines retrieved');
+        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, __('loading.messages.bays_retrieved'));
     }
 
     public function store(StoreBayLineRequest $request)
@@ -61,53 +61,53 @@ class BayLineController extends ApiController
         $data = $request->validated();
         $bayline = BayLine::create($data);
 
-        return $this->created(new BayLineResource($bayline), 'BayLine created');
+        return $this->created(new BayLineResource($bayline), __('loading.messages.bay_created'));
     }
 
     public function show($id)
     {
         $bayline = BayLine::find($id);
         if (! $bayline) {
-            return $this->error('BayLine not found', 'BAYLINE_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.bay_not_found_bl'), 'BAYLINE_NOT_FOUND', 404);
         }
 
-        return $this->success(new BayLineResource($bayline), 'BayLine retrieved');
+        return $this->success(new BayLineResource($bayline), __('loading.messages.bay_retrieved'));
     }
 
     public function update(UpdateBayLineRequest $request, $id)
     {
         $bayline = BayLine::find($id);
         if (! $bayline) {
-            return $this->error('BayLine not found', 'BAYLINE_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.bay_not_found_bl'), 'BAYLINE_NOT_FOUND', 404);
         }
 
         $bayline->update($request->validated());
 
-        return $this->success(new BayLineResource($bayline), 'BayLine updated');
+        return $this->success(new BayLineResource($bayline), __('loading.messages.bay_updated'));
     }
 
     public function activate(Request $request, $id)
     {
         $bayline = BayLine::find($id);
         if (! $bayline) {
-            return $this->error('BayLine not found', 'BAYLINE_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.bay_not_found_bl'), 'BAYLINE_NOT_FOUND', 404);
         }
 
         $bayline->update(['is_active' => true]);
 
-        return $this->success(new BayLineResource($bayline), 'BayLine activated');
+        return $this->success(new BayLineResource($bayline), __('loading.messages.bay_activated'));
     }
 
     public function deactivate(Request $request, $id)
     {
         $bayline = BayLine::find($id);
         if (! $bayline) {
-            return $this->error('BayLine not found', 'BAYLINE_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.bay_not_found_bl'), 'BAYLINE_NOT_FOUND', 404);
         }
 
         $bayline->update(['is_active' => false]);
 
-        return $this->success(new BayLineResource($bayline), 'BayLine deactivated');
+        return $this->success(new BayLineResource($bayline), __('loading.messages.bay_deactivated'));
     }
 
     public function destroy(Request $request, $id)
@@ -122,12 +122,12 @@ class BayLineController extends ApiController
 
         $bayline = BayLine::find($id);
         if (! $bayline) {
-            return $this->error('BayLine not found', 'BAYLINE_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.bay_not_found_bl'), 'BAYLINE_NOT_FOUND', 404);
         }
 
         // soft disable
         $bayline->update(['is_active' => false]);
 
-        return $this->success(null, 'BayLine deactivated');
+        return $this->success(null, __('loading.messages.bay_deactivated'));
     }
 }

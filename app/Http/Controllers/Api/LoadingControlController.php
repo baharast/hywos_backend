@@ -50,7 +50,7 @@ class LoadingControlController extends ApiController
             null,
             $summary,
             $lastUpdated,
-            'Station view retrieved'
+            __('loading.messages.station_view')
         );
     }
 
@@ -88,7 +88,7 @@ class LoadingControlController extends ApiController
             $paginator,
             $summary,
             $lastUpdated,
-            'Active loadings retrieved'
+            __('loading.messages.loadings_retrieved')
         );
     }
 
@@ -104,7 +104,7 @@ class LoadingControlController extends ApiController
     {
         $loading = LoadingOperation::find($id);
         if (! $loading) {
-            return $this->error('Loading not found', 'LOADING_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.loading_not_found'), 'LOADING_NOT_FOUND', 404);
         }
 
         $loading = $this->service->loadingDetail($loading);
@@ -112,18 +112,18 @@ class LoadingControlController extends ApiController
         if ($request->query('view') === 'selected') {
             return $this->success(
                 new SelectedLoadingDetailsResource($loading),
-                'Selected loading details retrieved'
+                __('loading.messages.selected_details')
             );
         }
 
-        return $this->success(new LoadingDetailResource($loading), 'Loading retrieved');
+        return $this->success(new LoadingDetailResource($loading), __('loading.messages.loading_retrieved'));
     }
 
     public function events(Request $request, $id)
     {
         $loading = LoadingOperation::find($id);
         if (! $loading) {
-            return $this->error('Loading not found', 'LOADING_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.loading_not_found'), 'LOADING_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -146,7 +146,7 @@ class LoadingControlController extends ApiController
             $paginator,
             null,
             $lastUpdated,
-            'Loading events retrieved'
+            __('loading.messages.loading_events')
         );
     }
 
@@ -154,7 +154,7 @@ class LoadingControlController extends ApiController
     {
         $loading = LoadingOperation::find($id);
         if (! $loading) {
-            return $this->error('Loading not found', 'LOADING_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.loading_not_found'), 'LOADING_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -177,7 +177,7 @@ class LoadingControlController extends ApiController
             $paginator,
             null,
             $lastUpdated,
-            'Loading audit retrieved'
+            __('loading.messages.loading_audit')
         );
     }
 
@@ -185,14 +185,14 @@ class LoadingControlController extends ApiController
     {
         $loading = LoadingOperation::find($id);
         if (! $loading) {
-            return $this->error('Loading not found', 'LOADING_NOT_FOUND', 404);
+            return $this->error(__('loading.messages.loading_not_found'), 'LOADING_NOT_FOUND', 404);
         }
 
         $loading = $this->service->addNote($loading, (string) $request->input('note'));
 
         return $this->success(
             new LoadingDetailResource($this->service->loadingDetail($loading)),
-            'Note added'
+            __('loading.messages.note_added')
         );
     }
 }

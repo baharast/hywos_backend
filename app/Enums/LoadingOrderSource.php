@@ -14,10 +14,7 @@ class LoadingOrderSource
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::SAP => 'SAP',
-            self::MANUAL => 'Manual',
-            default => ucfirst($v),
-        };
+        $translated = __('loading.order_source.' . $v);
+        return $translated !== 'loading.order_source.' . $v ? $translated : ucfirst($v);
     }
 }

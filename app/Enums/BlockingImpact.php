@@ -35,16 +35,10 @@ class BlockingImpact
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ENTRY_BLOCKED => 'Entry blocked',
-            self::REGISTRATION_BLOCKED => 'Registration blocked',
-            self::PARKING_BLOCKED => 'Parking blocked',
-            self::LOADING_BLOCKED => 'Loading blocked',
-            self::DOCUMENTS_BLOCKED => 'Documents blocked',
-            self::EXIT_BLOCKED => 'Exit blocked',
-            self::NONE => 'No current block',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('loading.blocking_impact.' . $v);
+        return $translated !== 'loading.blocking_impact.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string
