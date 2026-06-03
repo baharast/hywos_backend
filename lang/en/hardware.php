@@ -200,4 +200,17 @@ return [
         'terminal_detail'             => 'Terminal / panel detail retrieved',
     ],
 
+    'plc_controller_group' => [
+        'overall_plc'      => 'Overall / Central PLC',
+        'main_filling_plc' => 'Main Filling PLC',
+        'filling_bay_plc'  => 'Filling Bay PLC',
+        'analysis_unit'    => 'Analysis Unit',
+        'compressor_ab'    => 'Compressor A/B',
+        'compressor_de'    => 'Compressor D/E',
+        'electrolyzer'     => 'Electrolyzer',
+        'gate_controller'  => 'Gate Controllers',
+        'remote_io'        => 'Remote I/O',
+        'other'            => 'Other',
+    ],
+
 ];

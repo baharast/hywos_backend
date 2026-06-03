@@ -53,19 +53,10 @@ class PlcControllerGroup
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::OVERALL_PLC => 'Overall / Central PLC',
-            self::MAIN_FILLING_PLC => 'Main Filling PLC',
-            self::FILLING_BAY_PLC => 'Filling Bay PLC',
-            self::ANALYSIS_UNIT => 'Analysis Unit',
-            self::COMPRESSOR_AB => 'Compressor A/B',
-            self::COMPRESSOR_DE => 'Compressor D/E',
-            self::ELECTROLYZER => 'Electrolyzer',
-            self::GATE_CONTROLLER => 'Gate Controllers',
-            self::REMOTE_IO => 'Remote I/O',
-            self::OTHER => 'Other',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.plc_controller_group.' . $v);
+        return $translated !== 'hardware.plc_controller_group.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 
     /**

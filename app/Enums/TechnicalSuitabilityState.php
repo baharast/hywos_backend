@@ -16,13 +16,10 @@ class TechnicalSuitabilityState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::APPROVED => 'Approved',
-            self::INCOMPLETE => 'Incomplete',
-            self::NOT_SUITABLE => 'Not suitable',
-            self::NEEDS_REVIEW => 'Needs review',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.technical_suitability.' . $v);
+        return $translated !== 'vehicles.technical_suitability.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

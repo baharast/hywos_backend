@@ -16,13 +16,10 @@ class InspectionState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::VALID => 'Valid',
-            self::EXPIRING_SOON => 'Expiring soon',
-            self::EXPIRED => 'Expired',
-            self::MISSING => 'Missing',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.inspection_state.' . $v);
+        return $translated !== 'vehicles.inspection_state.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

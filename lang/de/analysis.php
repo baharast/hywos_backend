@@ -175,4 +175,18 @@ return [
         'result_retrieved'  => 'Ergebnis abgerufen',
     ],
 
+    'certificate_impact' => [
+        'allowed'      => 'Zulässig',
+        'blocked'      => 'Gesperrt',
+        'generated'    => 'Generiert',
+        'not_required' => 'Nicht erforderlich',
+    ],
+
+    'certificate_mapping' => [
+        'not_printed'     => 'Nicht gedruckt',
+        'certificate_row' => 'Zertifikatszeile',
+        'delivery_note'   => 'Lieferschein',
+        'qm_document'     => 'QM-Dokument',
+    ],
+
 ];

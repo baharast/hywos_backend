@@ -197,4 +197,18 @@ return [
         'security_events_placeholder' => 'Security events retrieved (placeholder)',
     ],
 
+    'inspection_state' => [
+        'valid'         => 'Valid',
+        'expiring_soon' => 'Expiring soon',
+        'expired'       => 'Expired',
+        'missing'       => 'Missing',
+    ],
+
+    'technical_suitability' => [
+        'approved'     => 'Approved',
+        'incomplete'   => 'Incomplete',
+        'not_suitable' => 'Not suitable',
+        'needs_review' => 'Needs review',
+    ],
+
 ];

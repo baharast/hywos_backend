@@ -24,13 +24,10 @@ class CertificateImpact
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ALLOWED => 'Allowed',
-            self::BLOCKED => 'Blocked',
-            self::GENERATED => 'Generated',
-            self::NOT_REQUIRED => 'Not required',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.certificate_impact.' . $v);
+        return $translated !== 'analysis.certificate_impact.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

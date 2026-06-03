@@ -40,7 +40,7 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         // Task is a query param here; reuse the SelectTaskRequest's whitelist
@@ -64,7 +64,7 @@ class DriverWorkflowController extends ApiController
             return $this->success([
                 'data' => [],
                 'task' => $task,
-            ], 'No orders for this session');
+            ], __('driver.workflow.no_orders'));
         }
 
         $rows = $this->service->listOrdersForDriver($session, $task);
@@ -72,7 +72,7 @@ class DriverWorkflowController extends ApiController
         return $this->success([
             'data' => DriverWorkflowOrderResource::collection(collect($rows)),
             'task' => $task,
-        ], 'Driver orders retrieved');
+        ], __('driver.workflow.orders_retrieved'));
     }
 
     /* ============================================================
@@ -83,7 +83,7 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -93,7 +93,7 @@ class DriverWorkflowController extends ApiController
             'source' => 'chip',
         ]);
 
-        return $this->success($this->sessionShape($fresh), 'Trailer info recorded');
+        return $this->success($this->sessionShape($fresh), __('driver.workflow.trailer_info_recorded'));
     }
 
     /* ============================================================
@@ -104,7 +104,7 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -118,7 +118,7 @@ class DriverWorkflowController extends ApiController
             'source' => 'tan',
         ]);
 
-        return $this->success($this->sessionShape($fresh), 'Trailer check recorded');
+        return $this->success($this->sessionShape($fresh), __('driver.workflow.trailer_check_recorded'));
     }
 
     /* ============================================================
@@ -129,12 +129,12 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $fresh = $this->service->setTractorPlate($session, $request->validated()['plate']);
 
-        return $this->success($this->sessionShape($fresh), 'Tractor plate recorded');
+        return $this->success($this->sessionShape($fresh), __('driver.workflow.tractor_plate_recorded'));
     }
 
     /* ============================================================
@@ -145,7 +145,7 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $task = $request->validated()['task'];
@@ -159,7 +159,7 @@ class DriverWorkflowController extends ApiController
                     'nextRoute' => $this->service->nextRouteForTask($task),
                 ]
             ),
-            'Task selected'
+            __('driver.workflow.task_selected')
         );
     }
 
@@ -171,14 +171,14 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
 
         if (! $session->driver_id) {
             return $this->error(
-                'Session has no associated driver; cannot confirm an order.',
+                __('driver.workflow.session_no_driver'),
                 'SESSION_HAS_NO_DRIVER',
                 409
             );
@@ -188,7 +188,7 @@ class DriverWorkflowController extends ApiController
 
         if (! $order) {
             return $this->error(
-                'Selected order is not in the driver-eligible list for this task.',
+                __('driver.workflow.order_not_eligible'),
                 'ORDER_NOT_ELIGIBLE',
                 409
             );
@@ -199,7 +199,7 @@ class DriverWorkflowController extends ApiController
             'task' => $data['task'],
             'nextRoute' => $this->service->nextRouteAfterOrder($data['task']),
             'fillingTan' => $this->service->fillingTanFor($order),
-        ], 'Order confirmed');
+        ], __('driver.workflow.order_confirmed'));
     }
 
     /* ============================================================
@@ -210,12 +210,12 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $payload = $this->service->bayLineAssignment($session);
 
-        return $this->success($payload, 'Bay line assignment retrieved');
+        return $this->success($payload, __('driver.workflow.bay_line_assignment'));
     }
 
     /* ============================================================
@@ -232,12 +232,12 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $payload = $this->service->parkingAssignment($session);
 
-        return $this->success($payload, 'Parking assignment retrieved');
+        return $this->success($payload, __('driver.workflow.parking_assignment'));
     }
 
     /* ============================================================
@@ -248,12 +248,12 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         if (! $session->order_id) {
             return $this->error(
-                'No order is confirmed for this session; nothing to print.',
+                __('driver.workflow.no_order_confirmed'),
                 'NO_ORDER_CONFIRMED',
                 409
             );
@@ -261,7 +261,7 @@ class DriverWorkflowController extends ApiController
 
         $payload = $this->service->printDeliveryNote($session);
 
-        return $this->success($payload, 'Delivery note printed');
+        return $this->success($payload, __('driver.workflow.delivery_note_printed'));
     }
 
     /* ============================================================
@@ -272,12 +272,12 @@ class DriverWorkflowController extends ApiController
     {
         $session = $this->service->findActiveSession($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('driver.workflow.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $payload = $this->service->complete($session, $request->validated()['task']);
 
-        return $this->success($payload, 'Workflow completed');
+        return $this->success($payload, __('driver.workflow.workflow_completed'));
     }
 
     /* ============================================================

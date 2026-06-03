@@ -197,4 +197,18 @@ return [
         'security_events_placeholder' => 'Sicherheitsereignisse abgerufen (Platzhalter)',
     ],
 
+    'inspection_state' => [
+        'valid'         => 'Gültig',
+        'expiring_soon' => 'Läuft bald ab',
+        'expired'       => 'Abgelaufen',
+        'missing'       => 'Fehlend',
+    ],
+
+    'technical_suitability' => [
+        'approved'     => 'Genehmigt',
+        'incomplete'   => 'Unvollständig',
+        'not_suitable' => 'Nicht geeignet',
+        'needs_review' => 'Prüfung erforderlich',
+    ],
+
 ];

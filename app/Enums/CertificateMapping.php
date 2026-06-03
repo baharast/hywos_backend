@@ -30,12 +30,9 @@ class CertificateMapping
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::NOT_PRINTED => 'Not printed',
-            self::CERTIFICATE_ROW => 'Certificate row',
-            self::DELIVERY_NOTE => 'Delivery note',
-            self::QM_DOCUMENT => 'QM document',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('analysis.certificate_mapping.' . $v);
+        return $translated !== 'analysis.certificate_mapping.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 }

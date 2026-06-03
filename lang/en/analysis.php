@@ -175,4 +175,18 @@ return [
         'result_retrieved'            => 'Result retrieved',
     ],
 
+    'certificate_impact' => [
+        'allowed'      => 'Allowed',
+        'blocked'      => 'Blocked',
+        'generated'    => 'Generated',
+        'not_required' => 'Not required',
+    ],
+
+    'certificate_mapping' => [
+        'not_printed'     => 'Not printed',
+        'certificate_row' => 'Certificate row',
+        'delivery_note'   => 'Delivery note',
+        'qm_document'     => 'QM document',
+    ],
+
 ];

@@ -56,4 +56,22 @@ return [
         'expires_at_after' => 'expires_at must be a future date/time.',
     ],
 
+    'workflow' => [
+        'session_not_found'     => 'Session not found',
+        'no_orders'             => 'No orders for this session',
+        'orders_retrieved'      => 'Driver orders retrieved',
+        'trailer_info_recorded' => 'Trailer info recorded',
+        'trailer_check_recorded' => 'Trailer check recorded',
+        'tractor_plate_recorded' => 'Tractor plate recorded',
+        'task_selected'         => 'Task selected',
+        'order_confirmed'       => 'Order confirmed',
+        'bay_line_assignment'   => 'Bay line assignment retrieved',
+        'parking_assignment'    => 'Parking assignment retrieved',
+        'delivery_note_printed' => 'Delivery note printed',
+        'workflow_completed'    => 'Workflow completed',
+        'session_no_driver'     => 'Session has no associated driver; cannot confirm an order.',
+        'order_not_eligible'    => 'Selected order is not in the driver-eligible list for this task.',
+        'no_order_confirmed'    => 'No order is confirmed for this session; nothing to print.',
+    ],
+
 ];

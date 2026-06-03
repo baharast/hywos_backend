@@ -200,4 +200,17 @@ return [
         'terminal_detail'          => 'Terminal / Panel-Detail abgerufen',
     ],
 
+    'plc_controller_group' => [
+        'overall_plc'      => 'Gesamt-SPS / Zentral-SPS',
+        'main_filling_plc' => 'Haupt-Befüll-SPS',
+        'filling_bay_plc'  => 'Befüllbucht-SPS',
+        'analysis_unit'    => 'Analyseeinheit',
+        'compressor_ab'    => 'Kompressor A/B',
+        'compressor_de'    => 'Kompressor D/E',
+        'electrolyzer'     => 'Elektrolyseur',
+        'gate_controller'  => 'Torsteuerungen',
+        'remote_io'        => 'Remote-I/O',
+        'other'            => 'Sonstige',
+    ],
+
 ];
