@@ -17,14 +17,8 @@ class ExportJobStatus
 
     public static function label(string $value): string
     {
-        return match ($value) {
-            self::QUEUED => 'Queued',
-            self::GENERATING => 'Generating',
-            self::READY => 'Ready',
-            self::FAILED => 'Failed',
-            self::EXPIRED => 'Expired',
-            default => $value,
-        };
+        $translated = __('masterdata.export_job_status.' . $value);
+        return $translated !== 'masterdata.export_job_status.' . $value ? $translated : ucfirst(str_replace('_', ' ', $value));
     }
 
     public static function tone(string $value): string

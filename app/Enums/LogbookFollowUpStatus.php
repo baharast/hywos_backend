@@ -35,14 +35,8 @@ class LogbookFollowUpStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::OPEN => 'Open',
-            self::IN_PROGRESS => 'In progress',
-            self::DONE => 'Done',
-            self::CANCELLED => 'Cancelled',
-            self::OVERDUE => 'Overdue',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('logbook.follow_up_status.' . $v);
+        return $translated !== 'logbook.follow_up_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

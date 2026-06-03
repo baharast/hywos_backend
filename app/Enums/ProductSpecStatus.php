@@ -24,13 +24,8 @@ class ProductSpecStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::DRAFT => 'Draft',
-            self::ACTIVE => 'Active',
-            self::INACTIVE => 'Inactive',
-            self::RETIRED => 'Retired',
-            default => ucfirst($v),
-        };
+        $translated = __('masterdata.product_spec_status.' . $v);
+        return $translated !== 'masterdata.product_spec_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -39,17 +39,8 @@ class InterfaceFamily
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::SAP => 'SAP',
-            self::PLC_FIELDBUS => 'PLC / Fieldbus',
-            self::ANALYSIS_INTERFACE => 'Analysis Interface',
-            self::GATE_ETHERNET => 'Gate Ethernet',
-            self::PRINTER_SERVICE => 'Printer Service',
-            self::CLOUD_SYNC => 'Cloud Sync',
-            self::VPN_REMOTE_SUPPORT => 'VPN / Remote Support',
-            self::MAIL_NOTIFICATION => 'Mail / Notification',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.interface_family.' . $v);
+        return $translated !== 'hardware.interface_family.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     /**

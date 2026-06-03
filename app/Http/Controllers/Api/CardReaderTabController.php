@@ -43,7 +43,7 @@ class CardReaderTabController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Card readers retrieved'
+            __('hardware.messages.readers_retrieved')
         );
     }
 
@@ -56,7 +56,7 @@ class CardReaderTabController extends ApiController
             ])
             ->find($deviceId);
         if (! $device) {
-            return $this->error('Card reader not found', 'CARD_READER_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.reader_not_found'), 'CARD_READER_NOT_FOUND', 404);
         }
 
         $sessionHistory = $this->service->sessionHistoryFor($device)->map(fn ($s) => [
@@ -98,6 +98,6 @@ class CardReaderTabController extends ApiController
                 'auditRows' => $auditRows,
             ]);
 
-        return $this->success($resource, 'Card reader detail retrieved');
+        return $this->success($resource, __('hardware.messages.reader_detail'));
     }
 }

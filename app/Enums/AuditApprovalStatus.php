@@ -37,13 +37,8 @@ class AuditApprovalStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::NOT_REQUIRED => 'Not required',
-            self::PENDING => 'Pending',
-            self::APPROVED => 'Approved',
-            self::REJECTED => 'Rejected',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('logbook.audit_approval_status.' . $v);
+        return $translated !== 'logbook.audit_approval_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -23,10 +23,7 @@ class SapSyncDirection
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::IMPORT => 'Import',
-            self::EXPORT => 'Export',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('masterdata.sap_sync_direction.' . $v);
+        return $translated !== 'masterdata.sap_sync_direction.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

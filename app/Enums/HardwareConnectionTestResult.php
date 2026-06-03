@@ -22,13 +22,8 @@ class HardwareConnectionTestResult
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::PASSED => 'Passed',
-            self::FAILED => 'Failed',
-            self::TIMEOUT => 'Timeout',
-            self::NOT_SUPPORTED => 'Not supported',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.connection_test_result.' . $v);
+        return $translated !== 'hardware.connection_test_result.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

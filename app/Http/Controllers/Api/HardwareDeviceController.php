@@ -69,7 +69,7 @@ class HardwareDeviceController extends ApiController
             $paginator,
             $this->service->buildSummaryBar(),
             $lastUpdated,
-            'Hardware devices retrieved'
+            __('hardware.messages.devices_retrieved')
         );
     }
 
@@ -77,7 +77,7 @@ class HardwareDeviceController extends ApiController
     {
         $device = HardwareDevice::query()->find($id);
         if (! $device) {
-            return $this->error('Hardware device not found', 'HARDWARE_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.device_not_found'), 'HARDWARE_DEVICE_NOT_FOUND', 404);
         }
 
         $auditRows = AuditLog::query()
@@ -99,14 +99,14 @@ class HardwareDeviceController extends ApiController
         $resource = (new HardwareDeviceDetailResource($device))
             ->additional(['auditRows' => $auditRows]);
 
-        return $this->success($resource, 'Hardware device retrieved');
+        return $this->success($resource, __('hardware.messages.device_retrieved'));
     }
 
     public function events(Request $request, string $id)
     {
         $device = HardwareDevice::query()->find($id);
         if (! $device) {
-            return $this->error('Hardware device not found', 'HARDWARE_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.device_not_found'), 'HARDWARE_DEVICE_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 20);
@@ -128,7 +128,7 @@ class HardwareDeviceController extends ApiController
             'occurredAt' => $e->occurred_at?->toIso8601String(),
         ])->all();
 
-        return ApiResponse::list($rows, $paginator, [], $paginator->max('occurred_at'), 'Events retrieved');
+        return ApiResponse::list($rows, $paginator, [], $paginator->max('occurred_at'), __('hardware.messages.device_events_retrieved'));
     }
 
     /* ============================================================
@@ -139,7 +139,7 @@ class HardwareDeviceController extends ApiController
     {
         $device = HardwareDevice::query()->find($id);
         if (! $device) {
-            return $this->error('Hardware device not found', 'HARDWARE_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.device_not_found'), 'HARDWARE_DEVICE_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -152,7 +152,7 @@ class HardwareDeviceController extends ApiController
         } catch (\DomainException $e) {
             if ($e->getMessage() === 'ALREADY_IN_SERVICE_MODE') {
                 return $this->error(
-                    'Device is already in service mode.',
+                    __('hardware.messages.already_in_service_mode'),
                     'ALREADY_IN_SERVICE_MODE',
                     409
                 );
@@ -162,7 +162,7 @@ class HardwareDeviceController extends ApiController
 
         return $this->success(
             new HardwareDeviceDetailResource($fresh),
-            'Service mode set'
+            __('hardware.messages.service_mode_set')
         );
     }
 
@@ -170,7 +170,7 @@ class HardwareDeviceController extends ApiController
     {
         $device = HardwareDevice::query()->find($id);
         if (! $device) {
-            return $this->error('Hardware device not found', 'HARDWARE_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.device_not_found'), 'HARDWARE_DEVICE_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -180,7 +180,7 @@ class HardwareDeviceController extends ApiController
         } catch (\DomainException $e) {
             if ($e->getMessage() === 'NOT_IN_SERVICE_MODE') {
                 return $this->error(
-                    'Device is not in service mode.',
+                    __('hardware.messages.not_in_service_mode'),
                     'NOT_IN_SERVICE_MODE',
                     409
                 );
@@ -190,7 +190,7 @@ class HardwareDeviceController extends ApiController
 
         return $this->success(
             new HardwareDeviceDetailResource($fresh),
-            'Device restored from service mode'
+            __('hardware.messages.service_mode_restored')
         );
     }
 
@@ -198,7 +198,7 @@ class HardwareDeviceController extends ApiController
     {
         $device = HardwareDevice::query()->find($id);
         if (! $device) {
-            return $this->error('Hardware device not found', 'HARDWARE_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.device_not_found'), 'HARDWARE_DEVICE_NOT_FOUND', 404);
         }
 
         try {
@@ -206,7 +206,7 @@ class HardwareDeviceController extends ApiController
         } catch (\DomainException $e) {
             if ($e->getMessage() === 'CONNECTION_TEST_NOT_SUPPORTED') {
                 return $this->error(
-                    'Connection test is not supported for safety devices.',
+                    __('hardware.messages.test_not_supported'),
                     'CONNECTION_TEST_NOT_SUPPORTED',
                     409
                 );
@@ -216,7 +216,7 @@ class HardwareDeviceController extends ApiController
 
         return $this->success(
             new HardwareDeviceDetailResource($fresh),
-            'Connection test recorded'
+            __('hardware.messages.connection_test_recorded')
         );
     }
 

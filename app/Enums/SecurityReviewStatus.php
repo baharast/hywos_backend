@@ -31,13 +31,8 @@ class SecurityReviewStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::UNREVIEWED => 'Unreviewed',
-            self::IN_REVIEW => 'In review',
-            self::REVIEWED => 'Reviewed',
-            self::FALSE_POSITIVE => 'False positive',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.security_review_status.' . $v);
+        return $translated !== 'terminal.security_review_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

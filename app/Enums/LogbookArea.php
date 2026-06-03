@@ -41,21 +41,7 @@ class LogbookArea
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::FILLING_STATION_01 => 'Filling Station 01',
-            self::FILLING_STATION_02 => 'Filling Station 02',
-            self::FILLING_STATION_03 => 'Filling Station 03',
-            self::FILLING_STATION_04 => 'Filling Station 04',
-            self::FILLING_STATION_05 => 'Filling Station 05',
-            self::FILLING_STATION_06 => 'Filling Station 06',
-            self::ENTRY_GATE => 'Entry Gate',
-            self::EXIT_GATE => 'Exit Gate',
-            self::ANALYSIS => 'Analysis',
-            self::COMPRESSOR => 'Compressor',
-            self::ELECTROLYZER => 'Electrolyzer',
-            self::CONTROL_ROOM => 'Control Room',
-            self::SERVER_NETWORK => 'Server / Network',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('logbook.area.' . $v);
+        return $translated !== 'logbook.area.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

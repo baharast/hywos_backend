@@ -38,7 +38,7 @@ class PlcHealthTabController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'PLC / OPC UA endpoints retrieved'
+            __('hardware.messages.plc_endpoints_retrieved')
         );
     }
 
@@ -48,7 +48,7 @@ class PlcHealthTabController extends ApiController
             ->whereIn('device_type', PlcHealthTabService::IN_SCOPE_TYPES)
             ->find($deviceId);
         if (! $device) {
-            return $this->error('PLC endpoint not found', 'PLC_ENDPOINT_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.plc_endpoint_not_found'), 'PLC_ENDPOINT_NOT_FOUND', 404);
         }
 
         $auditRows = AuditLog::query()
@@ -70,6 +70,6 @@ class PlcHealthTabController extends ApiController
         $resource = (new PlcHealthTabResource($device))
             ->additional(['auditRows' => $auditRows]);
 
-        return $this->success($resource, 'PLC endpoint detail retrieved');
+        return $this->success($resource, __('hardware.messages.plc_endpoint_detail'));
     }
 }

@@ -27,13 +27,8 @@ class InterfaceBlockingLevel
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CRITICAL => 'Critical',
-            self::OPERATIONAL => 'Operational',
-            self::REPORTING_ONLY => 'Reporting only',
-            self::NON_BLOCKING => 'Non-blocking',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.interface_blocking_level.' . $v);
+        return $translated !== 'hardware.interface_blocking_level.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

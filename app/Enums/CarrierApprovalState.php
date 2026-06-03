@@ -16,13 +16,8 @@ class CarrierApprovalState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::APPROVED => 'Approved',
-            self::PENDING_REVIEW => 'Pending Review',
-            self::MISSING_DATA => 'Missing Data',
-            self::NOT_APPROVED => 'Not Approved',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('masterdata.carrier_approval_state.' . $v);
+        return $translated !== 'masterdata.carrier_approval_state.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -24,13 +24,8 @@ class HardwareDeviceCriticality
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CRITICAL => 'Critical',
-            self::HIGH => 'High',
-            self::MEDIUM => 'Medium',
-            self::LOW => 'Low',
-            default => ucfirst($v),
-        };
+        $translated = __('hardware.device_criticality.' . $v);
+        return $translated !== 'hardware.device_criticality.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -45,18 +45,7 @@ class InterfaceProtocol
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::SAP_RFC_IDOC => 'SAP RFC / IDoc / OData (TBC)',
-            self::OPCUA => 'OPC UA',
-            self::MODBUS_TCP => 'Modbus TCP',
-            self::PROFINET => 'Profinet',
-            self::PROFIBUS => 'Profibus',
-            self::ETHERNET => 'Ethernet',
-            self::HTTPS => 'HTTPS',
-            self::PRINTER_LOCAL => 'Printer (local)',
-            self::PRINTER_NETWORK => 'Printer (network)',
-            self::VPN => 'VPN',
-            default => strtoupper(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.interface_protocol.' . $v);
+        return $translated !== 'hardware.interface_protocol.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

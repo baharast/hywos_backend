@@ -30,15 +30,8 @@ class GasComponent
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::H2 => 'Hydrogen',
-            self::O2 => 'Oxygen',
-            self::N2 => 'Nitrogen',
-            self::CH4 => 'Methane',
-            self::CO => 'Carbon monoxide',
-            self::CO2 => 'Carbon dioxide',
-            default => $v,
-        };
+        $translated = __('masterdata.gas_component.' . $v);
+        return $translated !== 'masterdata.gas_component.' . $v ? $translated : $v;
     }
 
     /**

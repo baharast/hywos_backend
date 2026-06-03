@@ -137,7 +137,7 @@ class CarrierController extends ApiController
         $rows = CarrierResource::collection($paginator->items());
         $lastUpdated = FreightForwarder::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Carriers retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('masterdata.messages.carriers_retrieved'));
     }
 
     public function store(StoreCarrierRequest $request, AuditLogger $audit, EventLogger $events)
@@ -172,7 +172,7 @@ class CarrierController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->created(new CarrierResource($carrier->fresh()), 'Carrier created');
+            return $this->created(new CarrierResource($carrier->fresh()), __('masterdata.messages.carrier_created'));
         });
     }
 
@@ -180,10 +180,10 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
-        return $this->success(new CarrierResource($carrier), 'Carrier retrieved');
+        return $this->success(new CarrierResource($carrier), __('masterdata.messages.carrier_retrieved'));
     }
 
     public function update(
@@ -195,7 +195,7 @@ class CarrierController extends ApiController
     ) {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
         $payload = $request->validated();
@@ -264,7 +264,7 @@ class CarrierController extends ApiController
                 );
             }
 
-            return $this->success(new CarrierResource($carrier->fresh()), 'Carrier updated');
+            return $this->success(new CarrierResource($carrier->fresh()), __('masterdata.messages.carrier_updated'));
         });
     }
 
@@ -272,10 +272,10 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
         if ($carrier->status === CarrierStatus::BLOCKED) {
-            return $this->error('Carrier is already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('masterdata.messages.carrier_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -310,7 +310,7 @@ class CarrierController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new CarrierResource($carrier->fresh()), 'Carrier blocked');
+            return $this->success(new CarrierResource($carrier->fresh()), __('masterdata.messages.carrier_blocked'));
         });
     }
 
@@ -318,10 +318,10 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
         if ($carrier->status !== CarrierStatus::BLOCKED) {
-            return $this->error('Carrier is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('masterdata.messages.carrier_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -355,7 +355,7 @@ class CarrierController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new CarrierResource($carrier->fresh()), 'Carrier unblocked');
+            return $this->success(new CarrierResource($carrier->fresh()), __('masterdata.messages.carrier_unblocked'));
         });
     }
 
@@ -363,7 +363,7 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -389,7 +389,7 @@ class CarrierController extends ApiController
             $paginator,
             null,
             null,
-            'Carrier drivers retrieved (best-effort match against companies FK; cross-link pending)'
+            __('masterdata.messages.carrier_drivers')
         );
     }
 
@@ -397,7 +397,7 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -412,7 +412,7 @@ class CarrierController extends ApiController
             $paginator,
             null,
             null,
-            'Carrier vehicles retrieved'
+            __('masterdata.messages.carrier_vehicles')
         );
     }
 
@@ -420,7 +420,7 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -435,7 +435,7 @@ class CarrierController extends ApiController
             $paginator,
             null,
             null,
-            'Carrier trailers retrieved'
+            __('masterdata.messages.carrier_trailers')
         );
     }
 
@@ -443,12 +443,12 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Loading orders module not yet implemented'],
-            'Carrier orders retrieved (placeholder)'
+            __('masterdata.messages.carrier_orders_placeholder')
         );
     }
 
@@ -456,12 +456,12 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Plant visits module not yet implemented'],
-            'Carrier plant visits retrieved (placeholder)'
+            __('masterdata.messages.carrier_visits_placeholder')
         );
     }
 
@@ -469,7 +469,7 @@ class CarrierController extends ApiController
     {
         $carrier = FreightForwarder::find($id);
         if (! $carrier) {
-            return $this->error('Carrier not found', 'CARRIER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.carrier_not_found'), 'CARRIER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -497,7 +497,7 @@ class CarrierController extends ApiController
                 'audits_count' => $audits->count(),
                 'events_count' => $events->count(),
             ],
-        ], 'Carrier events & audit retrieved');
+        ], __('masterdata.messages.carrier_events_audit'));
     }
 
     public function export(Request $request)
@@ -546,7 +546,7 @@ class CarrierController extends ApiController
             'visibleColumns' => $visibleColumns,
             'rows' => $rows,
             'note' => 'Binary export (CSV/XLSX) not yet implemented; returning JSON payload.',
-        ], 'Carrier export prepared');
+        ], __('masterdata.messages.carrier_export'));
     }
 
     /**

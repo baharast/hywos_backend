@@ -34,18 +34,18 @@ class AuditTrailController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Audit trail retrieved'
+            __('logbook.messages.audit_retrieved')
         );
     }
 
     public function show(string $id)
     {
         if (! ctype_digit($id)) {
-            return $this->error('Audit record not found', 'AUDIT_RECORD_NOT_FOUND', 404);
+            return $this->error(__('logbook.messages.audit_record_not_found'), 'AUDIT_RECORD_NOT_FOUND', 404);
         }
         $row = AuditLog::query()->find((int) $id);
         if (! $row) {
-            return $this->error('Audit record not found', 'AUDIT_RECORD_NOT_FOUND', 404);
+            return $this->error(__('logbook.messages.audit_record_not_found'), 'AUDIT_RECORD_NOT_FOUND', 404);
         }
 
         $resource = (new AuditTrailResource($row))
@@ -56,6 +56,6 @@ class AuditTrailController extends ApiController
                 'sessionId' => $row->session_id,
             ]);
 
-        return $this->success($resource, 'Audit record detail retrieved');
+        return $this->success($resource, __('logbook.messages.audit_record_detail'));
     }
 }

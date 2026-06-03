@@ -30,14 +30,7 @@ class SapFeedbackType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ORDER_STATUS => 'Order Status',
-            self::QUANTITY => 'Quantity',
-            self::QUALITY => 'Quality',
-            self::DOCUMENT => 'Document',
-            self::COMPLETION => 'Completion',
-            self::CANCELLATION => 'Cancellation',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('masterdata.sap_feedback_type.' . $v);
+        return $translated !== 'masterdata.sap_feedback_type.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

@@ -46,7 +46,7 @@ class PrinterTabController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Printers retrieved'
+            __('hardware.messages.printers_retrieved')
         );
     }
 
@@ -56,7 +56,7 @@ class PrinterTabController extends ApiController
             ->where('device_type', HardwareDeviceType::PRINTER)
             ->find($deviceId);
         if (! $device) {
-            return $this->error('Printer not found', 'PRINTER_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.printer_not_found'), 'PRINTER_NOT_FOUND', 404);
         }
 
         // Last 20 print attempts for this printer, newest first, with the
@@ -119,7 +119,7 @@ class PrinterTabController extends ApiController
                 'auditRows' => $auditRows,
             ]);
 
-        return $this->success($resource, 'Printer detail retrieved');
+        return $this->success($resource, __('hardware.messages.printer_detail'));
     }
 
     /* ============================================================
@@ -135,7 +135,7 @@ class PrinterTabController extends ApiController
     {
         $printer = $this->findPrinter($printerId);
         if (! $printer) {
-            return $this->error('Printer not found', 'PRINTER_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.printer_not_found'), 'PRINTER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -150,7 +150,7 @@ class PrinterTabController extends ApiController
             $paginator,
             null,
             $printer->last_event_at,
-            'Printer job feed retrieved'
+            __('hardware.messages.printer_job_feed')
         );
     }
 
@@ -158,14 +158,14 @@ class PrinterTabController extends ApiController
     {
         $printer = $this->findPrinter($printerId);
         if (! $printer) {
-            return $this->error('Printer not found', 'PRINTER_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.printer_not_found'), 'PRINTER_NOT_FOUND', 404);
         }
         // Confirm the attempt actually belongs to this printer — the URL
         // says so; the DB must agree. Either soft-FK column (or the
         // legacy printer_name match) is acceptable.
         if (! $this->attemptBelongsToPrinter($attemptId, $printer)) {
             return $this->error(
-                'Print attempt does not belong to this printer',
+                __('hardware.messages.print_wrong_printer'),
                 'PRINT_ATTEMPT_NOT_FOUND_FOR_PRINTER',
                 404
             );
@@ -182,7 +182,7 @@ class PrinterTabController extends ApiController
                 'newAttempt' => (new PrinterJobResource($result['newAttempt']))->toArray(request()),
                 'printer' => (new PrinterTabResource($printer))->toArray(request()),
             ],
-            'Print job retry queued'
+            __('hardware.messages.print_retry_queued')
         );
     }
 
@@ -190,11 +190,11 @@ class PrinterTabController extends ApiController
     {
         $printer = $this->findPrinter($printerId);
         if (! $printer) {
-            return $this->error('Printer not found', 'PRINTER_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.printer_not_found'), 'PRINTER_NOT_FOUND', 404);
         }
         if (! $this->attemptBelongsToPrinter($attemptId, $printer)) {
             return $this->error(
-                'Print attempt does not belong to this printer',
+                __('hardware.messages.print_wrong_printer'),
                 'PRINT_ATTEMPT_NOT_FOUND_FOR_PRINTER',
                 404
             );
@@ -202,7 +202,7 @@ class PrinterTabController extends ApiController
         $data = $request->validated();
         if ($data['replacement_printer_id'] === $printer->id) {
             return $this->error(
-                'Replacement printer must differ from the original.',
+                __('hardware.messages.replacement_must_differ'),
                 'PRINTER_REPLACEMENT_INVALID',
                 422,
                 ['replacement_printer_id' => $data['replacement_printer_id']]
@@ -224,7 +224,7 @@ class PrinterTabController extends ApiController
                 'newAttempt' => (new PrinterJobResource($result['newAttempt']))->toArray(request()),
                 'replacement' => (new PrinterTabResource($result['replacement']))->toArray(request()),
             ],
-            'Print job rerouted'
+            __('hardware.messages.print_rerouted')
         );
     }
 
@@ -259,18 +259,18 @@ class PrinterTabController extends ApiController
         $code = $e->getMessage();
         return match ($code) {
             'PRINT_ATTEMPT_NOT_FOUND' =>
-                $this->error('Print attempt not found', 'PRINT_ATTEMPT_NOT_FOUND', 404),
+                $this->error(__('hardware.messages.print_attempt_not_found'), 'PRINT_ATTEMPT_NOT_FOUND', 404),
             'PRINTER_JOB_NOT_RETRYABLE' =>
-                $this->error('Print attempt is not in a retryable state', 'PRINTER_JOB_NOT_RETRYABLE', 409),
+                $this->error(__('hardware.messages.print_not_retryable'), 'PRINTER_JOB_NOT_RETRYABLE', 409),
             'PRINTER_JOB_NOT_REROUTABLE' =>
-                $this->error('Only failed print attempts can be rerouted', 'PRINTER_JOB_NOT_REROUTABLE', 409),
+                $this->error(__('hardware.messages.print_not_reroutable'), 'PRINTER_JOB_NOT_REROUTABLE', 409),
             'PRINTER_REPLACEMENT_INVALID' =>
                 $this->error(
-                    'Replacement printer is not a usable printer (must exist, be in printer device_type, not in service mode, and not in fault/offline).',
+                    __('hardware.messages.replacement_invalid'),
                     'PRINTER_REPLACEMENT_INVALID',
                     422
                 ),
-            default => $this->error('Print job action failed', 'PRINTER_ACTION_FAILED', 500),
+            default => $this->error(__('hardware.messages.print_action_failed'), 'PRINTER_ACTION_FAILED', 500),
         };
     }
 }

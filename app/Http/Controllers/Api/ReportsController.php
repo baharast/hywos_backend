@@ -53,7 +53,7 @@ class ReportsController extends ApiController
             null,
             ['totalReports' => count($items)],
             $lastUpdated,
-            'Reports hub retrieved'
+            __('masterdata.messages.reports_retrieved')
         );
     }
 
@@ -64,7 +64,7 @@ class ReportsController extends ApiController
     {
         $canonical = ReportId::normaliseId($reportId);
         if ($canonical === null) {
-            return $this->error('Report not found', 'REPORT_NOT_FOUND', 404, [
+            return $this->error(__('masterdata.messages.report_not_found'), 'REPORT_NOT_FOUND', 404, [
                 'allowed' => ReportId::all(),
             ]);
         }
@@ -83,7 +83,7 @@ class ReportsController extends ApiController
 
         return $this->success(
             $payload,
-            'Report retrieved',
+            __('masterdata.messages.report_retrieved'),
             [
                 'dataSourceAvailable' => (bool) ($meta['dataSourceAvailable'] ?? true),
                 'placeholderReason' => $meta['placeholderReason'] ?? null,
@@ -101,7 +101,7 @@ class ReportsController extends ApiController
     {
         $canonical = ReportId::normaliseId($reportId);
         if ($canonical === null) {
-            return $this->error('Report not found', 'REPORT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.report_not_found'), 'REPORT_NOT_FOUND', 404);
         }
 
         $range = ReportDateRangePreset::resolve(
@@ -127,7 +127,7 @@ class ReportsController extends ApiController
             ],
             null,
             $lastUpdated,
-            'Drill-down rows retrieved'
+            __('masterdata.messages.report_drill_down')
         );
     }
 
@@ -143,7 +143,7 @@ class ReportsController extends ApiController
     {
         $canonical = ReportId::normaliseId($reportId);
         if ($canonical === null) {
-            return $this->error('Report not found', 'REPORT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.report_not_found'), 'REPORT_NOT_FOUND', 404);
         }
 
         $format = $request->input('format', 'json');
@@ -184,7 +184,7 @@ class ReportsController extends ApiController
                     ? 'Returning JSON payload — binary XLSX/PDF rendering not yet implemented for the per-report Export button (Master Data Export covers the multi-category background flow).'
                     : "Binary {$format} rendering not yet implemented; returning JSON payload for now.",
             ],
-            'Report export prepared',
+            __('masterdata.messages.report_export'),
             [
                 'dataSourceAvailable' => (bool) ($meta['dataSourceAvailable'] ?? true),
                 'placeholderReason' => $meta['placeholderReason'] ?? null,

@@ -41,16 +41,8 @@ class PrinterJobStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::QUEUED => 'Queued',
-            self::PRINTING => 'Printing',
-            self::PRINTED => 'Printed',
-            self::FAILED => 'Failed',
-            self::CANCELLED => 'Cancelled',
-            self::REPRINTED => 'Reprinted',
-            self::REROUTED => 'Rerouted',
-            default => ucfirst($v),
-        };
+        $translated = __('hardware.printer_job_status.' . $v);
+        return $translated !== 'hardware.printer_job_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

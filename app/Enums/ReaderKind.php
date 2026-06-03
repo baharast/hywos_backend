@@ -55,15 +55,8 @@ class ReaderKind
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ENTRY_GATE_PERSONAL => 'Entry Gate Personal RFID Reader',
-            self::EXIT_ID_READER => 'Exit Identification Reader',
-            self::DRIVER_TERMINAL_READER => 'Driver Terminal RFID/Chip Reader',
-            self::FILLING_BAY_READER => 'Filling Bay RFID Reader',
-            self::TRAILER_REGISTRATION_READER => 'Trailer-Chip Reader (Registration)',
-            self::OTHER => 'Other Reader',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.reader_kind.' . $v);
+        return $translated !== 'terminal.reader_kind.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string
@@ -125,13 +118,8 @@ class ReaderKind
 
     public static function linkedProcessLabel(string $kind): string
     {
-        return match (self::linkedProcess($kind)) {
-            'entry' => 'Entry',
-            'exit' => 'Exit',
-            'terminal_login' => 'Terminal login',
-            'loading_release' => 'Loading release',
-            'trailer_registration' => 'Trailer registration',
-            default => 'Unknown',
-        };
+        $process = self::linkedProcess($kind);
+        $translated = __('terminal.reader_linked_process.' . $process);
+        return $translated !== 'terminal.reader_linked_process.' . $process ? $translated : ucfirst(str_replace('_', ' ', $process));
     }
 }

@@ -36,7 +36,7 @@ class TerminalPanelTabController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Terminals & panels retrieved'
+            __('hardware.messages.terminals_retrieved')
         );
     }
 
@@ -44,7 +44,7 @@ class TerminalPanelTabController extends ApiController
     {
         $device = HardwareDevice::query()->find($deviceId);
         if (! $device) {
-            return $this->error('Hardware device not found', 'HARDWARE_DEVICE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.terminal_not_found'), 'HARDWARE_DEVICE_NOT_FOUND', 404);
         }
 
         // Last 20 sessions for this device's touchpoint, newest first.
@@ -88,6 +88,6 @@ class TerminalPanelTabController extends ApiController
                 'auditRows' => $auditRows,
             ]);
 
-        return $this->success($resource, 'Terminal / panel detail retrieved');
+        return $this->success($resource, __('hardware.messages.terminal_detail'));
     }
 }

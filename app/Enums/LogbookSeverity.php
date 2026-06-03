@@ -25,14 +25,8 @@ class LogbookSeverity
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CRITICAL => 'Critical',
-            self::HIGH => 'High',
-            self::MEDIUM => 'Medium',
-            self::LOW => 'Low',
-            self::INFO => 'Info',
-            default => ucfirst($v),
-        };
+        $translated = __('logbook.severity.' . $v);
+        return $translated !== 'logbook.severity.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

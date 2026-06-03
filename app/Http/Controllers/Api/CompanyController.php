@@ -41,7 +41,7 @@ class CompanyController extends ApiController
         $items = CompanyResource::collection($paginator->items());
         $lastUpdated = $query->max('updated_at');
 
-        return ApiResponse::list($items, $paginator, $summary, $lastUpdated, 'Companies retrieved');
+        return ApiResponse::list($items, $paginator, $summary, $lastUpdated, __('masterdata.messages.companies_retrieved'));
     }
 
     public function store(StoreCompanyRequest $request)
@@ -49,65 +49,65 @@ class CompanyController extends ApiController
         $data = $request->validated();
         $company = Company::create($data);
 
-        return $this->created(new CompanyResource($company), 'Company created');
+        return $this->created(new CompanyResource($company), __('masterdata.messages.company_created'));
     }
 
     public function show($id)
     {
         $company = Company::find($id);
         if (!$company) {
-            return $this->error('Company not found', 'COMPANY_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.company_not_found'), 'COMPANY_NOT_FOUND', 404);
         }
 
-        return $this->success(new CompanyResource($company), 'Company retrieved');
+        return $this->success(new CompanyResource($company), __('masterdata.messages.company_retrieved'));
     }
 
     public function update(UpdateCompanyRequest $request, $id)
     {
         $company = Company::find($id);
         if (!$company) {
-            return $this->error('Company not found', 'COMPANY_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.company_not_found'), 'COMPANY_NOT_FOUND', 404);
         }
 
         $company->update($request->validated());
 
-        return $this->success(new CompanyResource($company), 'Company updated');
+        return $this->success(new CompanyResource($company), __('masterdata.messages.company_updated'));
     }
 
     public function activate($id)
     {
         $company = Company::find($id);
         if (!$company) {
-            return $this->error('Company not found', 'COMPANY_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.company_not_found'), 'COMPANY_NOT_FOUND', 404);
         }
 
         $company->update(['is_active' => true]);
 
-        return $this->success(new CompanyResource($company), 'Company activated');
+        return $this->success(new CompanyResource($company), __('masterdata.messages.company_activated'));
     }
 
     public function deactivate($id)
     {
         $company = Company::find($id);
         if (!$company) {
-            return $this->error('Company not found', 'COMPANY_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.company_not_found'), 'COMPANY_NOT_FOUND', 404);
         }
 
         $company->update(['is_active' => false]);
 
-        return $this->success(new CompanyResource($company), 'Company deactivated');
+        return $this->success(new CompanyResource($company), __('masterdata.messages.company_deactivated'));
     }
 
     public function destroy($id)
     {
         $company = Company::find($id);
         if (!$company) {
-            return $this->error('Company not found', 'COMPANY_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.company_not_found'), 'COMPANY_NOT_FOUND', 404);
         }
 
         // Soft delete via deactivation
         $company->update(['is_active' => false]);
 
-        return $this->success(new CompanyResource($company), 'Company deleted');
+        return $this->success(new CompanyResource($company), __('masterdata.messages.company_deleted'));
     }
 }

@@ -60,17 +60,17 @@ class SapSyncController extends ApiController
         $summary = $this->summary();
         $lastUpdated = SapSyncRecord::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'SAP sync records retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('masterdata.messages.sap_records_retrieved'));
     }
 
     public function show($id)
     {
         $record = SapSyncRecord::find($id);
         if (! $record) {
-            return $this->error('SAP sync record not found', 'SAP_SYNC_RECORD_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.sap_record_not_found'), 'SAP_SYNC_RECORD_NOT_FOUND', 404);
         }
 
-        return $this->success(new SapSyncRecordDetailResource($record), 'SAP sync record retrieved');
+        return $this->success(new SapSyncRecordDetailResource($record), __('masterdata.messages.sap_record_retrieved'));
     }
 
     // ---------- helpers ----------

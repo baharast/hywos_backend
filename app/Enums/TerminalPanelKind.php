@@ -52,15 +52,8 @@ class TerminalPanelKind
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ENTRY_GATE => 'Entry Gate',
-            self::EXIT_GATE => 'Exit Gate',
-            self::DRIVER_TERMINAL => 'Driver Terminal',
-            self::FILLING_HMI_PANEL => 'Filling HMI Panel',
-            self::OPERATOR_CLIENT => 'Operator Client',
-            self::OTHER => 'Other',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.terminal_panel_kind.' . $v);
+        return $translated !== 'terminal.terminal_panel_kind.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

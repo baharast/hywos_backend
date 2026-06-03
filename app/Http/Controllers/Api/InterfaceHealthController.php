@@ -96,7 +96,7 @@ class InterfaceHealthController extends ApiController
                 ],
                 $summary,
                 $lastUpdated,
-                'Interfaces retrieved'
+                __('hardware.messages.interfaces_retrieved')
             );
         }
 
@@ -110,14 +110,14 @@ class InterfaceHealthController extends ApiController
             InterfaceHealth::query()->max('last_failure_at')
         );
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Interfaces retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('hardware.messages.interfaces_retrieved'));
     }
 
     public function show(string $id)
     {
         $interface = InterfaceHealth::find($id);
         if (! $interface) {
-            return $this->error('Interface not found', 'INTERFACE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.interface_not_found'), 'INTERFACE_NOT_FOUND', 404);
         }
 
         $base = (new InterfaceHealthListResource($interface))->toArray(request());
@@ -138,7 +138,7 @@ class InterfaceHealthController extends ApiController
 
         return $this->success(
             new InterfaceHealthDetailResource($detail),
-            'Interface retrieved'
+            __('hardware.messages.interface_retrieved')
         );
     }
 
@@ -153,12 +153,12 @@ class InterfaceHealthController extends ApiController
     {
         $interface = InterfaceHealth::find($id);
         if (! $interface) {
-            return $this->error('Interface not found', 'INTERFACE_NOT_FOUND', 404);
+            return $this->error(__('hardware.messages.interface_not_found'), 'INTERFACE_NOT_FOUND', 404);
         }
 
         if ($interface->family === InterfaceFamily::MAIL_NOTIFICATION) {
             return $this->error(
-                'Retry is not supported for mail / notification interfaces',
+                __('hardware.messages.retry_not_supported'),
                 'RETRY_NOT_SUPPORTED',
                 409,
                 ['family' => $interface->family]
@@ -167,7 +167,7 @@ class InterfaceHealthController extends ApiController
 
         if ($interface->status === InterfaceStatus::DISABLED) {
             return $this->error(
-                'Interface is disabled — re-enable it before retrying.',
+                __('hardware.messages.interface_disabled'),
                 'INTERFACE_DISABLED',
                 422,
                 ['status' => $interface->status]
@@ -178,7 +178,7 @@ class InterfaceHealthController extends ApiController
 
         return $this->success(
             new InterfaceHealthListResource($fresh),
-            'Retry requested'
+            __('hardware.messages.retry_requested')
         );
     }
 

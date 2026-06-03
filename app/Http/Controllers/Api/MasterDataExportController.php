@@ -51,7 +51,7 @@ class MasterDataExportController extends ApiController
             $paginator,
             $summary,
             ExportJob::max('updated_at'),
-            'Export jobs retrieved'
+            __('masterdata.messages.export_jobs_retrieved')
         );
     }
 
@@ -68,8 +68,8 @@ class MasterDataExportController extends ApiController
         return $this->success(
             new ExportJobResource($job),
             $job->status === ExportJobStatus::READY
-                ? 'Export ready'
-                : 'Export job created',
+                ? __('masterdata.messages.export_ready')
+                : __('masterdata.messages.export_job_created'),
             $code
         );
     }
@@ -78,31 +78,31 @@ class MasterDataExportController extends ApiController
     {
         $job = ExportJob::find($id);
         if (! $job) {
-            return $this->error('Export job not found', 'EXPORT_JOB_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.export_job_not_found'), 'EXPORT_JOB_NOT_FOUND', 404);
         }
-        return $this->success(new ExportJobResource($job), 'Export job retrieved');
+        return $this->success(new ExportJobResource($job), __('masterdata.messages.export_job_retrieved'));
     }
 
     public function download($id, MasterDataExportService $service)
     {
         $job = ExportJob::find($id);
         if (! $job) {
-            return $this->error('Export job not found', 'EXPORT_JOB_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.export_job_not_found'), 'EXPORT_JOB_NOT_FOUND', 404);
         }
         if ($job->status !== ExportJobStatus::READY) {
-            return $this->error('Export not ready', 'EXPORT_NOT_READY', 409, [
+            return $this->error(__('masterdata.messages.export_not_ready'), 'EXPORT_NOT_READY', 409, [
                 'status' => $job->status,
             ]);
         }
         if ($job->isExpired()) {
-            return $this->error('Export has expired', 'EXPORT_EXPIRED', 410);
+            return $this->error(__('masterdata.messages.export_expired'), 'EXPORT_EXPIRED', 410);
         }
         if (! $job->file_path || ! $job->file_disk) {
-            return $this->error('Export file is missing', 'EXPORT_FILE_MISSING', 410);
+            return $this->error(__('masterdata.messages.export_file_missing'), 'EXPORT_FILE_MISSING', 410);
         }
         $disk = Storage::disk($job->file_disk);
         if (! $disk->exists($job->file_path)) {
-            return $this->error('Export file is missing', 'EXPORT_FILE_MISSING', 410);
+            return $this->error(__('masterdata.messages.export_file_missing'), 'EXPORT_FILE_MISSING', 410);
         }
 
         $service->recordDownload($job);
@@ -115,10 +115,10 @@ class MasterDataExportController extends ApiController
     {
         $original = ExportJob::find($id);
         if (! $original) {
-            return $this->error('Export job not found', 'EXPORT_JOB_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.export_job_not_found'), 'EXPORT_JOB_NOT_FOUND', 404);
         }
         if ($original->status !== ExportJobStatus::FAILED) {
-            return $this->error('Only failed jobs can be retried', 'EXPORT_NOT_RETRYABLE', 409, [
+            return $this->error(__('masterdata.messages.export_not_retryable'), 'EXPORT_NOT_RETRYABLE', 409, [
                 'status' => $original->status,
             ]);
         }
@@ -136,6 +136,6 @@ class MasterDataExportController extends ApiController
         $retry = $service->generate($retry);
         $service->recordRetry($original, $retry);
 
-        return $this->success(new ExportJobResource($retry), 'Export retried', 201);
+        return $this->success(new ExportJobResource($retry), __('masterdata.messages.export_retried'), 201);
     }
 }

@@ -83,7 +83,7 @@ class OperationalDocumentController extends ApiController
             $paginator,
             $this->summary(),
             $lastUpdated,
-            'Operational documents retrieved'
+            __('masterdata.messages.documents_retrieved')
         );
     }
 
@@ -91,12 +91,12 @@ class OperationalDocumentController extends ApiController
     {
         $doc = OperationalDocument::with('printAttempts')->find($id);
         if (! $doc) {
-            return $this->error('Document not found', 'DOCUMENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.document_not_found'), 'DOCUMENT_NOT_FOUND', 404);
         }
 
         return $this->success(
             OperationalDocumentResource::detail($doc),
-            'Document retrieved'
+            __('masterdata.messages.document_retrieved')
         );
     }
 
@@ -110,12 +110,12 @@ class OperationalDocumentController extends ApiController
     {
         $doc = OperationalDocument::find($id);
         if (! $doc) {
-            return $this->error('Document not found', 'DOCUMENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.document_not_found'), 'DOCUMENT_NOT_FOUND', 404);
         }
 
         if (empty($doc->file_url)) {
             return $this->error(
-                'No preview file available for this document yet.',
+                __('masterdata.messages.document_no_preview'),
                 'PREVIEW_UNAVAILABLE',
                 404,
                 ['lifecycleStatus' => $doc->lifecycle_status]
@@ -129,7 +129,7 @@ class OperationalDocumentController extends ApiController
             'templateName' => $doc->template_name,
             'templateVersion' => $doc->template_version,
             'version' => $doc->version,
-        ], 'Document preview retrieved');
+        ], __('masterdata.messages.document_preview'));
     }
 
     /**
@@ -141,13 +141,13 @@ class OperationalDocumentController extends ApiController
     {
         $doc = OperationalDocument::find($id);
         if (! $doc) {
-            return $this->error('Document not found', 'DOCUMENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.document_not_found'), 'DOCUMENT_NOT_FOUND', 404);
         }
 
         $attempts = $doc->printAttempts()->orderBy('attempt_no')->get();
         return $this->success(
             DocumentPrintAttemptResource::collection($attempts),
-            'Print history retrieved'
+            __('masterdata.messages.document_print_history')
         );
     }
 
@@ -159,7 +159,7 @@ class OperationalDocumentController extends ApiController
     {
         $doc = OperationalDocument::find($id);
         if (! $doc) {
-            return $this->error('Document not found', 'DOCUMENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.document_not_found'), 'DOCUMENT_NOT_FOUND', 404);
         }
 
         if (! in_array($doc->lifecycle_status, [
@@ -231,7 +231,7 @@ class OperationalDocumentController extends ApiController
 
             return $this->success(
                 OperationalDocumentResource::detail($fresh->load('printAttempts')),
-                'Document queued for print'
+                __('masterdata.messages.document_queued')
             );
         });
     }
@@ -240,7 +240,7 @@ class OperationalDocumentController extends ApiController
     {
         $doc = OperationalDocument::find($id);
         if (! $doc) {
-            return $this->error('Document not found', 'DOCUMENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.document_not_found'), 'DOCUMENT_NOT_FOUND', 404);
         }
 
         if (! in_array($doc->lifecycle_status, [
@@ -316,7 +316,7 @@ class OperationalDocumentController extends ApiController
 
             return $this->success(
                 OperationalDocumentResource::detail($fresh->load('printAttempts')),
-                'Document reprint queued'
+                __('masterdata.messages.document_reprinted')
             );
         });
     }
@@ -325,7 +325,7 @@ class OperationalDocumentController extends ApiController
     {
         $doc = OperationalDocument::find($id);
         if (! $doc) {
-            return $this->error('Document not found', 'DOCUMENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.document_not_found'), 'DOCUMENT_NOT_FOUND', 404);
         }
 
         if (! in_array($doc->lifecycle_status, [
@@ -375,7 +375,7 @@ class OperationalDocumentController extends ApiController
 
             return $this->success(
                 OperationalDocumentResource::detail($fresh->load('printAttempts')),
-                'Document marked handed over'
+                __('masterdata.messages.document_handed_over')
             );
         });
     }
@@ -384,7 +384,7 @@ class OperationalDocumentController extends ApiController
     {
         $doc = OperationalDocument::find($id);
         if (! $doc) {
-            return $this->error('Document not found', 'DOCUMENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.document_not_found'), 'DOCUMENT_NOT_FOUND', 404);
         }
 
         if (in_array($doc->lifecycle_status, [
@@ -443,7 +443,7 @@ class OperationalDocumentController extends ApiController
 
             return $this->success(
                 OperationalDocumentResource::detail($fresh->load('printAttempts')),
-                $asCancelled ? 'Document cancelled' : 'Document invalidated'
+                $asCancelled ? __('masterdata.messages.document_cancelled') : __('masterdata.messages.document_invalidated')
             );
         });
     }

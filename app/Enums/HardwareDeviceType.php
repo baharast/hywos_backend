@@ -38,22 +38,8 @@ class HardwareDeviceType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::PLC => 'PLC',
-            self::HMI_PANEL => 'HMI Panel',
-            self::SMART_GATE_CONTROLLER => 'Smart Gate Controller',
-            self::PRINTER => 'Printer',
-            self::RFID_READER => 'RFID Reader',
-            self::TRAILER_CHIP_READER => 'Trailer Chip Reader',
-            self::COMPRESSOR_CONTROLLER => 'Compressor Controller',
-            self::ELECTROLYZER_CONTROLLER => 'Electrolyzer Controller',
-            self::ANALYZER => 'Analyzer',
-            self::NETWORK_DEVICE => 'Network Device',
-            self::SERVER => 'Server',
-            self::RIO_CABINET => 'Remote I/O Cabinet',
-            self::SAFETY_DEVICE => 'Safety Device',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.device_type.' . $v);
+        return $translated !== 'hardware.device_type.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     /**

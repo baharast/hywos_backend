@@ -51,7 +51,7 @@ class GateTerminalMonitorController extends ApiController
             null,
             null,
             $lastUpdated,
-            'Touchpoint board retrieved'
+            __('terminal.messages.touchpoint_board')
         );
     }
 
@@ -79,17 +79,17 @@ class GateTerminalMonitorController extends ApiController
         $summary = $this->summary();
         $lastUpdated = TerminalSession::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Terminal sessions retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('terminal.messages.sessions_retrieved'));
     }
 
     public function show($id)
     {
         $session = TerminalSession::find($id);
         if (! $session) {
-            return $this->error('Terminal session not found', 'TERMINAL_SESSION_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.session_not_found'), 'TERMINAL_SESSION_NOT_FOUND', 404);
         }
 
-        return $this->success(new GateTerminalSessionResource($session), 'Terminal session retrieved');
+        return $this->success(new GateTerminalSessionResource($session), __('terminal.messages.session_retrieved'));
     }
 
     // ---------- helpers ----------
@@ -225,7 +225,7 @@ class GateTerminalMonitorController extends ApiController
         if ($entryDenied + $exitBlocked + $needsOperator + $deviceFaults + $activeSessions === 0) {
             return [
                 'activeSessions' => 0,
-                'message' => 'No active gate or terminal issues',
+                'message' => __('terminal.messages.no_issues'),
             ];
         }
 

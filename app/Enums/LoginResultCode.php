@@ -76,25 +76,12 @@ class LoginResultCode
      */
     public static function message(string $v): string
     {
-        return match ($v) {
-            self::SUCCESS => 'Identity confirmed.',
-            self::TRAINING_REQUIRED => 'Safety training is required before operational access.',
-            self::INVALID => 'Identification is invalid. Please check the number or contact terminal support.',
-            self::EXPIRED => 'This TAN has expired. Please contact terminal support.',
-            self::USED => 'This TAN has already been used. Please contact terminal support.',
-            self::REVOKED => 'This TAN has been revoked. Please contact terminal support.',
-            self::PENDING => 'This TAN is not yet valid. Please try again later.',
-            self::DRIVER_BLOCKED => 'Access not permitted. Please contact terminal support.',
-            self::DRIVER_INACTIVE => 'Access not permitted. Please contact terminal support.',
-            self::CHIP_BLOCKED => 'Chip card is blocked. Please contact terminal support.',
-            self::CHIP_UNASSIGNED => 'Chip card not recognized. Please contact terminal support.',
-            self::READER_OFFLINE => 'Chip reader unavailable. Use TAN or contact terminal support.',
-            self::TERMINAL_OFFLINE => 'Terminal is offline. Please contact terminal support.',
-            self::TERMINAL_SERVICE_MODE => 'Terminal is in service mode. Please contact terminal support.',
-            self::BACKEND_UNAVAILABLE => 'System connection unavailable. Please contact terminal support.',
-            self::TOO_MANY_ATTEMPTS => 'Too many attempts. Please contact terminal support.',
-            default => 'Login failed. Please contact terminal support.',
-        };
+        $translated = __('terminal.login_result_message.' . $v);
+        if ($translated !== 'terminal.login_result_message.' . $v) {
+            return $translated;
+        }
+        $default = __('terminal.login_result_message.default');
+        return $default !== 'terminal.login_result_message.default' ? $default : 'Login failed. Please contact terminal support.';
     }
 
     /**

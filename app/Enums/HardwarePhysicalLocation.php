@@ -46,24 +46,7 @@ class HardwarePhysicalLocation
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ENTRY_GATE => 'Entry Gate',
-            self::EXIT_GATE => 'Exit Gate',
-            self::DRIVER_TERMINAL => 'Driver Terminal',
-            self::FILLING_BAY_01 => 'Filling Bay 01',
-            self::FILLING_BAY_02 => 'Filling Bay 02',
-            self::FILLING_BAY_03 => 'Filling Bay 03',
-            self::FILLING_BAY_04 => 'Filling Bay 04',
-            self::FILLING_BAY_05 => 'Filling Bay 05',
-            self::FILLING_BAY_06 => 'Filling Bay 06',
-            self::CONTROL_ROOM => 'Control Room',
-            self::TECHNICAL_ROOM => 'Technical Room',
-            self::ON_SITE_SERVER_ZONE => 'On-site Server Zone',
-            self::COMPRESSOR_CONTAINER => 'Compressor Container',
-            self::ELECTROLYZER_CONTAINER => 'Electrolyzer Container',
-            self::STORAGE_AREA => 'Storage Area',
-            self::UTILITY_AREA => 'Utility Area',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.physical_location.' . $v);
+        return $translated !== 'hardware.physical_location.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

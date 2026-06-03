@@ -77,19 +77,8 @@ class DocumentLifecycleStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::PENDING => 'Pending',
-            self::GENERATED => 'Generated',
-            self::QUEUED_FOR_PRINT => 'Queued for Print',
-            self::PRINTED => 'Printed',
-            self::PRINT_FAILED => 'Print Failed',
-            self::REPRINTED => 'Reprinted',
-            self::HANDED_OVER => 'Handed Over',
-            self::BLOCKED => 'Blocked',
-            self::INVALIDATED => 'Invalidated',
-            self::CANCELLED => 'Cancelled',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('masterdata.document_lifecycle_status.' . $v);
+        return $translated !== 'masterdata.document_lifecycle_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

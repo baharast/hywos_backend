@@ -21,10 +21,7 @@ class LoginMethod
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::TAN => 'TAN Number',
-            self::CHIP_CARD => 'Driver Chip Card',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.login_method.' . $v);
+        return $translated !== 'terminal.login_method.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

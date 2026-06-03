@@ -33,15 +33,8 @@ class GateTerminalSessionState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::IDLE => 'Idle',
-            self::ACTIVE => 'Active',
-            self::DENIED => 'Denied',
-            self::NEEDS_OPERATOR => 'Needs Operator',
-            self::DEVICE_FAULT => 'Device Fault',
-            self::SERVICE_MODE => 'Service Mode',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.session_state.' . $v);
+        return $translated !== 'terminal.session_state.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

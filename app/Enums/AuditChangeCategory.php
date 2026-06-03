@@ -36,17 +36,8 @@ class AuditChangeCategory
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::MASTER_DATA => 'Master data',
-            self::PROCESS_STATUS => 'Process status',
-            self::MANUAL_OVERRIDE => 'Manual override',
-            self::QUALITY_DECISION => 'Quality decision',
-            self::DOCUMENT => 'Document',
-            self::SECURITY_ROLE => 'Security / role',
-            self::CONFIGURATION => 'Configuration',
-            self::DEVICE_SERVICE_MODE => 'Device service mode',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('logbook.audit_change_category.' . $v);
+        return $translated !== 'logbook.audit_change_category.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

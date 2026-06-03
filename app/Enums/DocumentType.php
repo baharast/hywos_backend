@@ -25,11 +25,7 @@ class DocumentType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CERTIFICATE => 'Certificate',
-            self::DELIVERY_NOTE => 'Delivery Note',
-            self::QM_DOCUMENT => 'QM Document',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('masterdata.document_type.' . $v);
+        return $translated !== 'masterdata.document_type.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

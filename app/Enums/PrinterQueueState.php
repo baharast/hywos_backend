@@ -30,13 +30,8 @@ class PrinterQueueState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::IDLE => 'Idle',
-            self::QUEUED => 'Queued',
-            self::PRINTING => 'Printing',
-            self::FAILURES => 'Failures',
-            default => ucfirst($v),
-        };
+        $translated = __('hardware.printer_queue_state.' . $v);
+        return $translated !== 'hardware.printer_queue_state.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

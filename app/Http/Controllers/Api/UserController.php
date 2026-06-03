@@ -83,7 +83,7 @@ class UserController extends ApiController
         $users = UserResource::collection($paginator->items());
         $lastUpdated = User::query()->max('updated_at');
 
-        return ApiResponse::list($users, $paginator, $summary, $lastUpdated, 'Users retrieved');
+        return ApiResponse::list($users, $paginator, $summary, $lastUpdated, __('masterdata.messages.users_retrieved'));
     }
 
     public function store(StoreUserRequest $request)
@@ -97,24 +97,24 @@ class UserController extends ApiController
             $user->syncRoles($roles);
         }
 
-        return $this->created(new UserResource($user), 'User created');
+        return $this->created(new UserResource($user), __('masterdata.messages.user_created'));
     }
 
     public function show($id)
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
 
-        return $this->success(new UserResource($user), 'User retrieved');
+        return $this->success(new UserResource($user), __('masterdata.messages.user_retrieved'));
     }
 
     public function update(UpdateUserRequest $request, $id)
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -126,7 +126,7 @@ class UserController extends ApiController
             $user->syncRoles($roles);
         }
 
-        return $this->success(new UserResource($user), 'User updated');
+        return $this->success(new UserResource($user), __('masterdata.messages.user_updated'));
     }
 
     /**
@@ -165,10 +165,10 @@ class UserController extends ApiController
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
         if (! is_null($user->disabled_at)) {
-            return $this->error('User is already disabled', 'ALREADY_DISABLED', 409);
+            return $this->error(__('masterdata.messages.user_already_disabled'), 'ALREADY_DISABLED', 409);
         }
 
         $reason = $request->input('reason');
@@ -203,7 +203,7 @@ class UserController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new UserResource($user->fresh()), 'User disabled');
+            return $this->success(new UserResource($user->fresh()), __('masterdata.messages.user_disabled'));
         });
     }
 
@@ -211,10 +211,10 @@ class UserController extends ApiController
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
         if (is_null($user->disabled_at) && $user->is_active) {
-            return $this->error('User is already enabled', 'ALREADY_ENABLED', 409);
+            return $this->error(__('masterdata.messages.user_already_enabled'), 'ALREADY_ENABLED', 409);
         }
 
         $reason = $request->input('reason');
@@ -248,7 +248,7 @@ class UserController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new UserResource($user->fresh()), 'User enabled');
+            return $this->success(new UserResource($user->fresh()), __('masterdata.messages.user_enabled'));
         });
     }
 
@@ -256,10 +256,10 @@ class UserController extends ApiController
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
         if ($user->is_locked) {
-            return $this->error('User is already locked', 'ALREADY_LOCKED', 409);
+            return $this->error(__('masterdata.messages.user_already_locked'), 'ALREADY_LOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -294,7 +294,7 @@ class UserController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new UserResource($user->fresh()), 'User locked');
+            return $this->success(new UserResource($user->fresh()), __('masterdata.messages.user_locked'));
         });
     }
 
@@ -302,10 +302,10 @@ class UserController extends ApiController
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
         if (! $user->is_locked) {
-            return $this->error('User is not locked', 'NOT_LOCKED', 409);
+            return $this->error(__('masterdata.messages.user_not_locked'), 'NOT_LOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -339,7 +339,7 @@ class UserController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new UserResource($user->fresh()), 'User unlocked');
+            return $this->success(new UserResource($user->fresh()), __('masterdata.messages.user_unlocked'));
         });
     }
 
@@ -347,7 +347,7 @@ class UserController extends ApiController
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
 
         $reason = $request->input('reason');
@@ -389,7 +389,7 @@ class UserController extends ApiController
 
             return $this->success(
                 new UserResource($user->fresh()),
-                'Access reset triggered. Existing sessions and API tokens were revoked.'
+                __('masterdata.messages.user_access_reset')
             );
         });
     }
@@ -398,23 +398,23 @@ class UserController extends ApiController
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
 
         $user->syncRoles($request->validated('roles'));
 
-        return $this->success(new UserResource($user), 'User roles updated');
+        return $this->success(new UserResource($user), __('masterdata.messages.user_roles_updated'));
     }
 
     public function destroy($id)
     {
         $user = User::find($id);
         if (! $user) {
-            return $this->error('User not found', 'USER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.user_not_found'), 'USER_NOT_FOUND', 404);
         }
 
         $user->update(['is_active' => false]);
 
-        return $this->success(new UserResource($user), 'User deactivated');
+        return $this->success(new UserResource($user), __('masterdata.messages.user_disabled'));
     }
 }

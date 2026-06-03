@@ -62,7 +62,7 @@ class CalibrationProfileController extends ApiController
             $paginator,
             $summary,
             CalibrationProfile::query()->max('updated_at'),
-            'Calibration profiles retrieved'
+            __('masterdata.messages.profiles_retrieved')
         );
     }
 
@@ -70,97 +70,97 @@ class CalibrationProfileController extends ApiController
     {
         $profile = CalibrationProfile::with('components')->find($id);
         if (! $profile) {
-            return $this->error('Profile not found', 'CALIBRATION_PROFILE_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.profile_not_found'), 'CALIBRATION_PROFILE_NOT_FOUND', 404);
         }
-        return $this->success(new CalibrationProfileDetailResource($profile), 'Calibration profile retrieved');
+        return $this->success(new CalibrationProfileDetailResource($profile), __('masterdata.messages.profile_retrieved'));
     }
 
     public function store(CreateCalibrationProfileRequest $request)
     {
         $profile = $this->service->createDraft($request->validated());
-        return $this->created(new CalibrationProfileDetailResource($profile->load('components')), 'Calibration profile created');
+        return $this->created(new CalibrationProfileDetailResource($profile->load('components')), __('masterdata.messages.profile_created'));
     }
 
     public function update(UpdateCalibrationProfileRequest $request, string $id)
     {
         $profile = CalibrationProfile::find($id);
         if (! $profile) {
-            return $this->error('Profile not found', 'CALIBRATION_PROFILE_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.profile_not_found'), 'CALIBRATION_PROFILE_NOT_FOUND', 404);
         }
         $fresh = $this->service->updateMetadata($profile, $request->validated());
-        return $this->success(new CalibrationProfileDetailResource($fresh->load('components')), 'Calibration profile updated');
+        return $this->success(new CalibrationProfileDetailResource($fresh->load('components')), __('masterdata.messages.profile_updated'));
     }
 
     public function activate(Request $request, string $id)
     {
         $profile = CalibrationProfile::find($id);
         if (! $profile) {
-            return $this->error('Profile not found', 'CALIBRATION_PROFILE_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.profile_not_found'), 'CALIBRATION_PROFILE_NOT_FOUND', 404);
         }
         $result = $this->service->activate($profile, $request->input('reason'));
         if (! ($result['ok'] ?? false)) {
             return $this->error(
                 $result['code'] === 'CALIBRATION_PROFILE_INCOMPLETE'
-                    ? 'Cannot activate: not all 6 components are configured.'
-                    : 'Cannot activate from current status.',
+                    ? __('masterdata.messages.profile_incomplete')
+                    : __('masterdata.messages.profile_cannot_activate'),
                 $result['code'] ?? 'INVALID_STATE_TRANSITION',
                 409,
                 $result['details'] ?? null
             );
         }
-        return $this->success(new CalibrationProfileDetailResource($result['profile']->load('components')), 'Calibration profile activated');
+        return $this->success(new CalibrationProfileDetailResource($result['profile']->load('components')), __('masterdata.messages.profile_activated'));
     }
 
     public function retire(RetireCalibrationProfileRequest $request, string $id)
     {
         $profile = CalibrationProfile::find($id);
         if (! $profile) {
-            return $this->error('Profile not found', 'CALIBRATION_PROFILE_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.profile_not_found'), 'CALIBRATION_PROFILE_NOT_FOUND', 404);
         }
         $result = $this->service->retire($profile, $request->validated()['reason']);
         if (! ($result['ok'] ?? false)) {
-            return $this->error('Cannot retire from current status.', $result['code'] ?? 'INVALID_STATE_TRANSITION', 409);
+            return $this->error(__('masterdata.messages.profile_cannot_retire'), $result['code'] ?? 'INVALID_STATE_TRANSITION', 409);
         }
-        return $this->success(new CalibrationProfileDetailResource($result['profile']->load('components')), 'Calibration profile retired');
+        return $this->success(new CalibrationProfileDetailResource($result['profile']->load('components')), __('masterdata.messages.profile_retired'));
     }
 
     public function addComponent(AddCalibrationComponentRequest $request, string $id)
     {
         $profile = CalibrationProfile::find($id);
         if (! $profile) {
-            return $this->error('Profile not found', 'CALIBRATION_PROFILE_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.profile_not_found'), 'CALIBRATION_PROFILE_NOT_FOUND', 404);
         }
         if (! $profile->isEditable()) {
-            return $this->error('Profile is not editable in its current status.', 'CALIBRATION_PROFILE_NOT_EDITABLE', 409);
+            return $this->error(__('masterdata.messages.profile_not_editable'), 'CALIBRATION_PROFILE_NOT_EDITABLE', 409);
         }
 
         $result = $this->service->addComponent($profile, $request->validated());
         if (! ($result['ok'] ?? false)) {
             return $this->error(
-                'A component row already exists for this gas on this profile.',
+                __('masterdata.messages.cal_component_exists'),
                 $result['code'] ?? 'CALIBRATION_COMPONENT_EXISTS',
                 409
             );
         }
-        return $this->created(new CalibrationComponentResource($result['row']), 'Calibration component added');
+        return $this->created(new CalibrationComponentResource($result['row']), __('masterdata.messages.cal_component_added'));
     }
 
     public function updateComponent(UpdateCalibrationComponentRequest $request, string $id, string $rowId)
     {
         $profile = CalibrationProfile::find($id);
         if (! $profile) {
-            return $this->error('Profile not found', 'CALIBRATION_PROFILE_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.profile_not_found'), 'CALIBRATION_PROFILE_NOT_FOUND', 404);
         }
         if (! $profile->isEditable()) {
-            return $this->error('Profile is not editable in its current status.', 'CALIBRATION_PROFILE_NOT_EDITABLE', 409);
+            return $this->error(__('masterdata.messages.profile_not_editable'), 'CALIBRATION_PROFILE_NOT_EDITABLE', 409);
         }
 
         $row = CalibrationComponent::where('id', $rowId)->where('profile_id', $profile->id)->first();
         if (! $row) {
-            return $this->error('Component row not found on this profile.', 'CALIBRATION_COMPONENT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.cal_component_not_found'), 'CALIBRATION_COMPONENT_NOT_FOUND', 404);
         }
 
         $fresh = $this->service->updateComponent($row, $request->validated());
-        return $this->success(new CalibrationComponentResource($fresh), 'Calibration component updated');
+        return $this->success(new CalibrationComponentResource($fresh), __('masterdata.messages.cal_component_updated'));
     }
 }

@@ -20,11 +20,7 @@ class InterfaceDirection
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::INBOUND => 'Inbound',
-            self::OUTBOUND => 'Outbound',
-            self::BIDIRECTIONAL => 'Bidirectional',
-            default => ucfirst($v),
-        };
+        $translated = __('hardware.interface_direction.' . $v);
+        return $translated !== 'hardware.interface_direction.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

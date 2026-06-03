@@ -27,15 +27,7 @@ class ExportCategory
 
     public static function label(string $value): string
     {
-        return match ($value) {
-            self::DRIVERS => 'Drivers',
-            self::TRAILERS => 'Trailers',
-            self::TRACTORS_VEHICLES => 'Tractors / Vehicles',
-            self::CUSTOMERS => 'Customers',
-            self::FREIGHT_FORWARDERS_CARRIERS => 'Freight Forwarders / Carriers',
-            self::CHIP_CARDS => 'Chip Cards',
-            self::TANS => 'TANs',
-            default => $value,
-        };
+        $translated = __('masterdata.export_category.' . $value);
+        return $translated !== 'masterdata.export_category.' . $value ? $translated : ucfirst(str_replace('_', ' ', $value));
     }
 }

@@ -23,14 +23,8 @@ class SecurityRiskLevel
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CRITICAL => 'Critical',
-            self::HIGH => 'High',
-            self::MEDIUM => 'Medium',
-            self::LOW => 'Low',
-            self::INFO => 'Info',
-            default => ucfirst($v),
-        };
+        $translated = __('terminal.security_risk_level.' . $v);
+        return $translated !== 'terminal.security_risk_level.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

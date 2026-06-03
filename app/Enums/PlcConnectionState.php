@@ -41,15 +41,8 @@ class PlcConnectionState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CONNECTED => 'Connected',
-            self::DEGRADED => 'Degraded',
-            self::DISCONNECTED => 'Disconnected',
-            self::CERTIFICATE_ERROR => 'Certificate Error',
-            self::TIMEOUT => 'Timeout',
-            self::UNKNOWN => 'Unknown',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.plc_connection_state.' . $v);
+        return $translated !== 'hardware.plc_connection_state.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

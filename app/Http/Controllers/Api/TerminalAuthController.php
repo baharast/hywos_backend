@@ -47,10 +47,10 @@ class TerminalAuthController extends ApiController
             ->first();
 
         if (! $row) {
-            return $this->error('Terminal not found', 'TERMINAL_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.terminal_not_found'), 'TERMINAL_NOT_FOUND', 404);
         }
 
-        return $this->success(new TerminalConfigResource($row), 'Terminal configuration retrieved');
+        return $this->success(new TerminalConfigResource($row), __('terminal.messages.terminal_config'));
     }
 
     /**
@@ -61,22 +61,22 @@ class TerminalAuthController extends ApiController
     public function safetyInfo()
     {
         return $this->success([
-            'title' => 'Safety Information',
+            'title' => __('terminal.messages.safety_info_title'),
             'items' => [
-                'No smoking, open flames or ignition sources in H2 areas.',
-                'Follow terminal and operator instructions.',
-                'Observe all gas, fire and evacuation alarms.',
-                'Stay in allowed driver areas only.',
-                'Use required PPE where instructed.',
+                __('terminal.messages.safety_rule_1'),
+                __('terminal.messages.safety_rule_2'),
+                __('terminal.messages.safety_rule_3'),
+                __('terminal.messages.safety_rule_4'),
+                __('terminal.messages.safety_rule_5'),
             ],
-        ], 'Safety information retrieved');
+        ], __('terminal.messages.safety_info_retrieved'));
     }
 
     public function session(string $id)
     {
         $session = TerminalSession::find($id);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         return $this->success([
@@ -92,7 +92,7 @@ class TerminalAuthController extends ApiController
             'actionNeeded' => $session->action_needed,
             'lastActivityAt' => $session->last_activity_at?->toIso8601String(),
             'notes' => $session->notes,
-        ], 'Session retrieved');
+        ], __('terminal.messages.session_retrieved'));
     }
 
     /* ============================================================
@@ -159,7 +159,7 @@ class TerminalAuthController extends ApiController
     {
         $session = TerminalSession::find($sessionId);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $fresh = $this->authService->changeLanguage($session, $request->validated()['culture_code']);
@@ -169,14 +169,14 @@ class TerminalAuthController extends ApiController
             'sessionNo' => $fresh->session_no,
             'notes' => $fresh->notes,
             'lastActivityAt' => $fresh->last_activity_at?->toIso8601String(),
-        ], 'Language updated');
+        ], __('terminal.messages.language_updated'));
     }
 
     public function logout(string $sessionId)
     {
         $session = TerminalSession::find($sessionId);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
 
         $fresh = $this->authService->logoutSession($session, 'manual');
@@ -185,7 +185,7 @@ class TerminalAuthController extends ApiController
             'id' => $fresh->id,
             'sessionNo' => $fresh->session_no,
             'state' => $fresh->session_state,
-        ], 'Session ended');
+        ], __('terminal.messages.session_ended'));
     }
 
     /* ============================================================

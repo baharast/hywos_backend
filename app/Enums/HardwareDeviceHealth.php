@@ -26,16 +26,8 @@ class HardwareDeviceHealth
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ONLINE => 'Online',
-            self::WARNING => 'Warning',
-            self::ALARM => 'Alarm',
-            self::FAULT => 'Fault',
-            self::OFFLINE => 'Offline',
-            self::SERVICE_MODE => 'Service Mode',
-            self::UNKNOWN => 'Unknown',
-            default => ucfirst($v),
-        };
+        $translated = __('hardware.device_health.' . $v);
+        return $translated !== 'hardware.device_health.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -32,13 +32,8 @@ class AuditRetentionClass
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::OPERATIONAL => 'Operational',
-            self::QUALITY_CRITICAL => 'Quality-critical',
-            self::SECURITY_CRITICAL => 'Security-critical',
-            self::CONFIGURATION_CRITICAL => 'Configuration-critical',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('logbook.audit_retention_class.' . $v);
+        return $translated !== 'logbook.audit_retention_class.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function fromChangeCategory(string $changeCategory): string

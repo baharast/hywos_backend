@@ -16,7 +16,8 @@ class CarrierStatus
 
     public static function label(string $v): string
     {
-        return ucfirst(str_replace('_', ' ', $v));
+        $translated = __('masterdata.carrier_status.' . $v);
+        return $translated !== 'masterdata.carrier_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

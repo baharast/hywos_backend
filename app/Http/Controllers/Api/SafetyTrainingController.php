@@ -40,7 +40,7 @@ class SafetyTrainingController extends ApiController
             'orderedModuleIds' => SafetyTrainingCatalog::moduleIds(),
             'passThreshold' => SafetyTrainingCatalog::PASS_THRESHOLD,
             'examTotal' => SafetyTrainingCatalog::EXAM_TOTAL,
-        ], 'Safety training modules retrieved');
+        ], __('terminal.messages.modules_retrieved'));
     }
 
     /** V6 §7.5 — module detail page payload. */
@@ -58,7 +58,7 @@ class SafetyTrainingController extends ApiController
 
         return $this->success(
             (new TrainingModuleResource($module, TrainingModuleResource::SHAPE_DETAIL))->toArray(request()),
-            'Safety training module retrieved'
+            __('terminal.messages.module_retrieved')
         );
     }
 
@@ -73,7 +73,7 @@ class SafetyTrainingController extends ApiController
             'questions' => SafetyTrainingCatalog::examQuestions(false),
             'total' => SafetyTrainingCatalog::EXAM_TOTAL,
             'passThreshold' => SafetyTrainingCatalog::PASS_THRESHOLD,
-        ], 'Safety training exam retrieved');
+        ], __('terminal.messages.exam_retrieved'));
     }
 
     /* ============================================================
@@ -84,11 +84,11 @@ class SafetyTrainingController extends ApiController
     {
         $session = TerminalSession::find($sessionId);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
         if (! $session->driver_id) {
             return $this->error(
-                'Session has no driver attached — cannot record training progress',
+                __('terminal.messages.session_no_driver_progress'),
                 'SESSION_HAS_NO_DRIVER',
                 409
             );
@@ -96,25 +96,25 @@ class SafetyTrainingController extends ApiController
 
         $driver = Driver::find($session->driver_id);
         if (! $driver) {
-            return $this->error('Driver not found for session', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.driver_not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         $moduleId = $request->validated()['moduleId'];
 
         $payload = $this->service->recordModuleCompleted($driver, $session, $moduleId);
 
-        return $this->success($payload, 'Training module recorded');
+        return $this->success($payload, __('terminal.messages.training_recorded'));
     }
 
     public function submitExam(SubmitExamRequest $request, string $sessionId)
     {
         $session = TerminalSession::find($sessionId);
         if (! $session) {
-            return $this->error('Session not found', 'SESSION_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.session_not_found'), 'SESSION_NOT_FOUND', 404);
         }
         if (! $session->driver_id) {
             return $this->error(
-                'Session has no driver attached — cannot grade exam',
+                __('terminal.messages.session_no_driver'),
                 'SESSION_HAS_NO_DRIVER',
                 409
             );
@@ -122,7 +122,7 @@ class SafetyTrainingController extends ApiController
 
         $driver = Driver::find($session->driver_id);
         if (! $driver) {
-            return $this->error('Driver not found for session', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('terminal.messages.driver_not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         $answers = $request->validated()['answers'];
@@ -131,7 +131,7 @@ class SafetyTrainingController extends ApiController
 
         return $this->success(
             (new TrainingExamResultResource($result))->toArray(request()),
-            $result['passed'] ? 'Safety knowledge check passed' : 'Safety knowledge check failed'
+            $result['passed'] ? __('terminal.messages.exam_passed') : __('terminal.messages.exam_failed')
         );
     }
 }

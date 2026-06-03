@@ -28,16 +28,8 @@ class LogbookCategory
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::SAFETY_NOTE => 'Safety note',
-            self::OPERATIONS_NOTE => 'Operations note',
-            self::MANUAL_ACTION => 'Manual action',
-            self::HANDOVER_NOTE => 'Handover note',
-            self::DEVICE_FOLLOW_UP => 'Device follow-up',
-            self::NEAR_MISS => 'Near miss',
-            self::INFORMATION => 'Information',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('logbook.category.' . $v);
+        return $translated !== 'logbook.category.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

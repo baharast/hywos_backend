@@ -42,22 +42,8 @@ class AuditActionType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CREATE => 'Create',
-            self::UPDATE => 'Update',
-            self::BLOCK => 'Block',
-            self::UNBLOCK => 'Unblock',
-            self::APPROVE => 'Approve',
-            self::REJECT => 'Reject',
-            self::OVERRIDE => 'Override',
-            self::PRINT => 'Print',
-            self::REPRINT => 'Reprint',
-            self::ASSIGN => 'Assign',
-            self::UNASSIGN => 'Unassign',
-            self::CONFIGURATION_CHANGE => 'Configuration change',
-            self::OTHER => 'Other',
-            default => ucfirst($v),
-        };
+        $translated = __('logbook.audit_action_type.' . $v);
+        return $translated !== 'logbook.audit_action_type.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

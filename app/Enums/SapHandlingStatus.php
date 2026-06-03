@@ -28,13 +28,8 @@ class SapHandlingStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::NO_ACTION_NEEDED => 'No Action Needed',
-            self::AUTO_RETRY_SCHEDULED => 'Auto Retry Scheduled',
-            self::NEEDS_SUPPORT => 'Needs Support',
-            self::RESOLVED => 'Resolved',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('masterdata.sap_handling_status.' . $v);
+        return $translated !== 'masterdata.sap_handling_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -74,7 +74,7 @@ class ProductSpecificationController extends ApiController
             $paginator,
             $summary,
             ProductSpecification::query()->max('updated_at'),
-            'Product specifications retrieved'
+            __('masterdata.messages.specs_retrieved')
         );
     }
 
@@ -82,99 +82,99 @@ class ProductSpecificationController extends ApiController
     {
         $spec = ProductSpecification::with('gasLimits')->find($id);
         if (! $spec) {
-            return $this->error('Specification not found', 'PRODUCT_SPEC_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.spec_not_found'), 'PRODUCT_SPEC_NOT_FOUND', 404);
         }
-        return $this->success(new ProductSpecificationDetailResource($spec), 'Product specification retrieved');
+        return $this->success(new ProductSpecificationDetailResource($spec), __('masterdata.messages.spec_retrieved'));
     }
 
     public function store(CreateProductSpecificationRequest $request)
     {
         $spec = $this->service->createDraft($request->validated());
-        return $this->created(new ProductSpecificationDetailResource($spec->load('gasLimits')), 'Product specification created');
+        return $this->created(new ProductSpecificationDetailResource($spec->load('gasLimits')), __('masterdata.messages.spec_created'));
     }
 
     public function update(UpdateProductSpecificationRequest $request, string $id)
     {
         $spec = ProductSpecification::find($id);
         if (! $spec) {
-            return $this->error('Specification not found', 'PRODUCT_SPEC_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.spec_not_found'), 'PRODUCT_SPEC_NOT_FOUND', 404);
         }
         $fresh = $this->service->updateMetadata($spec, $request->validated());
-        return $this->success(new ProductSpecificationDetailResource($fresh->load('gasLimits')), 'Product specification updated');
+        return $this->success(new ProductSpecificationDetailResource($fresh->load('gasLimits')), __('masterdata.messages.spec_updated'));
     }
 
     public function activate(Request $request, string $id)
     {
         $spec = ProductSpecification::find($id);
         if (! $spec) {
-            return $this->error('Specification not found', 'PRODUCT_SPEC_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.spec_not_found'), 'PRODUCT_SPEC_NOT_FOUND', 404);
         }
 
         $result = $this->service->activate($spec, $request->input('reason'));
         if (! ($result['ok'] ?? false)) {
             return $this->error(
                 $result['code'] === 'PRODUCT_SPEC_INCOMPLETE'
-                    ? 'Cannot activate: not all 6 components are configured.'
-                    : 'Cannot activate from current status.',
+                    ? __('masterdata.messages.spec_incomplete')
+                    : __('masterdata.messages.spec_cannot_activate'),
                 $result['code'] ?? 'INVALID_STATE_TRANSITION',
                 409,
                 $result['details'] ?? null
             );
         }
-        return $this->success(new ProductSpecificationDetailResource($result['spec']->load('gasLimits')), 'Product specification activated');
+        return $this->success(new ProductSpecificationDetailResource($result['spec']->load('gasLimits')), __('masterdata.messages.spec_activated'));
     }
 
     public function retire(RetireProductSpecificationRequest $request, string $id)
     {
         $spec = ProductSpecification::find($id);
         if (! $spec) {
-            return $this->error('Specification not found', 'PRODUCT_SPEC_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.spec_not_found'), 'PRODUCT_SPEC_NOT_FOUND', 404);
         }
 
         $result = $this->service->retire($spec, $request->validated()['reason']);
         if (! ($result['ok'] ?? false)) {
-            return $this->error('Cannot retire from current status.', $result['code'] ?? 'INVALID_STATE_TRANSITION', 409);
+            return $this->error(__('masterdata.messages.spec_cannot_retire'), $result['code'] ?? 'INVALID_STATE_TRANSITION', 409);
         }
-        return $this->success(new ProductSpecificationDetailResource($result['spec']->load('gasLimits')), 'Product specification retired');
+        return $this->success(new ProductSpecificationDetailResource($result['spec']->load('gasLimits')), __('masterdata.messages.spec_retired'));
     }
 
     public function addGasLimit(AddGasLimitRequest $request, string $id)
     {
         $spec = ProductSpecification::find($id);
         if (! $spec) {
-            return $this->error('Specification not found', 'PRODUCT_SPEC_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.spec_not_found'), 'PRODUCT_SPEC_NOT_FOUND', 404);
         }
         if (! $spec->isEditable()) {
-            return $this->error('Specification is not editable in its current status.', 'PRODUCT_SPEC_NOT_EDITABLE', 409);
+            return $this->error(__('masterdata.messages.spec_not_editable'), 'PRODUCT_SPEC_NOT_EDITABLE', 409);
         }
 
         $result = $this->service->addGasLimit($spec, $request->validated());
         if (! ($result['ok'] ?? false)) {
             return $this->error(
-                'A gas-limit row already exists for this component on this specification.',
+                __('masterdata.messages.gas_limit_exists'),
                 $result['code'] ?? 'PRODUCT_SPEC_GAS_LIMIT_EXISTS',
                 409
             );
         }
-        return $this->created(new ProductGasLimitResource($result['row']), 'Gas limit row added');
+        return $this->created(new ProductGasLimitResource($result['row']), __('masterdata.messages.gas_limit_added'));
     }
 
     public function updateGasLimit(UpdateGasLimitRequest $request, string $id, string $rowId)
     {
         $spec = ProductSpecification::find($id);
         if (! $spec) {
-            return $this->error('Specification not found', 'PRODUCT_SPEC_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.spec_not_found'), 'PRODUCT_SPEC_NOT_FOUND', 404);
         }
         if (! $spec->isEditable()) {
-            return $this->error('Specification is not editable in its current status.', 'PRODUCT_SPEC_NOT_EDITABLE', 409);
+            return $this->error(__('masterdata.messages.spec_not_editable'), 'PRODUCT_SPEC_NOT_EDITABLE', 409);
         }
 
         $row = ProductGasLimit::where('id', $rowId)->where('spec_id', $spec->id)->first();
         if (! $row) {
-            return $this->error('Gas limit row not found on this specification.', 'PRODUCT_SPEC_GAS_LIMIT_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.gas_limit_not_found'), 'PRODUCT_SPEC_GAS_LIMIT_NOT_FOUND', 404);
         }
 
         $fresh = $this->service->updateGasLimit($row, $request->validated());
-        return $this->success(new ProductGasLimitResource($fresh), 'Gas limit row updated');
+        return $this->success(new ProductGasLimitResource($fresh), __('masterdata.messages.gas_limit_updated'));
     }
 }

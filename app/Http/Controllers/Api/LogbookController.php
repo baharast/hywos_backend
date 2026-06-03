@@ -43,7 +43,7 @@ class LogbookController extends ApiController
             $paginator,
             $this->service->buildSummary(),
             $lastUpdated,
-            'Logbook entries retrieved'
+            __('logbook.messages.entries_retrieved')
         );
     }
 
@@ -51,7 +51,7 @@ class LogbookController extends ApiController
     {
         $entry = LogbookEntry::query()->find($id);
         if (! $entry) {
-            return $this->error('Logbook entry not found', 'LOGBOOK_ENTRY_NOT_FOUND', 404);
+            return $this->error(__('logbook.messages.entry_not_found'), 'LOGBOOK_ENTRY_NOT_FOUND', 404);
         }
 
         $corrections = $this->service->correctionsFor($entry);
@@ -59,7 +59,7 @@ class LogbookController extends ApiController
         $resource = (new LogbookEntryResource($entry))
             ->additional(['corrections' => $corrections]);
 
-        return $this->success($resource, 'Logbook entry detail retrieved');
+        return $this->success($resource, __('logbook.messages.entry_retrieved'));
     }
 
     public function store(CreateLogbookEntryRequest $request)
@@ -68,7 +68,7 @@ class LogbookController extends ApiController
 
         return $this->success(
             new LogbookEntryResource($entry),
-            'Logbook entry created',
+            __('logbook.messages.entry_created'),
             201
         );
     }
@@ -77,7 +77,7 @@ class LogbookController extends ApiController
     {
         $entry = LogbookEntry::query()->find($id);
         if (! $entry) {
-            return $this->error('Logbook entry not found', 'LOGBOOK_ENTRY_NOT_FOUND', 404);
+            return $this->error(__('logbook.messages.entry_not_found'), 'LOGBOOK_ENTRY_NOT_FOUND', 404);
         }
 
         try {
@@ -86,14 +86,14 @@ class LogbookController extends ApiController
             return $this->error($e->getMessage(), 'LOGBOOK_FOLLOWUP_ALREADY_OPEN', 409);
         }
 
-        return $this->success(new LogbookEntryResource($entry), 'Follow-up added');
+        return $this->success(new LogbookEntryResource($entry), __('logbook.messages.follow_up_added'));
     }
 
     public function markFollowUpDone(MarkFollowUpDoneRequest $request, string $id)
     {
         $entry = LogbookEntry::query()->find($id);
         if (! $entry) {
-            return $this->error('Logbook entry not found', 'LOGBOOK_ENTRY_NOT_FOUND', 404);
+            return $this->error(__('logbook.messages.entry_not_found'), 'LOGBOOK_ENTRY_NOT_FOUND', 404);
         }
 
         try {
@@ -102,14 +102,14 @@ class LogbookController extends ApiController
             return $this->error($e->getMessage(), 'LOGBOOK_FOLLOWUP_INVALID_STATE', 409);
         }
 
-        return $this->success(new LogbookEntryResource($entry), 'Follow-up marked done');
+        return $this->success(new LogbookEntryResource($entry), __('logbook.messages.follow_up_done'));
     }
 
     public function correct(CorrectLogbookEntryRequest $request, string $id)
     {
         $entry = LogbookEntry::query()->find($id);
         if (! $entry) {
-            return $this->error('Logbook entry not found', 'LOGBOOK_ENTRY_NOT_FOUND', 404);
+            return $this->error(__('logbook.messages.entry_not_found'), 'LOGBOOK_ENTRY_NOT_FOUND', 404);
         }
 
         try {
@@ -118,6 +118,6 @@ class LogbookController extends ApiController
             return $this->error($e->getMessage(), 'LOGBOOK_CORRECTION_NO_CHANGE', 422);
         }
 
-        return $this->success(new LogbookEntryResource($entry), 'Logbook entry corrected');
+        return $this->success(new LogbookEntryResource($entry), __('logbook.messages.entry_corrected'));
     }
 }

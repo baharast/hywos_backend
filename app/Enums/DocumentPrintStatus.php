@@ -33,15 +33,8 @@ class DocumentPrintStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::NOT_REQUESTED => 'Not Requested',
-            self::QUEUED => 'Queued',
-            self::PRINTING => 'Printing',
-            self::PRINTED => 'Printed',
-            self::FAILED => 'Failed',
-            self::REPRINTED => 'Reprinted',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('masterdata.document_print_status.' . $v);
+        return $translated !== 'masterdata.document_print_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

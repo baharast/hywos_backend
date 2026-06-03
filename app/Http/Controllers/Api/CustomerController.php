@@ -79,7 +79,7 @@ class CustomerController extends ApiController
         $items = CustomerResource::collection($paginator->items());
         $lastUpdated = Customer::query()->max('updated_at');
 
-        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, 'Customers retrieved');
+        return \App\Services\ApiResponse::list($items, $paginator, $summary, $lastUpdated, __('masterdata.messages.customers_retrieved'));
     }
 
     public function store(StoreCustomerRequest $request)
@@ -95,17 +95,17 @@ class CustomerController extends ApiController
 
         $customer = Customer::create($data);
 
-        return $this->created(new CustomerResource($customer), 'Customer created');
+        return $this->created(new CustomerResource($customer), __('masterdata.messages.customer_created'));
     }
 
     public function show($id)
     {
         $customer = Customer::find($id);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
 
-        return $this->success(new CustomerResource($customer), 'Customer retrieved');
+        return $this->success(new CustomerResource($customer), __('masterdata.messages.customer_retrieved'));
     }
 
     public function update(
@@ -117,7 +117,7 @@ class CustomerController extends ApiController
     ) {
         $customer = Customer::find($id);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
 
         $payload = $request->validated();
@@ -154,41 +154,41 @@ class CustomerController extends ApiController
 
         $customer->update($payload);
 
-        return $this->success(new CustomerResource($customer->fresh()), 'Customer updated');
+        return $this->success(new CustomerResource($customer->fresh()), __('masterdata.messages.customer_updated'));
     }
 
     public function activate(Request $request, $id)
     {
         $customer = Customer::find($id);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
 
         $customer->update(['is_active' => true]);
 
-        return $this->success(new CustomerResource($customer), 'Customer activated');
+        return $this->success(new CustomerResource($customer), __('masterdata.messages.customer_activated'));
     }
 
     public function deactivate(Request $request, $id)
     {
         $customer = Customer::find($id);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
 
         $customer->update(['is_active' => false]);
 
-        return $this->success(new CustomerResource($customer), 'Customer deactivated');
+        return $this->success(new CustomerResource($customer), __('masterdata.messages.customer_deactivated'));
     }
 
     public function block(BlockCustomerRequest $request, $id, AuditLogger $audit, EventLogger $events)
     {
         $customer = Customer::find($id);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
         if ($customer->status === 'blocked') {
-            return $this->error('Customer is already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('masterdata.messages.customer_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -223,7 +223,7 @@ class CustomerController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new CustomerResource($customer->fresh()), 'Customer blocked');
+            return $this->success(new CustomerResource($customer->fresh()), __('masterdata.messages.customer_blocked'));
         });
     }
 
@@ -231,10 +231,10 @@ class CustomerController extends ApiController
     {
         $customer = Customer::find($id);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
         if ($customer->status !== 'blocked') {
-            return $this->error('Customer is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('masterdata.messages.customer_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -268,7 +268,7 @@ class CustomerController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new CustomerResource($customer->fresh()), 'Customer unblocked');
+            return $this->success(new CustomerResource($customer->fresh()), __('masterdata.messages.customer_unblocked'));
         });
     }
 
@@ -278,12 +278,12 @@ class CustomerController extends ApiController
 
         $customer = Customer::find($id);
         if (! $customer) {
-            return $this->error('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
+            return $this->error(__('masterdata.messages.customer_not_found'), 'CUSTOMER_NOT_FOUND', 404);
         }
 
         $customer->update(['is_active' => false]);
 
-        return $this->success(null, 'Customer deactivated');
+        return $this->success(null, __('masterdata.messages.customer_deactivated'));
     }
 
     /**

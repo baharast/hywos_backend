@@ -33,13 +33,8 @@ class SupportedReaderMedia
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::DRIVER_CHIP => 'Driver chip',
-            self::TAN_INPUT => 'TAN input',
-            self::TRAILER_CHIP => 'Trailer chip',
-            self::RFID_AUTHORIZATION => 'RFID authorization',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.supported_media.' . $v);
+        return $translated !== 'terminal.supported_media.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     /**

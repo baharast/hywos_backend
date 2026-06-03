@@ -33,15 +33,7 @@ class GateTerminalCurrentScreen
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::DRIVER_LOGIN => 'Driver Login',
-            self::TRAILER_IDENTIFICATION => 'Trailer Identification',
-            self::TRACTOR_MACHINE_PLATE => 'Tractor / Machine Plate',
-            self::TASK_SELECTION => 'Task Selection',
-            self::INSTRUCTION => 'Instruction',
-            self::DOCUMENTS => 'Documents',
-            self::EXIT_VALIDATION => 'Exit Validation',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.current_screen.' . $v);
+        return $translated !== 'terminal.current_screen.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

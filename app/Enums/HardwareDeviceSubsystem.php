@@ -38,23 +38,7 @@ class HardwareDeviceSubsystem
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::FILLING => 'Filling',
-            self::GATE => 'Gate',
-            self::DRIVER_TERMINAL => 'Driver Terminal',
-            self::ANALYSIS => 'Analysis',
-            self::COMPRESSOR => 'Compressor',
-            self::ELECTROLYZER => 'Electrolyzer',
-            self::STORAGE => 'Storage',
-            self::AIR => 'Air',
-            self::NITROGEN => 'Nitrogen',
-            self::PRINTING => 'Printing',
-            self::SAP => 'SAP',
-            self::CLOUD => 'Cloud',
-            self::NETWORK => 'Network',
-            self::INTEGRATION => 'Integration',
-            self::SAFETY => 'Safety',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('hardware.device_subsystem.' . $v);
+        return $translated !== 'hardware.device_subsystem.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }

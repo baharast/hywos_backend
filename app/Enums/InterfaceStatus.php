@@ -35,15 +35,8 @@ class InterfaceStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ONLINE => 'Online',
-            self::WARNING => 'Warning',
-            self::FAULT => 'Fault',
-            self::OFFLINE => 'Offline',
-            self::DISABLED => 'Disabled',
-            self::UNKNOWN => 'Unknown',
-            default => ucfirst($v),
-        };
+        $translated = __('hardware.interface_status.' . $v);
+        return $translated !== 'hardware.interface_status.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

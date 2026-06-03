@@ -21,11 +21,7 @@ class GateTerminalTouchpoint
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ENTRY_GATE => 'Entry Gate',
-            self::DRIVER_TERMINAL => 'Control Room / Driver Terminal',
-            self::EXIT_GATE => 'Exit Gate',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('terminal.touchpoint.' . $v);
+        return $translated !== 'terminal.touchpoint.' . $v ? $translated : ucfirst(str_replace('_', ' ', $v));
     }
 }
