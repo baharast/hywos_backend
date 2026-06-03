@@ -27,16 +27,10 @@ class ChipUsageResult
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ACCEPTED => 'Accepted',
-            self::REJECTED => 'Rejected',
-            self::UNKNOWN => 'Unknown',
-            self::BLOCKED => 'Blocked',
-            self::EXPIRED => 'Expired',
-            self::MISMATCH => 'Mismatch',
-            self::FAILED => 'Failed',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.chip_usage_result.' . $v);
+        return $translated !== 'vehicles.chip_usage_result.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

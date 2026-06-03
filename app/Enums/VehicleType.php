@@ -16,12 +16,9 @@ class VehicleType
 
     public static function label(string $value): string
     {
-        return match ($value) {
-            self::TRACTOR_UNIT => 'Tractor unit',
-            self::TRUCK => 'Truck',
-            self::SERVICE_VEHICLE => 'Service vehicle',
-            self::OTHER => 'Other',
-            default => ucwords(str_replace('_', ' ', $value)),
-        };
+        $translated = __('vehicles.vehicle_type.' . $value);
+        return $translated !== 'vehicles.vehicle_type.' . $value
+            ? $translated
+            : ucwords(str_replace('_', ' ', $value));
     }
 }

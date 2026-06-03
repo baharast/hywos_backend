@@ -41,13 +41,10 @@ class TrailerCredentialKind
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::CHIP => 'Chip',
-            self::TAN => 'TAN',
-            self::BOTH => 'Chip + TAN',
-            self::NONE => 'No credential',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.trailer_credential_kind.' . $v);
+        return $translated !== 'vehicles.trailer_credential_kind.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

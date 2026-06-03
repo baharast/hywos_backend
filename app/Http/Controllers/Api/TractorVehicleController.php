@@ -123,7 +123,7 @@ class TractorVehicleController extends ApiController
 
         $lastUpdated = TractorVehicle::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Vehicles retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('vehicles.messages.vehicles_retrieved'));
     }
 
     public function store(StoreVehicleRequest $request, AuditLogger $audit, EventLogger $events)
@@ -151,7 +151,7 @@ class TractorVehicleController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->created(new TractorVehicleResource($vehicle), 'Vehicle created');
+            return $this->created(new TractorVehicleResource($vehicle), __('vehicles.messages.vehicle_created'));
         });
     }
 
@@ -159,17 +159,17 @@ class TractorVehicleController extends ApiController
     {
         $vehicle = TractorVehicle::with(['carrier', 'defaultDriver', 'activeCoupling'])->find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
 
-        return $this->success(new TractorVehicleResource($vehicle), 'Vehicle retrieved');
+        return $this->success(new TractorVehicleResource($vehicle), __('vehicles.messages.vehicle_retrieved'));
     }
 
     public function update(UpdateVehicleRequest $request, $id, AuditLogger $audit, EventLogger $events)
     {
         $vehicle = TractorVehicle::find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -213,7 +213,7 @@ class TractorVehicleController extends ApiController
                 );
             }
 
-            return $this->success(new TractorVehicleResource($vehicle), 'Vehicle updated');
+            return $this->success(new TractorVehicleResource($vehicle), __('vehicles.messages.vehicle_updated'));
         });
     }
 
@@ -221,10 +221,10 @@ class TractorVehicleController extends ApiController
     {
         $vehicle = TractorVehicle::find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
         if ($vehicle->status === VehicleStatus::BLOCKED) {
-            return $this->error('Vehicle already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('vehicles.messages.vehicle_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -258,7 +258,7 @@ class TractorVehicleController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new TractorVehicleResource($vehicle->fresh()->load(['carrier', 'defaultDriver'])), 'Vehicle blocked');
+            return $this->success(new TractorVehicleResource($vehicle->fresh()->load(['carrier', 'defaultDriver'])), __('vehicles.messages.vehicle_blocked'));
         });
     }
 
@@ -266,10 +266,10 @@ class TractorVehicleController extends ApiController
     {
         $vehicle = TractorVehicle::find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
         if ($vehicle->status !== VehicleStatus::BLOCKED) {
-            return $this->error('Vehicle is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('vehicles.messages.vehicle_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -303,7 +303,7 @@ class TractorVehicleController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new TractorVehicleResource($vehicle->fresh()->load(['carrier', 'defaultDriver'])), 'Vehicle unblocked');
+            return $this->success(new TractorVehicleResource($vehicle->fresh()->load(['carrier', 'defaultDriver'])), __('vehicles.messages.vehicle_unblocked'));
         });
     }
 
@@ -311,7 +311,7 @@ class TractorVehicleController extends ApiController
     {
         $vehicle = TractorVehicle::find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -329,19 +329,19 @@ class TractorVehicleController extends ApiController
         $rows = TractorTrailerCouplingResource::collection($paginator->items());
         $lastUpdated = $query->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, null, $lastUpdated, 'Couplings retrieved');
+        return ApiResponse::list($rows, $paginator, null, $lastUpdated, __('vehicles.messages.couplings'));
     }
 
     public function plantVisits($id)
     {
         $vehicle = TractorVehicle::find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Plant visits module not yet implemented'],
-            'Plant visits placeholder'
+            __('vehicles.messages.plant_visits_placeholder')
         );
     }
 
@@ -349,12 +349,12 @@ class TractorVehicleController extends ApiController
     {
         $vehicle = TractorVehicle::find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Clarification cases module not yet implemented'],
-            'Clarifications placeholder'
+            __('vehicles.messages.clarifications_placeholder')
         );
     }
 
@@ -362,7 +362,7 @@ class TractorVehicleController extends ApiController
     {
         $vehicle = TractorVehicle::find($id);
         if (! $vehicle) {
-            return $this->error('Vehicle not found', 'VEHICLE_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.vehicle_not_found'), 'VEHICLE_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -386,7 +386,7 @@ class TractorVehicleController extends ApiController
         return $this->success([
             'events' => $events,
             'audits' => $audits,
-        ], 'Events + audit retrieved');
+        ], __('vehicles.messages.vehicle_events_audit'));
     }
 
     public function export(Request $request)
@@ -426,7 +426,7 @@ class TractorVehicleController extends ApiController
             'filters' => $filters,
             'format' => 'json',
             'note' => 'CSV/XLSX delivery TBC',
-        ], 'Vehicle export prepared');
+        ], __('vehicles.messages.vehicle_export'));
     }
 
     /**

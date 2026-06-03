@@ -15,11 +15,9 @@ class ChipCardType
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::DRIVER_CARD => 'Driver card',
-            self::TRAILER_CHIP_TAG => 'Trailer chip tag',
-            self::SERVICE_TEST => 'Service / test card',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.chip_type.' . $v);
+        return $translated !== 'vehicles.chip_type.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 }

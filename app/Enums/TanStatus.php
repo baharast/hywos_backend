@@ -26,15 +26,8 @@ class TanStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ACTIVE => 'Active',
-            self::PENDING => 'Pending',
-            self::EXPIRED => 'Expired',
-            self::CONSUMED => 'Consumed',
-            self::REVOKED => 'Revoked',
-            self::BLOCKED => 'Blocked',
-            default => ucfirst($v),
-        };
+        $translated = __('vehicles.tan_status.' . $v);
+        return $translated !== 'vehicles.tan_status.' . $v ? $translated : ucfirst($v);
     }
 
     public static function tone(string $v): string

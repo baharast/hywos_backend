@@ -38,15 +38,10 @@ class IdentificationResultStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ACCEPTED => 'Accepted',
-            self::DENIED => 'Denied',
-            self::UNKNOWN_CHIP => 'Unknown chip',
-            self::MULTIPLE_MATCHES => 'Multiple matches',
-            self::READER_ERROR => 'Reader error',
-            self::UNKNOWN => 'No recent event',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.identification_result.' . $v);
+        return $translated !== 'vehicles.identification_result.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

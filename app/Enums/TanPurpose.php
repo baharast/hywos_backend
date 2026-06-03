@@ -26,12 +26,10 @@ class TanPurpose
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::GATE_ENTRY => 'Gate entry',
-            self::FILLING => 'Filling station',
-            self::GENERAL => 'General',
-            default => ucwords(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.tan_purpose.' . $v);
+        return $translated !== 'vehicles.tan_purpose.' . $v
+            ? $translated
+            : ucwords(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

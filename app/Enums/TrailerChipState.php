@@ -17,14 +17,10 @@ class TrailerChipState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ASSIGNED => 'Chip assigned',
-            self::MISSING => 'Missing',
-            self::BLOCKED => 'Blocked',
-            self::MISMATCH => 'Mismatch',
-            self::NOT_REQUIRED => 'Not required',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.trailer_chip_state.' . $v);
+        return $translated !== 'vehicles.trailer_chip_state.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

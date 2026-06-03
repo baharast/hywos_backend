@@ -25,11 +25,10 @@ class CouplingState
 
     public static function label(string $value): string
     {
-        return match ($value) {
-            self::COUPLED => 'Coupled',
-            self::NOT_COUPLED => 'Not coupled',
-            self::UNKNOWN => 'Unknown',
-            default => ucwords(str_replace('_', ' ', $value)),
-        };
+        $translated = __('vehicles.coupling_state.' . $value);
+        return $translated !== 'vehicles.coupling_state.' . $value
+            ? $translated
+            : ucwords(str_replace('_', ' ', $value));
     }
+
 }

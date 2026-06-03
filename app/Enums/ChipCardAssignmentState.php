@@ -16,13 +16,10 @@ class ChipCardAssignmentState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::UNASSIGNED => 'Unassigned',
-            self::ASSIGNED => 'Assigned',
-            self::REPLACED => 'Replaced',
-            self::ARCHIVED => 'Archived',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.chip_assignment_state.' . $v);
+        return $translated !== 'vehicles.chip_assignment_state.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -26,16 +26,10 @@ class ChipCardLifecycleStatus
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::ACTIVE => 'Active',
-            self::BLOCKED => 'Blocked',
-            self::LOST => 'Lost',
-            self::DEFECTIVE => 'Defective',
-            self::EXPIRED => 'Expired',
-            self::REPLACED => 'Replaced',
-            self::ARCHIVED => 'Archived',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.chip_lifecycle_status.' . $v);
+        return $translated !== 'vehicles.chip_lifecycle_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

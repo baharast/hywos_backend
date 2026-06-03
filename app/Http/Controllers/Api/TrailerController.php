@@ -61,7 +61,7 @@ class TrailerController extends ApiController
         $summary = $this->summary();
         $lastUpdated = Trailer::query()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Trailers retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('vehicles.messages.trailers_retrieved'));
     }
 
     public function store(StoreTrailerRequest $request, AuditLogger $audit, EventLogger $events)
@@ -98,7 +98,7 @@ class TrailerController extends ApiController
 
             return $this->created(
                 new TrailerResource($trailer->fresh()->load(['carrier', 'customer', 'authMedia'])),
-                'Trailer created'
+                __('vehicles.messages.trailer_created')
             );
         });
     }
@@ -107,17 +107,17 @@ class TrailerController extends ApiController
     {
         $trailer = Trailer::with(['carrier', 'customer', 'authMedia'])->find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
-        return $this->success(new TrailerResource($trailer), 'Trailer retrieved');
+        return $this->success(new TrailerResource($trailer), __('vehicles.messages.trailer_retrieved'));
     }
 
     public function update(UpdateTrailerRequest $request, $id, AuditLogger $audit, EventLogger $events)
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
         $data = $request->validated();
@@ -147,7 +147,7 @@ class TrailerController extends ApiController
 
             return $this->success(
                 new TrailerResource($trailer->fresh()->load(['carrier', 'customer', 'authMedia'])),
-                'Trailer updated'
+                __('vehicles.messages.trailer_updated')
             );
         });
     }
@@ -156,10 +156,10 @@ class TrailerController extends ApiController
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
         if ($trailer->status === TrailerStatus::BLOCKED) {
-            return $this->error('Trailer already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('vehicles.messages.trailer_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -196,7 +196,7 @@ class TrailerController extends ApiController
 
             return $this->success(
                 new TrailerResource($trailer->fresh()->load(['carrier', 'customer', 'authMedia'])),
-                'Trailer blocked'
+                __('vehicles.messages.trailer_blocked')
             );
         });
     }
@@ -205,10 +205,10 @@ class TrailerController extends ApiController
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
         if ($trailer->status !== TrailerStatus::BLOCKED) {
-            return $this->error('Trailer is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('vehicles.messages.trailer_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -244,7 +244,7 @@ class TrailerController extends ApiController
 
             return $this->success(
                 new TrailerResource($trailer->fresh()->load(['carrier', 'customer', 'authMedia'])),
-                'Trailer unblocked'
+                __('vehicles.messages.trailer_unblocked')
             );
         });
     }
@@ -253,7 +253,7 @@ class TrailerController extends ApiController
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
         $media = $trailer->authMedia()
@@ -261,19 +261,19 @@ class TrailerController extends ApiController
             ->orderByDesc('created_at')
             ->get();
 
-        return $this->success(AuthMediumResource::collection($media), 'Auth media retrieved');
+        return $this->success(AuthMediumResource::collection($media), __('vehicles.messages.auth_media'));
     }
 
     public function plantVisits($id)
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Plant visits module not yet implemented'],
-            'Plant visits retrieved (placeholder)'
+            __('vehicles.messages.plant_visits_placeholder')
         );
     }
 
@@ -281,7 +281,7 @@ class TrailerController extends ApiController
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -301,19 +301,19 @@ class TrailerController extends ApiController
             ->where('trailer_id', $trailer->id)
             ->max('updated_at');
 
-        return ApiResponse::list($paginator->items(), $paginator, null, $lastUpdated, 'Loadings retrieved');
+        return ApiResponse::list($paginator->items(), $paginator, null, $lastUpdated, __('vehicles.messages.trailer_loadings'));
     }
 
     public function documents($id)
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Documents module not yet implemented'],
-            'Documents retrieved (placeholder)'
+            __('vehicles.messages.documents_placeholder')
         );
     }
 
@@ -321,7 +321,7 @@ class TrailerController extends ApiController
     {
         $trailer = Trailer::find($id);
         if (! $trailer) {
-            return $this->error('Trailer not found', 'TRAILER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.trailer_not_found'), 'TRAILER_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -349,7 +349,7 @@ class TrailerController extends ApiController
                 'audits_count' => $audits->count(),
                 'events_count' => $events->count(),
             ],
-        ], 'Trailer events & audit retrieved');
+        ], __('vehicles.messages.trailer_events_audit'));
     }
 
     public function export(Request $request)
@@ -368,7 +368,7 @@ class TrailerController extends ApiController
             'visibleColumns' => $visibleColumns,
             'rows' => $rows,
             'note' => 'Binary export (CSV/XLSX) not yet implemented; returning JSON payload.',
-        ], 'Trailer export prepared');
+        ], __('vehicles.messages.trailer_export'));
     }
 
     /**

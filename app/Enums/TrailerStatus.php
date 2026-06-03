@@ -16,7 +16,10 @@ class TrailerStatus
 
     public static function label(string $v): string
     {
-        return ucfirst(str_replace('_', ' ', $v));
+        $translated = __('vehicles.trailer_status.' . $v);
+        return $translated !== 'vehicles.trailer_status.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

@@ -27,12 +27,10 @@ class VehicleStatus
 
     public static function label(string $value): string
     {
-        return match ($value) {
-            self::ACTIVE => 'Active',
-            self::INACTIVE => 'Inactive',
-            self::BLOCKED => 'Blocked',
-            self::ARCHIVED => 'Archived',
-            default => ucfirst($value),
-        };
+        $translated = __('vehicles.vehicle_status.' . $value);
+        return $translated !== 'vehicles.vehicle_status.' . $value
+            ? $translated
+            : ucfirst($value);
     }
+
 }

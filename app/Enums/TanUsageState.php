@@ -17,14 +17,10 @@ class TanUsageState
 
     public static function label(string $v): string
     {
-        return match ($v) {
-            self::UNUSED => 'Unused',
-            self::CONSUMED => 'Consumed',
-            self::FAILED => 'Failed',
-            self::BLOCKED => 'Blocked',
-            self::NOT_APPLICABLE => 'Not applicable',
-            default => ucfirst(str_replace('_', ' ', $v)),
-        };
+        $translated = __('vehicles.tan_usage_state.' . $v);
+        return $translated !== 'vehicles.tan_usage_state.' . $v
+            ? $translated
+            : ucfirst(str_replace('_', ' ', $v));
     }
 
     public static function tone(string $v): string

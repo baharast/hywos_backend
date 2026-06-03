@@ -49,14 +49,14 @@ class TanController extends ApiController
         $summary = $this->summary();
         $lastUpdated = AuthMedium::query()->tans()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'TANs retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('vehicles.messages.tans_retrieved'));
     }
 
     public function store(GenerateTanRequest $request, AuditLogger $audit, EventLogger $events)
     {
         $driver = Driver::find($request->input('driver_id'));
         if (! $driver) {
-            return $this->error('Driver not found', 'DRIVER_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.driver_not_found'), 'DRIVER_NOT_FOUND', 404);
         }
 
         // No-overlap policy: a driver may not have two simultaneously-active TANs.
@@ -71,7 +71,7 @@ class TanController extends ApiController
             ->first();
         if ($overlap) {
             return $this->error(
-                'Driver already has an active TAN',
+                __('vehicles.messages.driver_already_has_tan'),
                 'OVERLAPPING_ACTIVE_TAN',
                 409,
                 ['existingTanId' => $overlap->id]
@@ -145,7 +145,7 @@ class TanController extends ApiController
             // Subsequent show()/index() never include this field.
             $data['oneTimeFullValue'] = $rawValue;
 
-            return ApiResponse::success($data, 'TAN generated', 201);
+            return ApiResponse::success($data, __('vehicles.messages.tan_generated'), 201);
         });
     }
 
@@ -153,23 +153,23 @@ class TanController extends ApiController
     {
         $tan = AuthMedium::query()->tans()->with('driver')->find($id);
         if (! $tan) {
-            return $this->error('TAN not found', 'TAN_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.tan_not_found'), 'TAN_NOT_FOUND', 404);
         }
 
-        return $this->success(new TanResource($tan), 'TAN retrieved');
+        return $this->success(new TanResource($tan), __('vehicles.messages.tan_retrieved'));
     }
 
     public function revoke(RevokeTanRequest $request, $id, AuditLogger $audit, EventLogger $events)
     {
         $tan = AuthMedium::query()->tans()->find($id);
         if (! $tan) {
-            return $this->error('TAN not found', 'TAN_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.tan_not_found'), 'TAN_NOT_FOUND', 404);
         }
         if (! is_null($tan->revoked_at)) {
-            return $this->error('TAN already revoked', 'ALREADY_REVOKED', 409);
+            return $this->error(__('vehicles.messages.tan_already_revoked'), 'ALREADY_REVOKED', 409);
         }
         if (! is_null($tan->consumed_at)) {
-            return $this->error('Consumed TANs cannot be revoked', 'NOT_REVOKABLE', 409);
+            return $this->error(__('vehicles.messages.tan_consumed_not_revokable'), 'NOT_REVOKABLE', 409);
         }
 
         $reason = $request->input('reason');
@@ -206,7 +206,7 @@ class TanController extends ApiController
                 EventSeverity::WARNING
             );
 
-            return $this->success(new TanResource($tan->fresh()->load('driver')), 'TAN revoked');
+            return $this->success(new TanResource($tan->fresh()->load('driver')), __('vehicles.messages.tan_revoked'));
         });
     }
 
@@ -214,12 +214,12 @@ class TanController extends ApiController
     {
         $tan = AuthMedium::query()->tans()->find($id);
         if (! $tan) {
-            return $this->error('TAN not found', 'TAN_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.tan_not_found'), 'TAN_NOT_FOUND', 404);
         }
         if ($tan->status === AuthMediumStatus::EXPIRED
             || ($tan->expires_at && $tan->expires_at->isPast())
         ) {
-            return $this->error('TAN already expired', 'ALREADY_EXPIRED', 409);
+            return $this->error(__('vehicles.messages.tan_already_expired'), 'ALREADY_EXPIRED', 409);
         }
 
         $reason = $request->input('reason');
@@ -251,7 +251,7 @@ class TanController extends ApiController
                 EventSeverity::INFO
             );
 
-            return $this->success(new TanResource($tan->fresh()->load('driver')), 'TAN expired');
+            return $this->success(new TanResource($tan->fresh()->load('driver')), __('vehicles.messages.tan_expired'));
         });
     }
 
@@ -259,7 +259,7 @@ class TanController extends ApiController
     {
         $tan = AuthMedium::query()->tans()->find($id);
         if (! $tan) {
-            return $this->error('TAN not found', 'TAN_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.tan_not_found'), 'TAN_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -279,7 +279,7 @@ class TanController extends ApiController
             $paginator,
             null,
             null,
-            'TAN usage history retrieved'
+            __('vehicles.messages.tan_usage_history')
         );
     }
 
@@ -287,12 +287,12 @@ class TanController extends ApiController
     {
         $tan = AuthMedium::query()->tans()->find($id);
         if (! $tan) {
-            return $this->error('TAN not found', 'TAN_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.tan_not_found'), 'TAN_NOT_FOUND', 404);
         }
 
         return $this->success(
             ['data' => [], 'note' => 'Security events module not yet implemented'],
-            'Security events retrieved (placeholder)'
+            __('vehicles.messages.security_events_placeholder')
         );
     }
 
@@ -300,7 +300,7 @@ class TanController extends ApiController
     {
         $tan = AuthMedium::query()->tans()->find($id);
         if (! $tan) {
-            return $this->error('TAN not found', 'TAN_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.tan_not_found'), 'TAN_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -328,7 +328,7 @@ class TanController extends ApiController
                 'audits_count' => $audits->count(),
                 'events_count' => $events->count(),
             ],
-        ], 'TAN events & audit retrieved');
+        ], __('vehicles.messages.tan_events_audit'));
     }
 
     public function export(Request $request)
@@ -346,7 +346,7 @@ class TanController extends ApiController
             'visibleColumns' => $visibleColumns,
             'rows' => $rows,
             'note' => 'Binary export (CSV/XLSX) for the per-table button not yet implemented; returning JSON payload. For background CSV/XLSX export jobs use the Master Data Export endpoint.',
-        ], 'TAN export prepared');
+        ], __('vehicles.messages.tan_export'));
     }
 
     // ---------- helpers ----------

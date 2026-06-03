@@ -58,7 +58,7 @@ class ChipCardController extends ApiController
         $summary = $this->summary();
         $lastUpdated = AuthMedium::query()->chipCards()->max('updated_at');
 
-        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, 'Chip cards retrieved');
+        return ApiResponse::list($rows, $paginator, $summary, $lastUpdated, __('vehicles.messages.cards_retrieved'));
     }
 
     public function store(StoreChipCardRequest $request, AuditLogger $audit, EventLogger $events)
@@ -116,7 +116,7 @@ class ChipCardController extends ApiController
 
             return $this->created(
                 new ChipCardResource($card->fresh()->load(['driver', 'trailer'])),
-                'Chip card registered'
+                __('vehicles.messages.card_registered')
             );
         });
     }
@@ -125,7 +125,7 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->with(['driver', 'trailer'])->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
 
         $includes = array_filter(array_map('trim', explode(',', (string) $request->query('include', ''))));
@@ -150,17 +150,17 @@ class ChipCardController extends ApiController
                 ->get();
         }
 
-        return $this->success($payload, 'Chip card retrieved');
+        return $this->success($payload, __('vehicles.messages.card_retrieved'));
     }
 
     public function update(UpdateChipCardRequest $request, $id, AuditLogger $audit, EventLogger $events)
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
         if ($card->status === AuthMediumStatus::ARCHIVED) {
-            return $this->error('Archived chip cards cannot be updated', 'CARD_ARCHIVED', 409);
+            return $this->error(__('vehicles.messages.card_archived_locked'), 'CARD_ARCHIVED', 409);
         }
 
         $data = $request->validated();
@@ -190,7 +190,7 @@ class ChipCardController extends ApiController
 
             return $this->success(
                 new ChipCardResource($card->fresh()->load(['driver', 'trailer'])),
-                'Chip card updated'
+                __('vehicles.messages.card_updated')
             );
         });
     }
@@ -199,13 +199,13 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
         if ($card->status !== AuthMediumStatus::ACTIVE) {
-            return $this->error('Chip card not active', 'CARD_NOT_ASSIGNABLE', 409);
+            return $this->error(__('vehicles.messages.card_not_active'), 'CARD_NOT_ASSIGNABLE', 409);
         }
         if ($card->assignment_state === ChipCardAssignmentState::ASSIGNED) {
-            return $this->error('Chip card already assigned', 'CARD_NOT_ASSIGNABLE', 409);
+            return $this->error(__('vehicles.messages.card_already_assigned'), 'CARD_NOT_ASSIGNABLE', 409);
         }
 
         $entityType = $request->input('entity_type');
@@ -214,10 +214,10 @@ class ChipCardController extends ApiController
         $reasonCode = $request->input('reason_code');
 
         if ($card->card_type === ChipCardType::DRIVER_CARD && $entityType !== 'driver') {
-            return $this->error('Card type mismatch', 'CARD_TYPE_MISMATCH', 409);
+            return $this->error(__('vehicles.messages.card_type_mismatch'), 'CARD_TYPE_MISMATCH', 409);
         }
         if ($card->card_type === ChipCardType::TRAILER_CHIP_TAG && $entityType !== 'trailer') {
-            return $this->error('Card type mismatch', 'CARD_TYPE_MISMATCH', 409);
+            return $this->error(__('vehicles.messages.card_type_mismatch'), 'CARD_TYPE_MISMATCH', 409);
         }
 
         $existing = AuthMedium::query()->chipCards()
@@ -229,7 +229,7 @@ class ChipCardController extends ApiController
             ->first();
         if ($existing) {
             return $this->error(
-                'Entity already has an active chip card of this type',
+                __('vehicles.messages.entity_has_card'),
                 'ASSIGNMENT_CONFLICT',
                 409,
                 ['existingChipCardId' => $existing->id]
@@ -240,7 +240,7 @@ class ChipCardController extends ApiController
             $this->performAssign($card, $entityType, $entityId, $reason, $reasonCode, $audit, $events);
             return $this->success(
                 new ChipCardResource($card->fresh()->load(['driver', 'trailer'])),
-                'Chip card assigned'
+                __('vehicles.messages.card_assigned')
             );
         });
     }
@@ -249,10 +249,10 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
         if ($card->assignment_state !== ChipCardAssignmentState::ASSIGNED) {
-            return $this->error('Chip card is not assigned', 'NOT_ASSIGNED', 409);
+            return $this->error(__('vehicles.messages.card_not_assigned'), 'NOT_ASSIGNED', 409);
         }
 
         $reason = (string) ($request->input('reason') ?? 'Unassigned');
@@ -300,7 +300,7 @@ class ChipCardController extends ApiController
 
             return $this->success(
                 new ChipCardResource($card->fresh()->load(['driver', 'trailer'])),
-                'Chip card unassigned'
+                __('vehicles.messages.card_unassigned')
             );
         });
     }
@@ -309,10 +309,10 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
         if ($card->status === AuthMediumStatus::BLOCKED) {
-            return $this->error('Chip card already blocked', 'ALREADY_BLOCKED', 409);
+            return $this->error(__('vehicles.messages.card_already_blocked'), 'ALREADY_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -330,7 +330,7 @@ class ChipCardController extends ApiController
                 EventCategory::OPERATIONS, EventSeverity::WARNING
             );
 
-            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), 'Chip card blocked');
+            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), __('vehicles.messages.card_blocked'));
         });
     }
 
@@ -338,10 +338,10 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
         if ($card->status !== AuthMediumStatus::BLOCKED) {
-            return $this->error('Chip card is not blocked', 'NOT_BLOCKED', 409);
+            return $this->error(__('vehicles.messages.card_not_blocked'), 'NOT_BLOCKED', 409);
         }
 
         $reason = $request->input('reason');
@@ -359,7 +359,7 @@ class ChipCardController extends ApiController
                 EventCategory::OPERATIONS, EventSeverity::INFO
             );
 
-            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), 'Chip card unblocked');
+            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), __('vehicles.messages.card_unblocked'));
         });
     }
 
@@ -367,7 +367,7 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
 
         $reason = $request->input('reason');
@@ -411,7 +411,7 @@ class ChipCardController extends ApiController
                 EventCategory::OPERATIONS, EventSeverity::WARNING
             );
 
-            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), 'Chip card marked lost');
+            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), __('vehicles.messages.card_lost'));
         });
     }
 
@@ -419,7 +419,7 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
 
         $reason = $request->input('reason');
@@ -440,7 +440,7 @@ class ChipCardController extends ApiController
                 EventCategory::OPERATIONS, EventSeverity::WARNING
             );
 
-            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), 'Chip card marked defective');
+            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), __('vehicles.messages.card_defective'));
         });
     }
 
@@ -448,24 +448,24 @@ class ChipCardController extends ApiController
     {
         $oldCard = AuthMedium::query()->chipCards()->find($id);
         if (! $oldCard) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
 
         $newCard = AuthMedium::query()->chipCards()->find($request->input('replacement_card_id'));
         if (! $newCard) {
-            return $this->error('Replacement chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.replacement_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
         if ($newCard->id === $oldCard->id) {
-            return $this->error('Replacement card must differ from original', 'CARD_NOT_ASSIGNABLE', 409);
+            return $this->error(__('vehicles.messages.replacement_must_differ'), 'CARD_NOT_ASSIGNABLE', 409);
         }
         if ($newCard->status !== AuthMediumStatus::ACTIVE) {
-            return $this->error('Replacement card is not active', 'CARD_NOT_ASSIGNABLE', 409);
+            return $this->error(__('vehicles.messages.replacement_not_active'), 'CARD_NOT_ASSIGNABLE', 409);
         }
         if ($newCard->assignment_state !== ChipCardAssignmentState::UNASSIGNED) {
-            return $this->error('Replacement card is not unassigned', 'CARD_NOT_ASSIGNABLE', 409);
+            return $this->error(__('vehicles.messages.replacement_not_unassigned'), 'CARD_NOT_ASSIGNABLE', 409);
         }
         if ($newCard->card_type !== $oldCard->card_type) {
-            return $this->error('Replacement card type does not match', 'CARD_TYPE_MISMATCH', 409);
+            return $this->error(__('vehicles.messages.replacement_type_mismatch'), 'CARD_TYPE_MISMATCH', 409);
         }
 
         $reason = $request->input('reason');
@@ -545,7 +545,7 @@ class ChipCardController extends ApiController
             return $this->success([
                 'oldCard' => new ChipCardResource($oldCard->fresh()->load(['driver', 'trailer'])),
                 'newCard' => new ChipCardResource($newCard->fresh()->load(['driver', 'trailer'])),
-            ], 'Chip card replaced');
+            ], __('vehicles.messages.card_replaced'));
         });
     }
 
@@ -553,10 +553,10 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
         if ($card->assignment_state === ChipCardAssignmentState::ASSIGNED) {
-            return $this->error('Cannot archive an assigned chip card — unassign first', 'CARD_NOT_ASSIGNABLE', 409);
+            return $this->error(__('vehicles.messages.card_cannot_archive'), 'CARD_NOT_ASSIGNABLE', 409);
         }
 
         $reason = $request->input('reason');
@@ -578,7 +578,7 @@ class ChipCardController extends ApiController
                 EventCategory::OPERATIONS, EventSeverity::INFO
             );
 
-            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), 'Chip card archived');
+            return $this->success(new ChipCardResource($card->fresh()->load(['driver', 'trailer'])), __('vehicles.messages.card_archived'));
         });
     }
 
@@ -586,7 +586,7 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -600,7 +600,7 @@ class ChipCardController extends ApiController
             $paginator,
             null,
             $paginator->items() ? data_get($paginator->items()[0], 'created_at') : null,
-            'Assignment history retrieved'
+            __('vehicles.messages.assignment_history')
         );
     }
 
@@ -608,7 +608,7 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -624,7 +624,7 @@ class ChipCardController extends ApiController
             $paginator,
             null,
             null,
-            'Usage history retrieved'
+            __('vehicles.messages.usage_history')
         );
     }
 
@@ -632,7 +632,7 @@ class ChipCardController extends ApiController
     {
         $card = AuthMedium::query()->chipCards()->find($id);
         if (! $card) {
-            return $this->error('Chip card not found', 'CHIP_CARD_NOT_FOUND', 404);
+            return $this->error(__('vehicles.messages.card_not_found'), 'CHIP_CARD_NOT_FOUND', 404);
         }
 
         $perPage = (int) $request->query('per_page', 25);
@@ -660,7 +660,7 @@ class ChipCardController extends ApiController
                 'audits_count' => $audits->count(),
                 'events_count' => $events->count(),
             ],
-        ], 'Chip card events & audit retrieved');
+        ], __('vehicles.messages.card_events_audit'));
     }
 
     public function export(Request $request)
@@ -678,7 +678,7 @@ class ChipCardController extends ApiController
             'visibleColumns' => $visibleColumns,
             'rows' => $rows,
             'note' => 'Binary export (CSV/XLSX) not yet implemented; returning JSON payload.',
-        ], 'Chip card export prepared');
+        ], __('vehicles.messages.card_export'));
     }
 
     // ---------- helpers ----------
